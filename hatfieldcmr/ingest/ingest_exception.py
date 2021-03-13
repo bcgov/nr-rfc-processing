@@ -1,2 +1,0 @@
-class IngestException(Exception):
-    pass

@@ -1,7 +1,0 @@
-# register at https://urs.earthdata.nasa.gov/home
-EARTHDATA_USER: username_without_quotes
-EARTHDATA_PASS: password_without_quotes
-
-# register at https://scihub.copernicus.eu/dhus/#/self-registration 
-SENTINELSAT_USER: username_without_quotes
-SENTINELSAT_PASS: password_without_quotes

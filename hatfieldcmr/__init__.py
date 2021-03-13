@@ -1,2 +1,0 @@
-from .earthdata import CMRClient
-

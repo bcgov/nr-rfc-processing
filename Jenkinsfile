@@ -1,4 +1,4 @@
-node('zavijava') {
+node('zavijava_rfc') {
     // ENVS to be set for this job
     //    * ENS_NETWORK_DRIVE
     //    * ENS_DRIVEMAPPING

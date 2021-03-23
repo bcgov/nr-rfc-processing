@@ -8,6 +8,8 @@ from multiprocessing import Pool
 
 #from google.cloud import storage
 
+import admin.constants
+
 from hatfieldcmr.ingest import LocalStorageWrapper
 from hatfieldcmr import CMRClient
 
@@ -44,8 +46,9 @@ def download_granules(envpath: str, date: str, sat: str, days: int = 5):
     date = date.split('.')
     end_date = datetime(int(date[0]), int(date[1]), int(date[2]))
     bbox = [-140.977, 46.559, -112.3242, 63.134]
+    const = admin.constants.Constants()
     storage_wrapper = LocalStorageWrapper(
-        '/data'
+        const.top
     )
 
     #ed_client = CMRClient(storage_wrapper, earthdata_user=os.getenv('EARTHDATA_USER'), earthdata_pass=os.getenv('EARTHDATA_PWD'))

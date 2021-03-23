@@ -55,7 +55,7 @@ def calc(typ, sat, date):
         print(f'CONNECTION ERR: {e}')
         return 0
 
-    watersheds = glob(os.path.join('/data',typ, '**'))
+    watersheds = glob(os.path.join(const.top, typ, '**'))
 
     cols = ['name', 'date', 'snow_coverage', 'nodata', 'below_threshold', 'satellite']
 
@@ -90,11 +90,11 @@ def calc(typ, sat, date):
     conn.close()
 
 def db_to_csv():
-    conn = sqlite3.connect(os.path.join('/data','analysis','analysis.db'))
+    conn = sqlite3.connect(os.path.join(const.top, 'analysis','analysis.db'))
     df_modis = pd.read_sql(f"SELECT * FROM modis", conn)
     df_modis['satellite'] = 'modis'
     df_viirs = pd.read_sql(f"SELECT * FROM viirs", conn)
     df_viirs['satellite'] = 'viirs'
     df = pd.concat([df_modis, df_viirs])
-    df.to_csv(os.path.join('/data','analysis','analysis.csv'), index=False)
+    df.to_csv(os.path.join(const.top, 'analysis','analysis.csv'), index=False)
     conn.close()

@@ -72,5 +72,12 @@ def build_shapefiles(typ, dataset):
 
 def buildall():
     build_dir_structure()
-    build_shapefiles('basins', os.path.join('aoi','clever_basins','CLEVER_BASINS.shp'))
-    build_shapefiles('watersheds', os.path.join('aoi','watersheds','Export_Output_SBIMap.shp'))
+    clever_basins_dir = os.path.join(const.aoi, 'clever_basins')
+    if not os.path.exists(clever_basins_dir):
+        os.makedirs(clever_basins_dir)
+    build_shapefiles('basins', os.path.join(clever_basins_dir, 'CLEVER_BASINS.shp'))
+
+    watersheds_dir = os.path.join(const.aoi, 'watersheds')
+    if not os.path.exists(watersheds_dir):
+        os.makedirs(watersheds_dir)
+    build_shapefiles('watersheds', os.path.join(watersheds_dir, 'Export_Output_SBIMap.shp'))

@@ -13,6 +13,10 @@ from glob import glob
 from descartes import PolygonPatch
 from typing import List
 
+from admin.constants import Constants
+const = Constants()
+
+
 res = { 
         'modis': {
             'EPSG4326': 0.008259714517502726, 
@@ -60,7 +64,7 @@ def plot_helper(sheds: List, typ: str, sat: str, date: str):
                 "width": mosaic.shape[2],
                 "transform": out_trans,
                       })
-        pth = os.path.join('/data','intermediate_tif','plot',f'{typ}_{crs}.tif')
+        pth = os.path.join(const.top, 'intermediate_tif','plot',f'{typ}_{crs}.tif')
         with rio.open(pth, 'w', **out_meta) as dst:
             dst.write(mosaic)
         for f in src_files_to_mosaic:
@@ -71,7 +75,7 @@ def plot_helper(sheds: List, typ: str, sat: str, date: str):
         cbar.ax.set_ylabel('NDSI', rotation=270)
         rasterio.plot.show((r.read()), transform=r.transform, ax=ax, adjust=None)
         try:
-            os.makedirs(os.path.join('/data','plot',sat,'mosaic',date))
+            os.makedirs(os.path.join(const.top, 'plot', sat,'mosaic',date))
         except:
             pass
         pth = os.path.join('aoi','provincial_boundary','FLNR10747_AOI_BC_boundary_20210106_AnS.shp')
@@ -79,7 +83,7 @@ def plot_helper(sheds: List, typ: str, sat: str, date: str):
         shapefile.plot(ax=ax, alpha=0.2)
         ax.axis('off')
         fig.suptitle(f'{typ.upper()} - {sat.upper()} - {date}', x=0.6)
-        plt.savefig(os.path.join('/data','plot',sat,'mosaic',date,f'{typ}_{crs}.png'), bbox_inches='tight')
+        plt.savefig(os.path.join(const.top, 'plot',sat,'mosaic',date,f'{typ}_{crs}.png'), bbox_inches='tight')
     else: # Create individual plots
         fig, ax = plt.subplots(1,1, dpi=100)
         print(sheds[0])
@@ -92,9 +96,9 @@ def plot_helper(sheds: List, typ: str, sat: str, date: str):
         name = '_'.join(typ.split('_')[:-1])
         fig.suptitle(f'{name.upper()} - {sat.upper()} - {date}')
         if os.path.split(typ)[-1].split('_')[0].isupper():
-            base = os.path.join('/data','plot',sat,'basins',date,crs)
+            base = os.path.join(const.top, 'plot',sat,'basins',date,crs)
         else:
-            base = os.path.join('/data','plot',sat,'watersheds',date,crs)
+            base = os.path.join(const.top, 'plot',sat,'watersheds',date,crs)
         try:
             os.makedirs(base)
         except:
@@ -117,7 +121,7 @@ def plot_single_shed(shed_name: str, sat: str, date: str):
     """
     typ = os.path.split(shed_name)[0]
     shed_name = os.path.split(shed_name)[-1]
-    sheds = glob(os.path.join('/data',typ,shed_name,sat,date, '*EPSG3153_fin.tif'))
+    sheds = glob(os.path.join(const.top, typ,shed_name,sat,date, '*EPSG3153_fin.tif'))
     for shed in sheds:
         plot_helper([shed], os.path.split(shed)[-1].replace('_fin',"").split('.')[0], sat, date)
 
@@ -131,14 +135,14 @@ def plot_(date: str, sat: str):
     sat : str
         Target satellite data to plot [modis | viirs]
     """
-    watersheds = glob(os.path.join('/data','watersheds','**',sat,date,'*EPSG3153_fin.tif'))
+    watersheds = glob(os.path.join(const.top,'watersheds','**',sat,date,'*EPSG3153_fin.tif'))
     if len(watersheds) != 0:
         plot_helper(watersheds, 'watersheds', sat, date)
-    basins = glob(os.path.join('/data','basins','**',sat,date,'*EPSG3153_fin.tif'))
+    basins = glob(os.path.join(const.top, 'basins','**',sat,date,'*EPSG3153_fin.tif'))
     if len(basins) != 0:
         plot_helper(basins, 'basins', sat, date)
     for task in ['watersheds', 'basins']:
-        indiv_sheds = glob(os.path.join('/data',task,'*'))
+        indiv_sheds = glob(os.path.join(const.top, task,'*'))
         for shed in indiv_sheds:
             plot_single_shed(os.path.join(task,os.path.split(shed)[-1]), sat, date)
     

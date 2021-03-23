@@ -27,12 +27,12 @@ def daily_kml(date: str, typ: str, sat: str):
         Target satellite to process [modis | viirs]
     """
 
-    sheds = glob(os.path.join('/data',typ,'*'))
+    sheds = glob(os.path.join(const.top, typ,'*'))
     for shed in sheds:
         for crs in ['EPSG4326', 'EPSG3153']:
             # Apply /data thresholding and balancing
             name = os.path.split(shed)[-1]
-            shed_pth = os.path.join('/data',typ, name, sat, date, f'{name}_{sat}_{date}_{crs}.tif')
+            shed_pth = os.path.join(const.top, typ, name, sat, date, f'{name}_{sat}_{date}_{crs}.tif')
             if not os.path.exists(shed_pth):
                 print(f'Could not find {shed_pth}')
                 continue            
@@ -62,8 +62,8 @@ def daily_kml(date: str, typ: str, sat: str):
             os.system(f'gdal_translate -q -expand rgb -of GTiff \
                 {intermediate_pth} {output_pth}')
             # Process kmls on EPSG4326 ( EPSG3005 does not work )
-            intermediate_fin_pth = os.path.join('/data', typ, name, sat, date,f'{name}_{crs}_fin.tif')
-            shp_pth = os.path.join("/data", typ, name, "shape", crs, f"{name}.shp")
+            intermediate_fin_pth = os.path.join(const.top, typ, name, sat, date,f'{name}_{crs}_fin.tif')
+            shp_pth = os.path.join(const.top, typ, name, "shape", crs, f"{name}.shp")
             os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
                 {shp_pth} \
                 -crop_to_cutline {output_pth} \
@@ -92,10 +92,10 @@ def composite_kml(date: str, sat: str):
 
     kml = simplekml.Kml(name=f'{sat}_{date}')
 
-    location = glob(os.path.join('/data','kml',date,sat,'*'))
+    location = glob(os.path.join(const.top, 'kml',date,sat,'*'))
     for shed in location:
         shed = os.path.split(shed)[-1]
-        kmls = glob(os.path.join('/data','kml',date,sat,shed,f'*_{date}*'))
+        kmls = glob(os.path.join(const.top, 'kml',date,sat,shed,f'*_{date}*'))
         doc = kml.newfolder(name=shed)
         for k in kmls:
             name = os.path.split(k)[-1]
@@ -103,7 +103,7 @@ def composite_kml(date: str, sat: str):
             link.link.href = os.path.join(date,sat,shed,name,'doc.kml')
             link.link.viewrefreshmode = simplekml.ViewRefreshMode.onrequest
 
-    kml.save(os.path.join('/data','kml',f'{sat}_{date}.kml'))
+    kml.save(os.path.join(const.top, 'kml',f'{sat}_{date}.kml'))
     #kml.savekmz(f'kml/{sat}_{date}.kmz')
 
     
@@ -111,9 +111,9 @@ def zipkmls():
     """
     Zip heirarchal kmls into a zipfile
     """
-    with zipfile.ZipFile(os.path.join('/data','kml.zip'), 'w') as zipf:
-        for root, dirs, files in os.walk(os.path.join('/data','kml')):
+    with zipfile.ZipFile(os.path.join(const.top, 'kml.zip'), 'w') as zipf:
+        for root, dirs, files in os.walk(os.path.join(const.top, 'kml')):
             for file in files:
-                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), os.path.join('/data','kml', '..')))
+                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), os.path.join(const.top, 'kml', '..')))
     
     

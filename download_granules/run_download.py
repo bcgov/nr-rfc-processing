@@ -1,12 +1,13 @@
 import click
 import datetime
 
-from .download_granules import download_granules
+from download_granules import download_granules
+from admin import check_date
 
 from constants import sats, days, typs
 
 def download_(envpth: str, sat: str, date: str, days: int = 5):
-    if check_date(date):    
+    if check_date.check_date(date):    
         print(f'download {sat}')
         if sat == 'viirs':
             days = 1

@@ -2,7 +2,7 @@ import os
 
 class Constants(object):
     def __init__(self):
-        self.top = '/data'
+        self.top = os.environ['SNOWPACK-DATA']
         self.basins = os.path.join(self.top,'basins')
         self.watersheds = os.path.join(self.top,'watersheds')
         self.kml = os.path.join(self.top,'kml')
@@ -28,3 +28,5 @@ class Constants(object):
         self.plot_sentinel = os.path.join(self.plot,'sentinel')
         self.analysis = os.path.join(self.top,'analysis')
         self.modis_terra = os.path.join(self.top,'modis-terra')
+
+        self.aoi = os.path.join(os.path.dirname(__file__), '..', 'aoi')

@@ -2,11 +2,11 @@ node('zavijava') {
     // ENVS to be set for this job
     //    * ENS_NETWORK_DRIVE
     //    * ENS_DRIVEMAPPING
-    //    * ARTIFACTS
+    //    * RFC_ARTIFACTS_FOLDER
     //
     stage('checkout') {
-        sh 'if [ ! -d "$TEMP" ]; then mkdir $TEMP; fi'
-        checkout([$class: 'GitSCM', branches: [[name: "${env.TAGNAME}"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true, reference: '', trackingSubmodules: false]], gitTool: 'Default', submoduleCfg: [], userRemoteConfigs: [[credentialsId: '607141bd-ef34-4e80-8e7e-1134b7c77176', url: 'https://github.com/bcgov/replication_health_check']]])
+        //sh 'if [ ! -d "$TEMP" ]; then mkdir $TEMP; fi'
+        checkout([$class: 'GitSCM', branches: [[name: '$TAGNAME']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/bcgov/nr-rfc-processing']]])    
     }
     stage('configure drive mappings') {
     bat '''
@@ -35,8 +35,8 @@ node('zavijava') {
         // install conda env
         //  conda env create --file environment.yaml --prefix $CONDAENVPATH
         bat '''
-        SET PATH=%ARTIFACTS%\miniconda\condabin;%PATH%
-        SET condaEnvPath=%ARTIFACTS%\rfc_conda_envs\nr-rfc-processing
+        SET PATH=%RFC_ARTIFACTS_FOLDER%\miniconda\condabin;%PATH%
+        SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\rfc_conda_envs\nr-rfc-processing
         if NOT EXIST %condaEnvPath% (
             conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%
         )
@@ -46,10 +46,11 @@ node('zavijava') {
         conda.bat deactivate
         '''
     }
-    stage('wgrib install') {
+    stage('blank') {
         // check if wgrib exe exists, if not then download source and install
-        
+        bat '''
+            echo doing nothing
+        '''
     }
-    stage('')
 
 }

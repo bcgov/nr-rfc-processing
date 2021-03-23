@@ -2,7 +2,7 @@ import os
 
 class Constants(object):
     def __init__(self):
-        self.top = os.environ['SNOWPACK-DATA']
+        self.top = os.environ['SNOWPACK_DATA']
         self.basins = os.path.join(self.top,'basins')
         self.watersheds = os.path.join(self.top,'watersheds')
         self.kml = os.path.join(self.top,'kml')

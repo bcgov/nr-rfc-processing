@@ -10,7 +10,7 @@ node('zavijava') {
     }
     stage('configure drive mappings') {
     bat '''
-        if NOT EXIST %ENS_DRIVEMAPPING%:\nul  (
+        if NOT EXIST %ENS_DRIVEMAPPING%:\\nul  (
             net use %ENS_DRIVEMAPPING%: %ENS_NETWORK_DRIVE% /PERSISTENT:YES /d
             @REM powershell -File ./mapdrives.ps1
         )
@@ -35,8 +35,8 @@ node('zavijava') {
         // install conda env
         //  conda env create --file environment.yaml --prefix $CONDAENVPATH
         bat '''
-        SET PATH=%RFC_ARTIFACTS_FOLDER%\miniconda\condabin;%PATH%
-        SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\rfc_conda_envs\nr-rfc-processing
+        SET PATH=%RFC_ARTIFACTS_FOLDER%\\miniconda\\condabin;%PATH%
+        SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\\rfc_conda_envs\\nr-rfc-processing
         if NOT EXIST %condaEnvPath% (
             conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%
         )

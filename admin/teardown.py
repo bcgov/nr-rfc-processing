@@ -3,21 +3,23 @@ import shutil
 
 from glob import glob
 
-from admin.constants import Constants
-
-const = Constants()
+import admin.constants as const
 
 dirs = [
-    const.modis_terra,
-    const.basins,
-    const.watersheds,
-    const.intermediate_tif,
-    const.output_tif,
-    const.intermediate_kml,
-    const.kml
+    const.MODIS_TERRA,
+    const.BASINS,
+    const.WATERSHEDS,
+    const.INTERMEDIATE_TIF,
+    const.KML,
+    const.SENTINEL_OUTPUT,
+    const.PLOT
 ]
 
 def cleanupall():
+    """
+    Clean up all folders
+    USE WITH CAUTION
+    """
     for dir in dirs:
         try:
             shutil.rmtree(dir)
@@ -26,31 +28,30 @@ def cleanupall():
 
 def clean_downloads():
     try:
-        shutil.rmtree(const.modis_terra)
+        shutil.rmtree(const.MODIS_TERRA)
     except Exception as e:
         print(e)
 
 def clean_intermediate():
     try:
-        for dr in [const.intermediate_tif, const.intermediate_kml]:
-            shutil.rmtree(dr)
+        shutil.rmtree(const.INTERMEDIATE_TIF)
     except Exception as e:
         print(e)
 
-def cleanup_output():
+def clean_basins():
     try:
-        shutil.rmtree(const.output_tif)
+        shutil.rmtree(const.BASINS)
     except Exception as e:
         print(e)
 
-def cleanup_basins():
+def clean_watersheds():
     try:
-        shutil.rmtree(const.basins)
+        shutil.rmtree(const.WATERSHEDS)
     except Exception as e:
         print(e)
 
-def cleanup_watersheds():
+def clean_kmls():
     try:
-        shutil.rmtree(const.watersheds)
+        shutil.rmtree(const.KML)
     except Exception as e:
         print(e)

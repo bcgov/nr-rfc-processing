@@ -1,144 +1,285 @@
 import os
-import descartes
-import fiona
 import rasterio.plot
+import logging
 
+import numpy as np
+import rioxarray as rioxr
 import rasterio as rio
 import matplotlib.pyplot as plt
 import geopandas as gpd
-import matplotlib as mpl
 
-from rasterio.merge import merge
+import admin.constants as const
+
+from admin.color_ramp import color_ramp
+
+from collections import defaultdict
+from matplotlib.patches import Patch
 from glob import glob
-from descartes import PolygonPatch
-from typing import List
+from collections import defaultdict
 
-res = { 
-        'modis': {
-            'EPSG4326': 0.008259714517502726, 
-            'EPSG3153': 500
-        },
-        'viirs': {
-            'EPSG4326': 0.006659501656959246,
-            'EPSG3153': 375
-        }
-    }
+logger = logging.getLogger('snow_mapping')
 
-def plot_helper(sheds: List, typ: str, sat: str, date: str):
-    """Create PNG plots of watersheds/basins
-    + mosaic of all as well as individual
+def plot_sheds(sheds: list, typ: str, sat: str, date: str):
+    """Plot individual watersheds/basins
 
     Parameters
     ----------
-    sheds : List
-        List of sheds to turn into plots
+    sheds : list
+        List of watersheds or basins names
     typ : str
-        watersheds/basins/individual-name to determine
-        mosaic or not
+        Watersheds or Basins [watersheds | basins]
     sat : str
-        Target satellite date to plot [modis | viirs]
-    date : str
-        Target date to plot in format YYYY.MM.DD
-    """
-    crs = os.path.split(sheds[0])[-1].split('_')[-2]
-    # Create a mosaic plot
-    if typ == 'watersheds' or typ == 'basins':
-        fig, ax = plt.subplots(1,1,figsize=(10, 4), dpi=300)
-        print(sheds)
-        src_files_to_mosaic = []
-        for shed in sheds:
-            src = rio.open(shed, 'r')
-            src_files_to_mosaic.append(src)
-        mosaic, out_trans = merge(
-            src_files_to_mosaic, 
-            res=res[sat][crs]
-            )
-        out_meta = src.meta.copy()
-        out_meta.update({
-                "driver": "GTiff",
-                "height": mosaic.shape[1],
-                "width": mosaic.shape[2],
-                "transform": out_trans,
-                      })
-        pth = os.path.join('/data','intermediate_tif','plot',f'{typ}_{crs}.tif')
-        with rio.open(pth, 'w', **out_meta) as dst:
-            dst.write(mosaic)
-        for f in src_files_to_mosaic:
-            f.close()
-        r = rio.open(pth,'r')
-        im = ax.imshow(r.read().transpose(1,2,0), cmap=plt.cm.RdYlBu, vmin=0, vmax=100, clim=[0,100])
-        cbar = fig.colorbar(im)
-        cbar.ax.set_ylabel('NDSI', rotation=270)
-        rasterio.plot.show((r.read()), transform=r.transform, ax=ax, adjust=None)
-        try:
-            os.makedirs(os.path.join('/data','plot',sat,'mosaic',date))
-        except:
-            pass
-        pth = os.path.join('aoi','provincial_boundary','FLNR10747_AOI_BC_boundary_20210106_AnS.shp')
-        shapefile = gpd.read_file(os.path.join('aoi','provincial_boundary','FLNR10747_AOI_BC_boundary_20210106_AnS.shp'))
-        shapefile.plot(ax=ax, alpha=0.2)
-        ax.axis('off')
-        fig.suptitle(f'{typ.upper()} - {sat.upper()} - {date}', x=0.6)
-        plt.savefig(os.path.join('/data','plot',sat,'mosaic',date,f'{typ}_{crs}.png'), bbox_inches='tight')
-    else: # Create individual plots
-        fig, ax = plt.subplots(1,1, dpi=100)
-        print(sheds[0])
-        f = rio.open(sheds[0], 'r')
-        mosaic = f.read()
-        im = ax.imshow(mosaic.transpose(1,2,0), cmap=plt.cm.RdYlBu, vmin=0, vmax=100, clim=[0,100])
-        cbar = fig.colorbar(im)
-        cbar.ax.set_ylabel('NDSI', rotation=270)
-        ax.axis('off')
-        name = '_'.join(typ.split('_')[:-1])
-        fig.suptitle(f'{name.upper()} - {sat.upper()} - {date}')
-        if os.path.split(typ)[-1].split('_')[0].isupper():
-            base = os.path.join('/data','plot',sat,'basins',date,crs)
-        else:
-            base = os.path.join('/data','plot',sat,'watersheds',date,crs)
-        try:
-            os.makedirs(base)
-        except:
-            pass
-        plt.savefig(os.path.join(base,f'{typ}.png'))
-    plt.close()
-
-def plot_single_shed(shed_name: str, sat: str, date: str):
-    """
-    Helper function to plot individual watersheds or basins
-
-    Parameters
-    ----------
-    shed_name : str
-        name of shed to plot
-    sat : str
-        Target satellite date [modis | viirs]
+        Source satellite [modis | viirs]
     date : str
         Target date in format YYYY.MM.DD
     """
-    typ = os.path.split(shed_name)[0]
-    shed_name = os.path.split(shed_name)[-1]
-    sheds = glob(os.path.join('/data',typ,shed_name,sat,date, '*EPSG3153_fin.tif'))
+    chunk = 512 # Chunk size to read in as not to overwhelm memory
+    org = defaultdict(list) # Organizer for all open sheds to be plot
     for shed in sheds:
-        plot_helper([shed], os.path.split(shed)[-1].replace('_fin',"").split('.')[0], sat, date)
+        logger.debug(f'PLOTTING {os.path.split(shed)[-1]}')
+        name = os.path.split(shed)[-1]
+        base = os.path.join(shed, sat, date)
+        # prepare
+        try: # If the shed is not accessible, skip to next
+            daily = glob(os.path.join(base, '*EPSG3153.tif'))[0]
+        except Exception as e:
+            logger.warning(e)
+            continue
+        d = rioxr.open_rasterio(daily, chunks={'band': 1, 'x': chunk, 'y': chunk})
+        d.data[(d.data == d._FillValue)] = np.nan
+        d.data[(d.data > 100)] = np.nan
+        org['daily'].append(d)
+        try: # If generated normal file is missing, skip to next
+            norm10yr = glob(os.path.join(base, f'{name}_10yrNorm.tif'))[0]
+        except Exception as e:
+            logger.warning(e)
+            continue
+        d = rioxr.open_rasterio(norm10yr, chunks={'band': 1, 'x': chunk, 'y': chunk})
+        d.data[(d.data == d._FillValue)] = np.nan
+        org['10yrnorm'].append(d)
+        try: # If generated normal file is missing, skip to next
+            norm20yr = glob(os.path.join(base, f'{name}_20yrNorm.tif'))[0]
+        except Exception as e:
+            logger.warning(e)
+            continue
+        d = rioxr.open_rasterio(norm20yr, chunks={'band': 1, 'x': chunk, 'y': chunk})
+        d.data[(d.data == d._FillValue)] = np.nan
+        org['20yrnorm'].append(d)
+        ######################
+        # Plot individual shed
+        ######################
+        fig, ax = plt.subplots(1,3, figsize=(15,5))
+        fig.suptitle(f'{name.upper()} - {sat.upper()} - {date}')
+        # Plot date generated raster
+        ax[0].set_title(date)
+        ax[0].axis('off')
+        im1 = ax[0].imshow(org['daily'][-1].data.transpose(1,2,0), cmap=plt.cm.RdYlBu,
+                                vmin=0, vmax=100, clim=[0,100], interpolation='none')
+        fig.colorbar(im1, ax=ax[0])
+        # Plot % difference to 10 year normal
+        ax[1].set_title('% Difference to 10 Year Normal')
+        ax[1].axis('off')
+        im2 = ax[1].imshow(org['10yrnorm'][-1].data.transpose(1,2,0), cmap=plt.cm.RdYlBu,
+                                vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
+        fig.colorbar(im2, ax=ax[1])
+        # Plot % different to 20 year normal
+        ax[2].set_title('% Difference to 20 Year Normal')
+        ax[2].axis('off')
+        im3 = ax[2].imshow(org['20yrnorm'][-1].data.transpose(1,2,0), cmap=plt.cm.RdYlBu,
+                                vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
+        fig.colorbar(im3, ax=ax[2])
 
-def plot_(date: str, sat: str): 
-    """Trigger point to plot all watersheds and basins
+        # Make sure the output dir is accessible and replace with
+        # most up to date version
+        out_pth = os.path.join(const.PLOT, sat, typ, date, f'{name}.png')
+        try:
+            os.makedirs(os.path.split(out_pth)[0])
+        except Exception as e:
+            logger.debug(e)
+        try:
+            os.remove(out_pth)
+        except Exception as e:
+            logger.debug(e)
+        try:
+            plt.savefig(out_pth)
+            plt.close()
+        except Exception as e:
+            logger.debug(e)
+            continue  
+
+def norm_math(orig: np.array, norm: np.array):
+    """Perform math against normal to calculate
+    percent change
+
+    Parameters
+    ----------
+    orig : np.array
+        User generated array
+    norm : np.array
+        10 or 20 year normal data array
+
+    Returns
+    -------
+    np.array
+        Percent change w.r.t normal data array
+    """
+    cp = norm.copy()
+    set_val = np.nan
+    np.seterr(divide='ignore', invalid='ignore')
+    norm = np.divide((orig-norm), norm, out=np.zeros(norm.shape))*100
+    norm[norm == np.inf] = set_val # correct div by 0 and inf/nan
+    norm = np.nan_to_num(norm, nan=set_val, posinf=set_val, neginf=set_val) # correct div by 0 and inf/nan
+    norm[((norm > 100)&(norm != np.nan))] = 100
+    norm[((norm < -100)&(norm != np.nan))] = -100
+    norm[((orig > 100)|(cp > 100))] = 0
+    return norm
+
+def plot_mosaics(sat: str, date: str):
+    """Plot mosaics and clip to prov boundary
+
+    Parameters
+    ----------
+    sat : str
+        Source satllite [modis | viirs]
+    date : str
+        Target date in format YYYY.MM.DD
+    """
+    shp_pth = os.path.join('aoi','provincial_boundary',
+                    'FLNR10747_AOI_BC_boundary_20210106_AnS.shp')
+    shapefile = gpd.read_file(shp_pth)
+    for _, row in shapefile.iterrows(): # Grab geometry
+        geom = row.geometry
+    fig, ax = plt.subplots(1,3, figsize=(25,5))
+    fig.suptitle(f'{sat.upper()} - {date}')
+    date_split = date.split('.')
+    # Gather satellite respective data and prepare path bases
+    if sat == 'modis':
+        orig = glob(os.path.join(const.INTERMEDIATE_TIF_MODIS, date, '*modis_composite*.tif'))[0]
+        base10yr = const.MODIS_DAILY_10YR
+        base20yr = const.MODIS_DAILY_20YR
+    elif sat == 'viirs':
+        orig = glob(os.path.join(const.OUTPUT_TIF_VIIRS, date.split('.')[0], f'{date}.tif'))[0]
+        base10yr = const.VIIRS_DAILY_10YR
+        base20yr = const.VIIRS_DAILY_20YR
+    else: # @click should not let this else ever be reached
+        return
+    norm10yr = glob(os.path.join(base10yr, f'{date_split[1]}.{date_split[2]}.tif'))[0]
+    norm20yr = glob(os.path.join(base20yr, f'{date_split[1]}.{date_split[2]}.tif'))[0]
+
+    # Plot user generated mosaic and clip to prov boundary
+    ax[0].set_title(f'{date}')
+    ax[0].axis('off')
+    daily_pth = os.path.join(const.INTERMEDIATE_TIF, 'plot', 'merged_daily.tif')
+    with rioxr.open_rasterio(orig) as orig:
+        fill_val = orig._FillValue
+        orig = orig.rio.reproject('EPSG:3153', resolution=const.RES[sat])
+        d_cp = orig.data.copy()
+        orig.rio.to_raster(daily_pth, recalc_transform=True)
+    color_ramp(daily_pth)
+    # implement gdal cutting to remove most nodata in plot
+    gdal_pth = os.path.join(os.path.split(daily_pth)[0], 'out_d.tif')
+    os.system(f'gdal_translate -q -expand rgb -of GTiff \
+                {daily_pth} {gdal_pth}')
+    os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
+                {shp_pth} \
+                -crop_to_cutline {gdal_pth} \
+               {daily_pth}')
+    with rio.open(daily_pth, 'r') as src:
+        im1 = ax[0].imshow(src.read().transpose(1,2,0), cmap=plt.cm.RdYlBu,
+                            vmin=0, vmax=100, clim=[0,100], interpolation='none')
+        rasterio.plot.show((src.read()), transform=src.transform, ax=ax[0], cmap=plt.cm.RdYlBu, 
+                            vmin=0, vmax=100, clim=[0,100], interpolation='none')
+        fig.colorbar(im1, ax=ax[0])
+
+    # Alter user generated data to prepare for norm math
+    d_cp[(d_cp > 100)&(d_cp != fill_val)] = 0
+
+    # Plot % change to 10 year norm
+    ax[1].set_title('% Difference to 10 Year Normal')
+    ax[1].axis('off')
+    norm10yr_pth = os.path.join(const.INTERMEDIATE_TIF, 'plot', '10yr.tif')
+    with rioxr.open_rasterio(norm10yr) as norm10yr:
+        norm10yr = norm10yr.rio.reproject('EPSG:3153', resolution=const.RES[sat])
+        norm10yr.data = norm_math(d_cp, norm10yr.data)
+        norm10yr = norm10yr.rio.clip([geom], drop=True, all_touched=True)
+        norm10yr.rio.to_raster(norm10yr_pth, recalc_transform=True)
+    gdal_pth = os.path.join(os.path.split(daily_pth)[0], 'out_.tif')
+    # Cut to prov boundary
+    os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
+                {shp_pth} \
+                -crop_to_cutline {norm10yr_pth} \
+               {gdal_pth}')
+    with rio.open(gdal_pth) as src:
+        d = src.read(1)
+        msk = src.read(2)
+        d[(msk == False)] = np.nan
+        im2 = ax[1].imshow(d, cmap=plt.cm.RdYlBu,
+                            vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
+        fig.colorbar(im2, ax=ax[1])
+        rasterio.plot.show((d), ax=ax[1], cmap=plt.cm.RdYlBu,
+                            vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
+
+    #  Plot % change to 20 year norm
+    ax[2].set_title('% Difference to 20 Year Normal')
+    ax[2].axis('off')
+    norm20yr_pth = os.path.join(const.INTERMEDIATE_TIF, 'plot', '20yr.tif')
+    with rioxr.open_rasterio(norm20yr) as norm20yr:
+        norm20yr = norm20yr.rio.reproject('EPSG:3153', resolution=const.RES[sat])
+        norm20yr.data = norm_math(d_cp, norm20yr.data)
+        norm20yr = norm20yr.rio.clip([geom], drop=True, all_touched=True)
+        norm20yr.rio.to_raster(norm20yr_pth, recalc_transform=True)
+    gdal_pth = os.path.join(os.path.split(daily_pth)[0], 'out_.tif')
+    # Clip to provincial boundary
+    os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
+                {shp_pth} \
+                -crop_to_cutline {norm20yr_pth} \
+               {gdal_pth}')
+    with rio.open(gdal_pth) as src:
+        d = src.read(1)
+        msk = src.read(2)
+        d[(msk == False)] = np.nan
+        im3 = ax[2].imshow(d, cmap=plt.cm.RdYlBu,
+                            vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
+        fig.colorbar(im3, ax=ax[2])
+        rasterio.plot.show((d), ax=ax[2], cmap=plt.cm.RdYlBu,
+                            vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
+    
+    # Add legend for nodata
+    legend_elements = [Patch(facecolor='black', edgecolor='k',
+                            label='NoData')]
+    fig.legend(handles=legend_elements, loc='lower center')
+    # Make sure output path is accessible and 
+    # replace with most up to date version
+    out_pth = os.path.join(const.PLOT, sat, 'mosaic', date, f'{date}.png')
+    try:
+        os.makedirs(os.path.split(out_pth)[0])
+    except Exception as e:
+        logger.debug(e)
+    try:
+        os.remove(out_pth)
+    except Exception as e:
+        logger.debug(e)
+    try:
+        plt.savefig(out_pth)
+        plt.close()
+    except Exception as e:
+        logger.debug(e)
+
+
+def plot_handler(date: str, sat: str):
+    """Handler for plotting all watersheds, basins
+    and mosaics
 
     Parameters
     ----------
     date : str
         Target date in format YYYY.MM.DD
     sat : str
-        Target satellite data to plot [modis | viirs]
+        Source satellite [modis | viirs]
     """
-    watersheds = glob(os.path.join('/data','watersheds','**',sat,date,'*EPSG3153_fin.tif'))
-    if len(watersheds) != 0:
-        plot_helper(watersheds, 'watersheds', sat, date)
-    basins = glob(os.path.join('/data','basins','**',sat,date,'*EPSG3153_fin.tif'))
-    if len(basins) != 0:
-        plot_helper(basins, 'basins', sat, date)
-    for task in ['watersheds', 'basins']:
-        indiv_sheds = glob(os.path.join('/data',task,'*'))
-        for shed in indiv_sheds:
-            plot_single_shed(os.path.join(task,os.path.split(shed)[-1]), sat, date)
+    watersheds = glob(os.path.join(const.TOP, 'watersheds', '*'))
+    plot_sheds(watersheds, 'watersheds', sat, date)
+    basins = glob(os.path.join(const.TOP, 'basins', '*'))
+    plot_sheds(basins, 'basins', sat, date)
+    plot_mosaics(sat, date)
     

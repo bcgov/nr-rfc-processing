@@ -1,45 +1,53 @@
 import os
+import logging
 
 import geopandas as gpd
 
-from admin.constants import Constants
+import admin.constants as const
 
-const = Constants()
+logger = logging.getLogger('snow_mapping')
 
 def build_dir_structure():
     dirs= [
-        const.top,
-        const.basins,
-        const.watersheds,
-        const.kml,
-        const.intermediate_kml,
-        const.intermediate_tif,
-        const.intermediate_tif_modis,
-        const.intermediate_tif_viirs,
-        const.intermediate_tif_sentinel,
-        const.intermediate_tif_plot,
-        const.output_tif,
-        const.output_tif_modis,
-        const.output_tif_viirs,
-        const.output_tif_sentinel,
-        const.plot,
-        const.plot_modis,
-        const.plot_modis_mosaic,
-        const.plot_modis_watersheds,
-        const.plot_modis_basins,
-        const.plot_viirs,
-        const.plot_viirs_mosaic,
-        const.plot_modis_watersheds,
-        const.plot_viirs_basins,
-        const.plot_sentinel,
-        const.analysis
+        const.TOP,
+        const.LOG,
+        const.BASINS,
+        const.WATERSHEDS,
+        const.KML,
+        const.INTERMEDIATE_KML,
+        const.INTERMEDIATE_TIF,
+        const.INTERMEDIATE_TIF_MODIS,
+        const.INTERMEDIATE_TIF_VIIRS,
+        const.INTERMEDIATE_TIF_SENTINEL,
+        const.INTERMEDIATE_TIF_PLOT,
+        const.NORM,
+        const.MOSAICS,
+        const.MODIS_DAILY_10YR,
+        const.MODIS_DAILY_20YR,
+        const.VIIRS_DAILY_10YR,
+        const.VIIRS_DAILY_20YR,
+        const.MOSAICS,
+        const.OUTPUT_TIF_MODIS,
+        const.OUTPUT_TIF_VIIRS,
+        const.PLOT,
+        const.PLOT_MODIS,
+        const.PLOT_MODIS_MOSAIC,
+        const.PLOT_MODIS_WATERSHEDS,
+        const.PLOT_MODIS_BASINS,
+        const.PLOT_VIIRS,
+        const.PLOT_VIIRS_MOSAIC,
+        const.PLOT_VIIRS_WATERSHEDS,
+        const.PLOT_VIIRS_BASINS,
+        const.PLOT_SENTINEL,
+        const.ANALYSIS,
+        const.SENTINEL_OUTPUT
     ]
 
     for d in dirs:
         try:
             os.makedirs(d)
         except Exception as e:
-            print(e)
+            logger.debug(e)
 
 def build_shapefiles(typ, dataset):
     gdf = gpd.read_file(dataset)
@@ -48,13 +56,13 @@ def build_shapefiles(typ, dataset):
         if typ == 'basins':
             objs = gdf.WSDG_NAME.unique()
             col = 'WSDG_NAME'
-            base = const.basins
+            base = const.BASINS
         elif typ == 'watersheds':
             objs = gdf.basinName.unique()
             col = 'basinName'
-            base = const.watersheds
+            base = const.WATERSHEDS
         for name in objs:
-            print(f'Creating supporting files for {name}')
+            logger.info(f'Creating supporting files for {name}')
             tmp = gdf[gdf[col] == name]
             name = name.translate({ord("("): None, ord(")"):None})
             name = "_".join(name.replace('.','').split(" "))
@@ -71,13 +79,20 @@ def build_shapefiles(typ, dataset):
             tmp.to_file(os.path.join(base, name, 'shape', crs.replace(':', ''), f'{name}.shp'))
 
 def buildall():
+    logger.info('Building up directory structure')
     build_dir_structure()
-    clever_basins_dir = os.path.join(const.aoi, 'clever_basins')
+    clever_basins_dir = os.path.join(const.AOI, 'clever_basins')
     if not os.path.exists(clever_basins_dir):
         os.makedirs(clever_basins_dir)
+
     build_shapefiles('basins', os.path.join(clever_basins_dir, 'CLEVER_BASINS.shp'))
 
-    watersheds_dir = os.path.join(const.aoi, 'watersheds')
+    watersheds_dir = os.path.join(const.AOI, 'watersheds')
     if not os.path.exists(watersheds_dir):
         os.makedirs(watersheds_dir)
-    build_shapefiles('watersheds', os.path.join(watersheds_dir, 'Export_Output_SBIMap.shp'))
+
+    #build_shapefiles('watersheds', os.path.join(watersheds_dir, 'Export_Output_SBIMap.shp'))
+
+    logger.info('Building supporting files')
+    build_shapefiles('basins', os.path.join(const.AOI, 'basins','CLEVER_BASINS.shp'))
+    build_shapefiles('watersheds', os.path.join(const.AOI, 'watersheds','Export_Output_SBIMap.shp'))

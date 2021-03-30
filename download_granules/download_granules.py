@@ -1,17 +1,15 @@
-import os
-import click
-import time
 import yaml
+import logging
 
 from datetime import datetime, timedelta
 from multiprocessing import Pool
 
-#from google.cloud import storage
-
-import admin.constants
-
 from hatfieldcmr.ingest import LocalStorageWrapper
 from hatfieldcmr import CMRClient
+
+import admin.constants as const
+
+logger = logging.getLogger('snow_mapping')
 
 def download_granules(envpath: str, date: str, sat: str, days: int = 5):
     """Download MODIS/VIIRS granules for a given day
@@ -45,24 +43,19 @@ def download_granules(envpath: str, date: str, sat: str, days: int = 5):
 
     date = date.split('.')
     end_date = datetime(int(date[0]), int(date[1]), int(date[2]))
-    bbox = [-140.977, 46.559, -112.3242, 63.134]
-    const = admin.constants.Constants()
     storage_wrapper = LocalStorageWrapper(
-        const.top
+        const.TOP
     )
 
-    #ed_client = CMRClient(storage_wrapper, earthdata_user=os.getenv('EARTHDATA_USER'), earthdata_pass=os.getenv('EARTHDATA_PWD'))
     ed_client = CMRClient(storage_wrapper, earthdata_user=secrets['EARTHDATA_USER'], earthdata_pass=secrets['EARTHDATA_PASS'])
     start_date = end_date - timedelta(product['date_span'])
     granules = ed_client.query(
         str(start_date.date()),
         str(end_date.date()),
         product,
-        bbox=bbox
+        bbox=[*const.BBOX]
     )
     print(f"queried product {product}, got {len(granules)} granules, downloading")
-    #for gran in granules:
-    #   ed_client.download_granule(gran)
     try:
         with Pool(4) as p:
             p.map(ed_client.download_granule, granules)

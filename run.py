@@ -175,7 +175,7 @@ def dailypipeline(envpth: str, date: str, sat: str, days: int, db_handler: DBHan
     if check_date(date):
         if sat == 'viirs':
             days = 1
-        download_granules.download_granules(envpth, date, sat, int(days))
+        download_granules(envpth, date, sat, int(days))
         if sat == 'modis':
             modis.process_modis(date, int(days))
         elif sat == 'viirs':

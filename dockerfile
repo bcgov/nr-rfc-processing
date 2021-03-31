@@ -18,6 +18,7 @@ RUN conda install -c conda-forge conda-pack && \
 FROM ubuntu:20.04 AS runtime
 COPY --from=build /venv /venv
 
+COPY normal_gen /app/normal_gen/
 COPY hatfieldcmr /app/hatfieldcmr/
 COPY requirements.txt app/requirements.txt
 COPY admin /app/admin/

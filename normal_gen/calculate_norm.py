@@ -4,6 +4,10 @@ import calendar
 import click
 import logging
 
+from download_granules.download_granules import download_granules
+from normal_gen.modis_mosaic import process_modis
+from normal_gen.viirs_mosaic import process_viirs
+
 import numpy as np
 import xarray as xr
 import rioxarray as rioxr
@@ -61,11 +65,13 @@ def get_days(rng: int):
                 dates[f'{month}_{day}'].append(date_fmt(str(datetime.date(int(year), int(month), int(day)))))
     return dates
 
-def get_file_pths(dates: list, sat: str):
+def get_file_pths(envpth: str, dates: list, sat: str):
     """Gather files to open
 
     Parameters
     ----------
+    envpth : str
+        Path to credential yaml.
     dates : list
         Dates to consider when gathering paths
     sat : str
@@ -78,11 +84,21 @@ def get_file_pths(dates: list, sat: str):
     """
     mosaics = []
     for date in dates:
+        year = date.split('.')[0]
         try:
-            year = date.split('.')[0]
-            mosaics.append(glob(os.path.join(const.MODIS_TERRA,'mosaics',sat, year, f'{date}.tif'))[0])
-        except:
-            continue
+            pth = glob(os.path.join(const.NORM,'mosaics',sat, year, f'{date}.tif'))[0]
+        except Exception as e:
+            print(e)
+            try:
+                download_granules(envpth, date, sat, days=1)
+                if sat == 'modis':
+                    process_modis(date)
+                elif sat == 'viirs':
+                    process_viirs(date)
+                pth = glob(os.path.join(const.NORM,'mosaics',sat, year, f'{date}.tif'))[0]
+            except Exception as e:
+                print(e)
+        mosaics.append(pth)        
     return mosaics
 
 def read_lazy(pth: str):
@@ -137,17 +153,16 @@ def _seasonal_norm(rng: int, sat: str):
         logger.debug(e)
     mnth.rio.to_raster(out_pth)
         
-@click.command()
-@click.option('--rng', type=click.Choice(['10','20']))
-@click.option('--sat')
-def daily_norm(rng: str, sat: str):
-    _daily_norm(rng, sat)
+def daily_norm(envpth: str, rng: str, sat: str):
+    _daily_norm(envpth, rng, sat)
 
-def _daily_norm(rng: int, sat: str):
+def _daily_norm(envpth: str, rng: int, sat: str):
     """Calculate 10 or 20 year normals
 
     Parameters
     ----------
+    envpth : str
+        Path to credential yaml
     rng : int
         Year range to consider [10 | 20]
     sat : str
@@ -160,7 +175,7 @@ def _daily_norm(rng: int, sat: str):
     except Exception as e:
         logger.debug(e)
     for k in dates.keys():
-        mosaics = get_file_pths(dates[k], sat)
+        mosaics = get_file_pths(envpth, dates[k], sat)
         ds = xr.Dataset()
         for pth in mosaics:
             src = os.path.split(pth)[-1]
@@ -203,26 +218,13 @@ def _build_dirs():
             os.makedirs(d)
         except Exception as e:
             logger.debug(e)
-    
-@click.command()
-def calculate_norms():
+
+def _calculate_norms(envpth: str, rng: int, sat: str):
     """
     Trigger to calculate both 10 and 20 year normals
     """
     _build_dirs()
     for sat in ['modis','viirs']:
         for rng in [10, 20]: # years
-            daily_norm(rng, sat)
+            daily_norm(envpth, rng, sat)
             #seasonal_norm(rng, sat)
-
-@click.group()
-def cli():
-    pass
-
-cli.add_command(build_dirs)
-cli.add_command(calculate_norms)
-cli.add_command(daily_norm)
-cli.add_command(seasonal_norm)
-
-if __name__ == '__main__':
-    cli()

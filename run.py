@@ -15,6 +15,7 @@ from admin import buildup, teardown
 from admin.check_date import check_date
 from admin.logging import setup_logger
 from admin.db_handler import DBHandler
+from normal_gen.calculate_norm import _calculate_norms
 
 if not os.path.exists(const.LOG):
     os.makedirs(const.LOG)
@@ -188,6 +189,13 @@ def dailypipeline(envpth: str, date: str, sat: str, days: int, db_handler: DBHan
     else:
         logger.error('ERROR: Date format YYYY.MM.DD')
 
+@click.command()
+@click.option('--envpth', type=str, required=True, help='Path to environment file.')
+@click.option('--rng', type=click.Choice(['10','20']), help='Range of years to calculate normal for.')
+@click.option('--sat', type=const.SATS, required=True, help='Which satellite source to process [ modis | viirs ]')
+def calculate_norms(envpth: str, rng: int, sat: str):
+    _calculate_norms(envpth, rng, sat)
+
 @click.group()
 def cli():
     pass
@@ -218,6 +226,9 @@ cli.add_command(daily_pipeline)
 
 # SENTINEL-2
 cli.add_command(process_sentinel)
+
+# NORMALS
+cli.add_command(calculate_norms)
 
 
 if __name__ == '__main__':

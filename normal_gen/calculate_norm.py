@@ -88,7 +88,7 @@ def get_file_pths(envpth: str, dates: list, sat: str):
         try:
             pth = glob(os.path.join(const.NORM,'mosaics',sat, year, f'{date}.tif'))[0]
         except Exception as e:
-            print(e)
+            logger.warning('[get_file_pths] : MOSAIC MISSING - BUILDING...')
             try:
                 download_granules(envpth, date, sat, days=1)
                 if sat == 'modis':
@@ -97,9 +97,9 @@ def get_file_pths(envpth: str, dates: list, sat: str):
                     process_viirs(date)
                 pth = glob(os.path.join(const.NORM,'mosaics',sat, year, f'{date}.tif'))[0]
             except Exception as e:
-                print(e)
+                logger.error(e)
                 continue
-        mosaics.append(pth)        
+        mosaics.append(pth)       
     return mosaics
 
 def read_lazy(pth: str):

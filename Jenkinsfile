@@ -21,6 +21,9 @@ node('zavijava_rfc') {
         )
 
         echo complete
+        
+        :: print the network mappings
+        net use
         '''
     }
     stage('conda env setup') {

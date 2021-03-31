@@ -37,15 +37,7 @@ node('zavijava_rfc') {
         SET PATH=%RFC_ARTIFACTS_FOLDER%\\miniconda\\condabin;%PATH%
         SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\\rfc_conda_envs\\nr-rfc-processing
         SET condaEnvFilePath=%WORKSPACE%\\environment.yaml
-
-        SET condaEnvFilePath=E:\\apps_data\\cron\\zavijava_rfc\\workspace\\RIVER_FORECAST_CENTER\\snowpack analysis\\environment.yaml
-
-        echo condaEnvFilePath %condaEnvFilePath%
-        SET
-
-        echo RFC_ARTIFACTS_FOLDER %RFC_ARTIFACTS_FOLDER%
-        echo condaEnvPath %condaEnvPath%
-        echo condaEnvFilePath %condaEnvFilePath%
+        SET condaEnvFilePath=%condaEnvFilePath:/=\%
 
         if NOT EXIST %condaEnvPath% (
             conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%

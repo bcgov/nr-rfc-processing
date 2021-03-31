@@ -10,8 +10,8 @@ node('zavijava_rfc') {
     }
     stage('configure drive mappings') {
     bat '''
-        if NOT EXIST %ENS_DRIVEMAPPING%:\\nul  (
-            net use %ENS_DRIVEMAPPING%: %ENS_NETWORK_DRIVE% /PERSISTENT:NO /d
+        if NOT EXIST %RFC_DRIVEMAPPING%:\\nul  (
+            net use %RFC_DRIVEMAPPING%: %RFC_NETWORK_DRIVE% /PERSISTENT:NO /d
             @REM powershell -File ./mapdrives.ps1
         )
 
@@ -20,10 +20,6 @@ node('zavijava_rfc') {
             mkdir %RFC_ARTIFACTS_FOLDER%
         )
 
-        IF NOT EXIST %ENS_WEATHER_DATA% (
-            echo creating the folder %ENS_WEATHER_DATA% 
-            mkdir %ENS_WEATHER_DATA%
-        )
         echo complete
         '''
     }

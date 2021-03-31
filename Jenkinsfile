@@ -46,11 +46,23 @@ node('zavijava_rfc') {
         conda.bat deactivate
         '''
     }
-    stage('blank') {
-        // check if wgrib exe exists, if not then download source and install
+    stage('run snowpack analysis') {
+        // 
         bat '''
-            echo doing nothing
+            SET CONDABIN=%RFC_ARTIFACTS_FOLDER%\miniconda\condabin
+            SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\rfc_conda_envs\nr-rfc-processing
+            SET PATH=%CONDABIN%;%PATH%
+
+            call conda.bat activate %condaEnvPath%
+
+            cd nr-rfc-processing
+            pip install -r .\requirements.txt
+
+            # ----------------------------------------------
+            echo env var param is: %SNOWPACK_ENVS_PTH%
+            echo SNOWPACK_SECRETS: %SNOWPACK_SECRETS%
+
+            %condaEnvPath%\python run.py daily-pipeline --envpth=%SNOWPACK_SECRETS% --date 2021.03.15
         '''
     }
-
 }

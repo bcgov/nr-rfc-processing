@@ -1,4 +1,4 @@
-name: bc_forecasting
+name: rfc-snowpack
 channels:
   - conda-forge
   - anaconda

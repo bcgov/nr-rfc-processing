@@ -35,7 +35,11 @@ node('zavijava_rfc') {
         SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\\rfc_conda_envs\\nr-rfc-processing
         SET condaEnvFilePath=%WORKSPACE%\\environment.yaml
 
+        echo condaEnvPath %condaEnvPath%
+        echo condaEnvFilePath %condaEnvFilePath%
+
         if NOT EXIST %condaEnvPath% (
+
             conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%
         )
         conda.bat activate %condaEnvPath%

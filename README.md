@@ -221,6 +221,15 @@ Manually clean up files and directories.
 docker run --rm -v <mount_point>:/data <tag_name> clean --target <target>
 ```
 
+## Calculate Normals
+
+To recalculate the normals, if the mosaic is not found, it will download the appropriate raw granules and generate the required mosaic. 
+The ``--rng`` argument details the target 10 or 20 years that require recalculating and the same notion for ``--sat`` for both MODIS and VIIRS
+
+```bash
+docker run --rm -v <mount_point>:/data <tag_name> --envpth /data/<cred.yml> --rng <10/20> --sat <modis/viirs>
+```
+
 # Sentinel-2 Pipeline
 
 ## Docker

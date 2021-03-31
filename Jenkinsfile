@@ -21,7 +21,7 @@ node('zavijava_rfc') {
         )
 
         echo complete
-        
+
         :: print the network mappings
         net use
         '''
@@ -38,6 +38,7 @@ node('zavijava_rfc') {
         SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\\rfc_conda_envs\\nr-rfc-processing
         SET condaEnvFilePath=%WORKSPACE%\\environment.yaml
 
+        echo RFC_ARTIFACTS_FOLDER %RFC_ARTIFACTS_FOLDER%
         echo condaEnvPath %condaEnvPath%
         echo condaEnvFilePath %condaEnvFilePath%
 

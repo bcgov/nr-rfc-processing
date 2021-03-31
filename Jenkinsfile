@@ -11,7 +11,7 @@ node('zavijava_rfc') {
     stage('configure drive mappings') {
     bat '''
         if NOT EXIST %ENS_DRIVEMAPPING%:\\nul  (
-            net use %ENS_DRIVEMAPPING%: %ENS_NETWORK_DRIVE% /PERSISTENT:YES /d
+            net use %ENS_DRIVEMAPPING%: %ENS_NETWORK_DRIVE% /PERSISTENT:NO /d
             @REM powershell -File ./mapdrives.ps1
         )
 

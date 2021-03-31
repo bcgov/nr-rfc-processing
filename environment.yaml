@@ -1,4 +1,4 @@
-name: rfc-snowpack
+name: rfc_snowpack
 channels:
   - conda-forge
   - anaconda

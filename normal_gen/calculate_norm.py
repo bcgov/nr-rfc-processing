@@ -98,6 +98,7 @@ def get_file_pths(envpth: str, dates: list, sat: str):
                 pth = glob(os.path.join(const.NORM,'mosaics',sat, year, f'{date}.tif'))[0]
             except Exception as e:
                 print(e)
+                continue
         mosaics.append(pth)        
     return mosaics
 

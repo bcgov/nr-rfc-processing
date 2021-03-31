@@ -123,7 +123,7 @@ def distribute(func, args):
 def process_modis(date: str):
     ws84 = 'EPSG:4326'
     bc_albers = 'EPSG:3005'
-    dst_crs = 'EPSG:3005'
+    dst_crs = 'EPSG:4326'
     pth = os.path.join(const.MODIS_TERRA,'MOD10A1.006')
     try:
         os.makedirs(os.path.join(const.INTERMEDIATE_TIF_MODIS,date))

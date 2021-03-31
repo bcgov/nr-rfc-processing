@@ -40,7 +40,7 @@ node('zavijava_rfc') {
         SET condaEnvFilePath=%condaEnvFilePath:/=\\%
 
         if NOT EXIST %condaEnvPath% (
-            conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%
+            conda.bat create --name snowpack --prefix %condaEnvPath% --file %condaEnvFilePath%
         )
         conda.bat activate %condaEnvPath%
         pip install -r requirements.txt

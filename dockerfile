@@ -27,14 +27,10 @@ COPY download_granules /app/download_granules/
 COPY process /app/process/
 COPY run.py /app/run.py
 COPY setup.py app/setup.py
-COPY constants.py /app/constants.py
 
 ENV PATH=/venv/bin:$PATH
 
 WORKDIR /app
 RUN pip install -e .
-#SHELL ["/bin/bash", "-c"]
-#RUN source /venv/bin/activate && pip install -e .
-#ENTRYPOINT source /venv/bin/activate && /bin/bash
 ENTRYPOINT ["python", "run.py"]
 CMD ["--help"]

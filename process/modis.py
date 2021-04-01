@@ -1,18 +1,15 @@
 import os
-import multiprocessing
 import warnings
+import logging
 
-import geopandas as gpd
 import rasterio as rio
-import matplotlib.pyplot as plt
-import geopandas as gpd
 import datetime
-import fiona
-import rasterio.mask
-import rasterio.crs
 
-from .support import process_by_watershed_or_basin
-from admin.constants import Constants
+import admin.constants as const
+
+from process.support import process_by_watershed_or_basin
+from admin.color_ramp import color_ramp
+
 from osgeo import gdal
 from multiprocessing import Pool
 from glob import glob
@@ -20,7 +17,7 @@ from rasterio.warp import calculate_default_transform, reproject, Resampling
 from rasterio.merge import merge
 from typing import List
 
-const = Constants()
+logger = logging.getLogger('snow_mapping')
 
 # Suppress warning for GCP/RPC - inquiry does not affect workflow
 warnings.filterwarnings("ignore", category=rio.errors.NotGeoreferencedWarning)
@@ -42,12 +39,18 @@ def reproject_modis(date, name, pth, dst_crs):
         The destination CRS to be reprojected to
     """
     pthname = '.'.join(os.path.split(pth)[-1].split('.')[:-1])
-    intermediate_tif = os.path.join(const.intermediate_tif_modis, date, f'{pthname}_{dst_crs.replace(":", "")}.tif')
+    intermediate_tif = os.path.join(const.INTERMEDIATE_TIF_MODIS, date, f'{pthname}_{dst_crs.replace(":", "")}.tif')
     with rio.open(pth, 'r') as modis_scene:
         with rio.open(modis_scene.subdatasets[0], 'r') as src:
             # transform raster to dst_crs------
             transform, width, height = calculate_default_transform(
-                    src.crs, dst_crs, src.width, src.height, *src.bounds, resolution=0.008259714517502726) 
+                                            src.crs, 
+                                            dst_crs, 
+                                            src.width, 
+                                            src.height, 
+                                            *src.bounds, 
+                                            resolution=const.MODIS_EPSG4326_RES
+                                        ) 
             kwargs = src.meta.copy()
             kwargs.update({
                 'driver': 'GTiff',
@@ -84,12 +87,11 @@ def create_modis_mosaic(pth: str):
         for f in outputs:
             src = rio.open(f, 'r')
             src_files_to_mosaic.append(src)
-            #print(src.res)
         # Merge all granule tiffs into one
         mosaic, out_trans = merge(
             src_files_to_mosaic, 
-            bounds=[-140.977, 46.559, -112.3242, 63.134],
-            res=0.008259714517502726
+            bounds=[*const.BBOX],
+            res=const.MODIS_EPSG4326_RES
             )
         out_meta = src.meta.copy()
         out_meta.update({
@@ -99,13 +101,19 @@ def create_modis_mosaic(pth: str):
                 "transform": out_trans,
                       })
         # Write mosaic to disk
-        with rio.open(os.path.join(const.output_tif_modis,f'{date}.tif'), "w", **out_meta) as dst:
+        out_pth = os.path.join(const.OUTPUT_TIF_MODIS,date.split('.')[0],f'{date}.tif')
+        try:
+            os.makedirs(os.path.split(out_pth)[0])
+        except Exception as e:
+            logger.debug(e)
+        with rio.open(out_pth, "w", **out_meta) as dst:
             dst.write(mosaic)
         # Close all open tiffs that were mosaic'ed
         for f in src_files_to_mosaic:
             f.close()
 
-def composite_mosaics(dates: list):
+        
+def composite_mosaics(startdate: str, dates: list):
     """
     Create a composite GTiff of the mosaics of a given range
     provided in the list of dates
@@ -115,9 +123,15 @@ def composite_mosaics(dates: list):
     dates : list
         Dates of mosaics to consider for compositing
     """
+    base = os.path.join(const.INTERMEDIATE_TIF_MODIS, startdate)
+    try:
+        os.makedirs(base)
+    except Exception as e:
+        logger.debug(e)
+    out_pth = os.path.join(base, f'modis_composite_{"_".join(dates)}.tif')
     mosaics = []
     for date in dates:
-        mosaics.append(os.path.join(const.output_tif_modis,f'{date}.tif'))
+        mosaics.append(os.path.join(const.OUTPUT_TIF_MODIS,startdate.split('.')[0],f'{date}.tif'))
     with rio.open(mosaics[0], 'r') as src:
         meta = src.meta.copy()
         data = src.read(1)
@@ -125,13 +139,14 @@ def composite_mosaics(dates: list):
             with rio.open(mosaics[i], 'r') as m:
                 try:
                     data_b = m.read(1)
-                    mask = (data > 100)&(data_b < 100)
+                    mask = (data > 100)&(data_b <= 100)
                     data[mask] = data_b[mask]
                 except Exception as e:
-                    print(e)
+                    logger.error(e)
                     continue
-        with rio.open(os.path.join(const.output_tif_modis,f'modis_composite_{"_".join(dates)}.tif'), 'w', **meta) as dst:
+        with rio.open(out_pth, 'w', **meta) as dst:
             dst.write(data, indexes=1)
+    return out_pth
 
 def distribute(func, args):
     # Multiprocessing support to manage Pool scope
@@ -161,6 +176,13 @@ def get_datespan(date: str, days: int) -> List[str]:
         date_query.append(fmt_date(pydate - datetime.timedelta(days=d)))
     return date_query
 
+def clean_intermediate(date):
+    residual_files = glob(os.path.join(const.INTERMEDIATE_TIF_MODIS,date,'*.tif'))
+    if len(residual_files) != 0:
+        logger.info('Cleaning up residual files...')
+        for f in residual_files:
+            os.remove(f)
+
 def process_modis(startdate, days):
     """
     Main trigger for processing modis from HDF4 -> GTiff and 
@@ -174,39 +196,38 @@ def process_modis(startdate, days):
         Number of days to process raw HDF5 granules into mosaic -> composites before clipping
         to watersheds/basins. days = 5 or days = 8 only. 
     """
+    logger.info('MODIS Process Started')
     bc_albers = 'EPSG:3153'
     dst_crs = 'EPSG:4326'
-    pth = os.path.join(const.modis_terra,'MOD10A1.006')
+    pth = os.path.join(const.MODIS_TERRA,'MOD10A1.006')
     dates = get_datespan(startdate, days)
     for date in dates:
         try:
-            os.makedirs(os.path.join(const.intermediate_tif_modis,date))
+            os.makedirs(os.path.join(const.INTERMEDIATE_TIF_MODIS,date))
         except:
             pass 
         modis_granules = glob(os.path.join(pth, date,'*.hdf'))
-        residual_files = glob(os.path.join(const.intermediate_tif_modis,date,'*.tif'))
-        if len(residual_files) != 0:
-            print('Cleaning up residual files...')
-            for f in residual_files:
-                os.remove(f)
+        clean_intermediate(date)
 
-        print('REPROJ GRANULES')
+        logger.info(f'REPROJ GRANULES: {date}')
         reproj_args = []
         for gran in modis_granules:
             try:
                 name = os.path.split(gran)[-1]
                 reproj_args.append((date, name, gran, dst_crs))           
             except Exception as e:
-                print(f'Could not append {gran} : {e}')
+                logger.error(f'Could not append {gran} : {e}')
                 continue
         distribute(reproject_modis, reproj_args)
         
-        print('CREATING MOSAICS')
-        create_modis_mosaic(os.path.join(const.intermediate_tif_modis,date))
+        logger.info(f'CREATING MOSAICS: {date}')
+        create_modis_mosaic(os.path.join(const.INTERMEDIATE_TIF_MODIS,date))
 
-    print('COMPOSING MOSAICS INTO ONE TIF')
-    composite_mosaics(dates)
+
+    logger.info('COMPOSING MOSAICS INTO ONE TIF')
+    out_pth = composite_mosaics(startdate, dates)
+    color_ramp(out_pth)
 
     for task in ['watersheds', 'basins']:
-        print(f'CREATING {task.upper()}')
-        process_by_watershed_or_basin('modis', task, os.path.join(const.output_tif_modis,f'modis_composite_{"_".join(dates)}.tif'), startdate)
+        logger.info(f'CREATING {task.upper()}')
+        process_by_watershed_or_basin('modis', task, startdate)

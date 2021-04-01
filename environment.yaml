@@ -23,3 +23,6 @@ dependencies:
   - urllib3==1.26.3
   - sqlite==3.34.0
   - descartes==1.1.0
+  - rioxarray==0.3.1
+  - dask==2021.2.0
+  

@@ -20,6 +20,11 @@ node('zavijava_rfc') {
             mkdir %RFC_ARTIFACTS_FOLDER%
         )
 
+        IF NOT EXIST %RFC_OBJ_STORE_DRIVEMAPPING% (
+            echo creating the folder %RFC_ARTIFACTS_FOLDER% 
+            net use %RFC_OBJ_STORE_DRIVEMAPPING%: %RFC_OBJ_STOR_UNC% /PERSISTENT:NO /d
+        )
+
         echo complete
 
         :: print the network mappings
@@ -53,6 +58,7 @@ node('zavijava_rfc') {
             bat '''
                 SET CONDABIN=%RFC_ARTIFACTS_FOLDER%\\miniconda\\condabin
                 SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\\rfc_conda_envs\\nr-rfc-processing
+                SET NORM_ROOT=%RFC_OBJ_STORE_DRIVEMAPPING%:\
                 SET PATH=%CONDABIN%;%PATH%
 
                 call conda.bat activate %condaEnvPath%

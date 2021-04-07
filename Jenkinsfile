@@ -11,7 +11,7 @@ node('zavijava_rfc') {
     stage('configure drive mappings') {
     bat '''
         if NOT EXIST %RFC_DRIVEMAPPING%:\\nul  (
-            net use %RFC_DRIVEMAPPING%: %RFC_NETWORK_DRIVE% /PERSISTENT:NO /d
+            net use %RFC_DRIVEMAPPING%: %RFC_NETWORK_DRIVE% /PERSISTENT:NO
             @REM powershell -File ./mapdrives.ps1
         )
 
@@ -22,7 +22,7 @@ node('zavijava_rfc') {
 
         IF NOT EXIST %RFC_OBJ_STORE_DRIVEMAPPING%:\\nul (
             echo creating the folder %RFC_ARTIFACTS_FOLDER% 
-            net use %RFC_OBJ_STORE_DRIVEMAPPING%: %RFC_OBJ_STOR_UNC% /PERSISTENT:NO /d
+            net use %RFC_OBJ_STORE_DRIVEMAPPING%: %RFC_OBJ_STOR_UNC% /PERSISTENT:NO
         )
 
         echo complete

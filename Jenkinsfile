@@ -20,7 +20,7 @@ node('zavijava_rfc') {
             mkdir %RFC_ARTIFACTS_FOLDER%
         )
 
-        IF NOT EXIST %RFC_OBJ_STORE_DRIVEMAPPING% (
+        IF NOT EXIST %RFC_OBJ_STORE_DRIVEMAPPING%:\\nul (
             echo creating the folder %RFC_ARTIFACTS_FOLDER% 
             net use %RFC_OBJ_STORE_DRIVEMAPPING%: %RFC_OBJ_STOR_UNC% /PERSISTENT:NO /d
         )
@@ -31,6 +31,8 @@ node('zavijava_rfc') {
         net use
         '''
     }
+    // combine the build of ens and snowpack
+    // configure the job so it can not be run concurrently multiple times
     stage('conda env setup') {
         // if check existence of a miniconda directory, if not then install
         // https://dev.to/waylonwalker/installing-miniconda-on-linux-from-the-command-line-4ad7
@@ -58,7 +60,7 @@ node('zavijava_rfc') {
             bat '''
                 SET CONDABIN=%RFC_ARTIFACTS_FOLDER%\\miniconda\\condabin
                 SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\\rfc_conda_envs\\nr-rfc-processing
-                SET NORM_ROOT=%RFC_OBJ_STORE_DRIVEMAPPING%:\
+                SET NORM_ROOT=%RFC_OBJ_STORE_DRIVEMAPPING%:\\norm
                 SET PATH=%CONDABIN%;%PATH%
 
                 call conda.bat activate %condaEnvPath%

@@ -64,6 +64,7 @@ node('zavijava_rfc') {
                 SET PATH=%CONDABIN%;%PATH%
 
                 call conda.bat activate %condaEnvPath%
+                call conda.bat env update --file environment.yaml
 
                 pip install -r .\\requirements.txt
 

@@ -65,7 +65,6 @@ node('zavijava_rfc') {
 
                 call conda.bat activate %condaEnvPath%
 
-                cd nr-rfc-processing
                 pip install -r .\\requirements.txt
 
                 :: ----------------------------------------------

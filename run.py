@@ -6,8 +6,9 @@ import pytz
 
 import admin.constants as const
 
-from download_granules import download_granules
-from download_granules.download_granules import download_granules
+#from download_granules import download_granules
+#from download_granules.download_granules import download_granules
+import download_granules
 from process import modis, viirs, sentinel2
 from analysis import analysis
 from admin import buildkml, plotter
@@ -57,7 +58,7 @@ def download(envpth: str, sat: str, date: str, days: int = 5):
         print(f'download {sat}')
         if sat == 'viirs':
             days = 1
-        download_granules(envpth, date, sat, int(days))
+        download_granules.download_granules(envpth, date, sat, int(days))
     else:
         print('ERROR: Date format YYYY.MM.DD')
 

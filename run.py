@@ -58,7 +58,7 @@ def download(envpth: str, sat: str, date: str, days: int = 5):
         print(f'download {sat}')
         if sat == 'viirs':
             days = 1
-        download_granules.download_granules(envpth, date, sat, int(days))
+        download_granules.download_granules.download_granules(envpth, date, sat, int(days))
     else:
         print('ERROR: Date format YYYY.MM.DD')
 
@@ -175,7 +175,7 @@ def dailypipeline(envpth: str, date: str, sat: str, days: int, db_handler: DBHan
     if check_date(date):
         if sat == 'viirs':
             days = 1
-        download_granules.download_granules(envpth, date, sat, int(days))
+        download_granules.download_granules.download_granules(envpth, date, sat, int(days))
         if sat == 'modis':
             modis.process_modis(date, int(days))
         elif sat == 'viirs':

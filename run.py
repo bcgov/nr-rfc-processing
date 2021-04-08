@@ -14,14 +14,14 @@ from analysis import analysis
 from admin import buildkml, plotter
 from admin import buildup, teardown
 from admin.check_date import check_date
-from admin.logging import setup_logger
+import admin.logging
 from admin.db_handler import DBHandler
 
 if not os.path.exists(const.LOG):
     os.makedirs(const.LOG)
 
-#logger = setup_logger('snow_mapping', os.path.join(const.LOG, 'snow_mapping.log'))
-logger = setup_stream_logger('snow_mapping')
+#logger = admin.logging.setup_logger('snow_mapping', os.path.join(const.LOG, 'snow_mapping.log'))
+logger = admin.logging.setup_stream_logger('snow_mapping')
 
 
 

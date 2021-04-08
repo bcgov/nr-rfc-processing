@@ -49,7 +49,7 @@ node('zavijava_rfc') {
         SET PATH=%CONDABIN%;%PATH%
 
         if NOT EXIST %condaEnvPath% (
-            conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%
+            %CONDABIN%\conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%
         )
         call conda.bat activate %condaEnvPath%
         call conda.bat env update --file environment.yaml

@@ -41,15 +41,18 @@ node('zavijava_rfc') {
         // install conda env
         //  conda env create --file environment.yaml --prefix $CONDAENVPATH
         bat '''
-        SET PATH=%RFC_ARTIFACTS_FOLDER%\\miniconda\\condabin;%PATH%
+        SET CONDABIN=%RFC_ARTIFACTS_FOLDER%\\miniconda\\condabin
         SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\\rfc_conda_envs\\nr-rfc-processing
         SET condaEnvFilePath=%WORKSPACE%\\environment.yaml
         SET condaEnvFilePath=%condaEnvFilePath:/=\\%
+        SET CONDABIN=%CONDABIN:/=\\%
+        SET PATH=%CONDABIN%;%PATH%
 
         if NOT EXIST %condaEnvPath% (
             conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%
         )
-        conda.bat activate %condaEnvPath%
+        call conda.bat activate %condaEnvPath%
+        call conda.bat env update --file environment.yaml
         pip install -r requirements.txt
         pip install -e .
         conda.bat deactivate
@@ -64,9 +67,9 @@ node('zavijava_rfc') {
                 SET PATH=%CONDABIN%;%PATH%
 
                 call conda.bat activate %condaEnvPath%
-                call conda.bat env update --file environment.yaml
+                
 
-                pip install -r .\\requirements.txt
+                ::pip install -r .\\requirements.txt
 
                 :: ----------------------------------------------
                 :: SNOWPACK_ENVS_PTH

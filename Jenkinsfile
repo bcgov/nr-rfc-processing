@@ -58,6 +58,8 @@ node('zavijava_rfc') {
         if NOT EXIST %condaEnvPath%\\python.exe (
             %CONDABIN%\\conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%
         )
+        :: should add logic to detect if these are already installed and only install if 
+        :: possible
         call conda.bat activate %condaEnvPath%
         pip install -r requirements.txt
         pip install -e .
@@ -75,11 +77,10 @@ node('zavijava_rfc') {
                 call conda.bat activate %condaEnvPath%
                 :: make sure additional requirements have been installed
                 :: process above exits out before gets to pip installs
-                pip install -r requirements.txt
-                pip install -e .
+                :: pip install -r requirements.txt
+                :: pip install -e .
 
 
-                ::pip install -r .\\requirements.txt
 
                 :: ----------------------------------------------
                 :: SNOWPACK_ENVS_PTH

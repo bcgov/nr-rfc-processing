@@ -20,7 +20,10 @@ from admin.db_handler import DBHandler
 if not os.path.exists(const.LOG):
     os.makedirs(const.LOG)
 
-logger = setup_logger('snow_mapping', os.path.join(const.LOG, 'snow_mapping.log'))
+#logger = setup_logger('snow_mapping', os.path.join(const.LOG, 'snow_mapping.log'))
+logger = setup_stream_logger('snow_mapping')
+
+
 
 @click.command()
 def build():

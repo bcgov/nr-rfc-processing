@@ -48,14 +48,18 @@ node('zavijava_rfc') {
         SET CONDABIN=%CONDABIN:/=\\%
         SET PATH=%CONDABIN%;%PATH%
 
+        if %REBUILD% == true ( 
+            conda env remove -p %condaEnvPath%
+        )
+
         if not exist %condaEnvPath% (
             mkdir %condaEnvPath%
         )
+        if %REBUILDCONDA% 
         if NOT EXIST %condaEnvPath%\\python.exe (
             %CONDABIN%\\conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%
         )
         call conda.bat activate %condaEnvPath%
-        call conda.bat env update --file environment.yaml
         pip install -r requirements.txt
         pip install -e .
         conda.bat deactivate

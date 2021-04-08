@@ -48,14 +48,13 @@ node('zavijava_rfc') {
         SET CONDABIN=%CONDABIN:/=\\%
         SET PATH=%CONDABIN%;%PATH%
 
-        if %REBUILD% == true ( 
+        if %REBUILDCONDA% == true ( 
             conda env remove -p %condaEnvPath%
         )
 
         if not exist %condaEnvPath% (
             mkdir %condaEnvPath%
         )
-        if %REBUILDCONDA% 
         if NOT EXIST %condaEnvPath%\\python.exe (
             %CONDABIN%\\conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%
         )

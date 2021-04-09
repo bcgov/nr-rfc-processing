@@ -160,7 +160,7 @@ def daily_pipeline(envpth: str, date: str, clean: str, days: int = 5):
     if check_date(date):
         # MODIS/VIIRS NASA server products are about 2 days behind current date
         logger.info('Daily Pipeline Started')
-        #buildup.buildall()
+        buildup.buildall()
         db_handler = DBHandler()
         pst = pytz.timezone('US/Pacific')
         date_l = date.split('.')

@@ -103,7 +103,12 @@ def create_modis_mosaic(pth: str):
         # Write mosaic to disk
         out_pth = os.path.join(const.OUTPUT_TIF_MODIS,date.split('.')[0],f'{date}.tif')
         try:
-            os.makedirs(os.path.split(out_pth)[0])
+            logger.debug(f"out_pth: {out_pth}")
+            #os.makedirs(os.path.split(out_pth)[0])
+            dir2Create = os.path.dirname(out_pth)
+            if not os.path.exists(dir2Create):
+                os.makedirs(dir2Create)
+                logger.debug(f"creating dir: {dir2Create}")
         except Exception as e:
             logger.debug(e)
         with rio.open(out_pth, "w", **out_meta) as dst:

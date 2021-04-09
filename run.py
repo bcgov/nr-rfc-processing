@@ -4,11 +4,12 @@ import multiprocessing
 import datetime
 import pytz
 
+
 import admin.constants as const
 
 #from download_granules import download_granules
 #from download_granules.download_granules import download_granules
-import download_granules
+import download_granules.download_granules
 from process import modis, viirs, sentinel2
 from analysis import analysis
 from admin import buildkml, plotter
@@ -21,7 +22,7 @@ if not os.path.exists(const.LOG):
     os.makedirs(const.LOG)
 
 #logger = admin.logging.setup_logger('snow_mapping', os.path.join(const.LOG, 'snow_mapping.log'))
-logger = admin.logging.setup_stream_logger('snow_mapping')
+logger = admin.logging.setup_stream_logger(__name__)
 
 
 
@@ -159,7 +160,7 @@ def daily_pipeline(envpth: str, date: str, clean: str, days: int = 5):
     if check_date(date):
         # MODIS/VIIRS NASA server products are about 2 days behind current date
         logger.info('Daily Pipeline Started')
-        buildup.buildall()
+        #buildup.buildall()
         db_handler = DBHandler()
         pst = pytz.timezone('US/Pacific')
         date_l = date.split('.')
@@ -178,6 +179,8 @@ def dailypipeline(envpth: str, date: str, sat: str, days: int, db_handler: DBHan
     if check_date(date):
         if sat == 'viirs':
             days = 1
+        #print(type())
+        #logger.debug(f'download granules: {download_granules} - {download_granules.download_granules}')
         download_granules.download_granules.download_granules(envpth, date, sat, int(days))
         if sat == 'modis':
             modis.process_modis(date, int(days))

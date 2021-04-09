@@ -33,7 +33,7 @@ retrieved upon request.
 
 nodata_val = 254
 
-logger = logging.getLogger('snow_mapping')
+logger = logging.getLogger(__name__)
 
 def query(creds: str, udate: str, lat: float, lng: float, 
             max_allowable_cloud: int, day_tolerance: int = 50):

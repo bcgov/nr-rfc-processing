@@ -17,7 +17,7 @@ from matplotlib.patches import Patch
 from glob import glob
 from collections import defaultdict
 
-logger = logging.getLogger('snow_mapping')
+logger = logging.getLogger(__name__)
 
 def plot_sheds(sheds: list, typ: str, sat: str, date: str):
     """Plot individual watersheds/basins

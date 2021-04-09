@@ -17,7 +17,7 @@ from rasterio.warp import calculate_default_transform, reproject, Resampling
 from rasterio.merge import merge
 from typing import List
 
-logger = logging.getLogger('snow_mapping')
+logger = logging.getLogger(__name__)
 
 # Suppress warning for GCP/RPC - inquiry does not affect workflow
 warnings.filterwarnings("ignore", category=rio.errors.NotGeoreferencedWarning)

@@ -92,15 +92,15 @@ def plot_sheds(sheds: list, typ: str, sat: str, date: str):
         # Make sure the output dir is accessible and replace with
         # most up to date version
         out_pth = os.path.join(const.PLOT, sat, typ, date, f'{name}.png')
-        try:
-            os.makedirs(os.path.split(out_pth)[0])
-        except Exception as e:
-            logger.debug(e)
-        try:
+        out_dir = os.path.dirname(out_pth)
+        if not os.path.exists(out_dir):
+            logger.debug(f"creating directory: {out_dir}")
+            os.makedirs(out_dir)
+        if os.path.exists(out_pth):
+            logger.debug(f"removing the path: {out_pth}")
             os.remove(out_pth)
-        except Exception as e:
-            logger.debug(e)
         try:
+            logger.debug(f"creating the plot: {out_pth}")
             plt.savefig(out_pth)
             plt.close()
         except Exception as e:
@@ -251,15 +251,15 @@ def plot_mosaics(sat: str, date: str):
     # Make sure output path is accessible and 
     # replace with most up to date version
     out_pth = os.path.join(const.PLOT, sat, 'mosaic', date, f'{date}.png')
-    try:
-        os.makedirs(os.path.split(out_pth)[0])
-    except Exception as e:
-        logger.debug(e)
-    try:
+    out_dir = os.path.dirname(out_pth)
+    if not os.path.exists(out_dir):
+        logger.debug(f"creating the directory: {out_dir}")
+        os.makedirs(out_dir)
+    if os.path.exists(out_pth):
+        logger.debug(f"deleting the file: {f}")
         os.remove(out_pth)
-    except Exception as e:
-        logger.debug(e)
     try:
+        logger.debug(f"creating the file: {f}")
         plt.savefig(out_pth)
         plt.close()
     except Exception as e:

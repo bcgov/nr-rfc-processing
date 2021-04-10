@@ -9,7 +9,7 @@ from hatfieldcmr import CMRClient
 
 import admin.constants as const
 
-logger = logging.getLogger('snow_mapping')
+logger = logging.getLogger(__name__)
 
 def download_granules(envpath: str, date: str, sat: str, days: int = 5):
     """Download MODIS/VIIRS granules for a given day

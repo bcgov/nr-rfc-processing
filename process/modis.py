@@ -17,7 +17,7 @@ from rasterio.warp import calculate_default_transform, reproject, Resampling
 from rasterio.merge import merge
 from typing import List
 
-logger = logging.getLogger('snow_mapping')
+logger = logging.getLogger(__name__)
 
 # Suppress warning for GCP/RPC - inquiry does not affect workflow
 warnings.filterwarnings("ignore", category=rio.errors.NotGeoreferencedWarning)
@@ -102,6 +102,7 @@ def create_modis_mosaic(pth: str):
                       })
         # Write mosaic to disk
         out_pth = os.path.join(const.OUTPUT_TIF_MODIS,date.split('.')[0],f'{date}.tif')
+        logger.debug(f"out_pth: {out_pth}")
         try:
             logger.debug(f"out_pth: {out_pth}")
             #os.makedirs(os.path.split(out_pth)[0])

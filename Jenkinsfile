@@ -71,7 +71,7 @@ node('zavijava_rfc') {
             bat '''
                 SET CONDABIN=%RFC_ARTIFACTS_FOLDER%\\miniconda\\condabin
                 SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\\rfc_conda_envs\\nr-rfc-processing
-                SET NORM_ROOT=%RFC_OBJ_STORE_DRIVEMAPPING%:\\norm
+                SET NORM_ROOT=%RFC_OBJ_STORE_DRIVEMAPPING%:\\
                 SET PATH=%CONDABIN%;%PATH%
 
                 call conda.bat activate %condaEnvPath%

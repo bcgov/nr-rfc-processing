@@ -18,8 +18,8 @@ VIIRS_EPSG4326_RES= 0.006659501656959246
 # Bounding box to clip mosaics to
 BBOX = [-140.977, 46.559, -112.3242, 63.134]
 
-TOP = '/data'
-LOG = '/data/log'
+TOP = os.environ['SNOWPACK_DATA']
+LOG = os.path.join(TOP, 'log')
 BASINS = os.path.join(TOP,'basins')
 WATERSHEDS = os.path.join(TOP,'watersheds')
 KML = os.path.join(TOP,'kml')

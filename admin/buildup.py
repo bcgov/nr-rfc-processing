@@ -5,7 +5,7 @@ import geopandas as gpd
 
 import admin.constants as const
 
-logger = logging.getLogger('snow_mapping')
+logger = logging.getLogger(__name__)
 
 def build_dir_structure():
     dirs= [

@@ -87,8 +87,8 @@ node('zavijava_rfc') {
                 echo env var param is: %SNOWPACK_ENVS_PTH%
                 echo SNOWPACK_SECRETS: %SNOWPACK_SECRETS%
 
-                for /f %%x in ('wmic path win32_localtime get /format:list ^| findstr "="') do set %%x
-                set rundate=%Year%.%Month%.%Day%
+                %condaEnvPath%\\python getDate.py > junk.txt
+                SET /p rundate= <junk.txt
 
                 %condaEnvPath%\\python run.py daily-pipeline --envpth=%SNOWPACK_ENVS_PTH% --date %rundate%
             '''

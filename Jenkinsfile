@@ -87,7 +87,10 @@ node('zavijava_rfc') {
                 echo env var param is: %SNOWPACK_ENVS_PTH%
                 echo SNOWPACK_SECRETS: %SNOWPACK_SECRETS%
 
-                %condaEnvPath%\\python run.py daily-pipeline --envpth=%SNOWPACK_ENVS_PTH% --date %date:-=.%
+                SET rundate=%date:-=.%
+                echo date is: %rundate%
+
+                %condaEnvPath%\\python run.py daily-pipeline --envpth=%SNOWPACK_ENVS_PTH% --date %rundate%
             '''
         }
     }

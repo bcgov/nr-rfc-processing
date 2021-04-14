@@ -8,6 +8,17 @@ node('zavijava_rfc') {
         //sh 'if [ ! -d "$TEMP" ]; then mkdir $TEMP; fi'
         checkout([$class: 'GitSCM', branches: [[name: '$TAGNAME']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/bcgov/nr-rfc-processing']]])    
     }
+    stage('build') {
+        build job: "snowpack_analysis_BUILD_${env.BUILDENV}",
+        parameters: [
+            string(name: 'TAGNAME', value: "${TAGNAME}"), 
+            string(name: 'no_proxy', value: "${no_proxy}"), 
+            string(name: 'RFC_ARTIFACTS_FOLDER', value: "${RFC_ARTIFACTS_FOLDER}"), 
+            string(name: 'RFC_NETWORK_DRIVE', value: "${RFC_NETWORK_DRIVE}"), 
+            string(name: 'RFC_DRIVEMAPPING', value: "${RFC_DRIVEMAPPING}"), 
+            string(name: 'SNOWPACK_DATA', value: "${SNOWPACK_DATA}"), 
+            string(name: 'REBUILDCONDA', value: "${REBUILDCONDA}")]
+    }
     stage('configure drive mappings') {
     bat '''
         if NOT EXIST %RFC_DRIVEMAPPING%:\\nul  (
@@ -31,41 +42,6 @@ node('zavijava_rfc') {
         net use
         '''
     }
-    // combine the build of ens and snowpack
-    // configure the job so it can not be run concurrently multiple times
-    stage('conda env setup') {
-        // if check existence of a miniconda directory, if not then install
-        // https://dev.to/waylonwalker/installing-miniconda-on-linux-from-the-command-line-4ad7
-
-        // create a conda env directory on fileshare
-        // install conda env
-        //  conda env create --file environment.yaml --prefix $CONDAENVPATH
-        bat '''
-        SET CONDABIN=%RFC_ARTIFACTS_FOLDER%\\miniconda\\condabin
-        SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\\rfc_conda_envs\\nr-rfc-processing
-        SET condaEnvFilePath=%WORKSPACE%\\environment.yaml
-        SET condaEnvFilePath=%condaEnvFilePath:/=\\%
-        SET CONDABIN=%CONDABIN:/=\\%
-        SET PATH=%CONDABIN%;%PATH%
-
-        if %REBUILDCONDA% == true ( 
-            conda env remove -p %condaEnvPath%
-        )
-
-        if not exist %condaEnvPath% (
-            mkdir %condaEnvPath%
-        )
-        if NOT EXIST %condaEnvPath%\\python.exe (
-            %CONDABIN%\\conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%
-        )
-        :: should add logic to detect if these are already installed and only install if 
-        :: possible
-        call conda.bat activate %condaEnvPath%
-        pip install -r requirements.txt
-        pip install -e .
-        conda.bat deactivate
-        '''
-    }
     withCredentials([file(credentialsId: 'SNOWPACK_ENVS_FILE', variable: 'SNOWPACK_ENVS_PTH')]) {
         stage('run snowpack analysis') {
             bat '''
@@ -75,12 +51,6 @@ node('zavijava_rfc') {
                 SET PATH=%CONDABIN%;%PATH%
 
                 call conda.bat activate %condaEnvPath%
-                :: make sure additional requirements have been installed
-                :: process above exits out before gets to pip installs
-                :: pip install -r requirements.txt
-                :: pip install -e .
-
-
 
                 :: ----------------------------------------------
                 :: SNOWPACK_ENVS_PTH

@@ -68,16 +68,33 @@ node('zavijava_rfc') {
                 SET minicondaInstallDir=%RFC_ARTIFACTS_FOLDER%\\miniconda
                 SET minicondaBin=%minicondaInstallDir%\\condabin
                 SET condaEnvFilePath=%WORKSPACE%\\environment.yaml
+                SET HATFIELD_EGG=%condaEnvPath%\Lib\site-packages\hatfieldcmr.egg-link
+                SET SIMPLE_KML_FOLDER=%condaEnvPath%\Lib\site-packages\simplekml
                 SET PATH=%minicondaBin%;%PATH%
+
+                if %REBUILDCONDA% == TRUE (
+                    conda.bat env remove --prefix %condaEnvPath%
+                )
 
                 if not exist %condaEnvPath% (
                     mkdir %condaEnvPath%
                 )
+
                 :: creates a conda env in the folder
                 if NOT EXIST %condaEnvPath%\\python.exe (
                     ::cd %WORKSPACE%
                     conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%
                 )
+
+                :: installing dependencies that are not available through conda
+                call conda.bat activate %condaEnvPath%
+                IF NOT EXIST %SIMPLE_KML_FOLDER% (
+                    pip install -r requirements.txt
+                )
+                IF NOT EXIST %HATFIELD_EGG% (
+                    pip install -e .
+                )
+                conda.bat deactivate
             '''
         }
     }

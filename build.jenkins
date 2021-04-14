@@ -68,7 +68,7 @@ node('zavijava_rfc') {
                 SET minicondaInstallDir=%RFC_ARTIFACTS_FOLDER%\\miniconda
                 SET minicondaBin=%minicondaInstallDir%\\condabin
                 SET condaEnvFilePath=%WORKSPACE%\\environment.yaml
-                SET HATFIELD_EGG=%condaEnvPath%\Lib\\site-packages\\hatfieldcmr.egg-link
+                SET HATFIELD_EGG=%condaEnvPath%\\Lib\\site-packages\\hatfieldcmr.egg-link
                 SET SIMPLE_KML_FOLDER=%condaEnvPath%\\Lib\\site-packages\\simplekml
                 SET PATH=%minicondaBin%;%PATH%
 

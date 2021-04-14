@@ -8,7 +8,7 @@ node('zavijava_rfc') {
         //sh 'if [ ! -d "$TEMP" ]; then mkdir $TEMP; fi'
         checkout([$class: 'GitSCM', branches: [[name: '$TAGNAME']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/bcgov/nr-rfc-processing']]])    
     }
-    stage('build') {
+    stage('build snowpack dependencies') {
         build job: "snowpack_analysis_BUILD_${env.BUILDENV}",
         parameters: [
             string(name: 'TAGNAME', value: "${TAGNAME}"), 

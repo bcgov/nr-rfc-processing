@@ -103,6 +103,7 @@ def process_sentinel(creds: str, date:str, lat: float, lng: float, rgb: str,
             teardown.clean_intermediate()
     else:
         logger.error('ERROR: Date format YYYY.MM.DD')
+    logger.info("sentinal analysis complete")
 
 @click.command()
 @click.option('--date', type=str, required=True, help='Date in format YYYY.MM.DD')

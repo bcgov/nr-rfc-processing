@@ -2,6 +2,7 @@ import os
 import yaml
 import logging
 import datetime
+import platform
 import shutil
 import simplekml
 
@@ -145,10 +146,9 @@ def build_sentinel_dir_struture():
     ]
 
     for d in dirs:
-        try:
+        if not os.path.exists(d):
+            logger.debug(f"creating directory: {d}")
             os.makedirs(d)
-        except Exception as e:
-            logger.warning(e)
 
 def download(product: str, api: SentinelAPI, udate: str, lat: float, lng: float, force: str='false'):
     """Download Sentinel-2 tile user selected
@@ -175,13 +175,13 @@ def download(product: str, api: SentinelAPI, udate: str, lat: float, lng: float,
     """
     logger.info('DOWNLOADING SENTINEL-2 DATA')
     output_pth = os.path.join(const.MODIS_TERRA,'sentinel',udate, f'lat{lat}_lng{lng}')
-    try:
+    if not os.path.exists(output_pth):
+        logger.debug(f'creating directory: {output_pth}')
         os.makedirs(output_pth)
-    except Exception as e:
-        logger.warning(e)
     if force == 'true': # if force then remove existing downloads
         files = glob(os.path.join(output_pth, '*'))
         for f in files:
+            logger.debug(f"removing: {f}")
             os.remove(f)
     try: # download target tile
         logger.info(f'Downloading {product}')
@@ -189,6 +189,27 @@ def download(product: str, api: SentinelAPI, udate: str, lat: float, lng: float,
         return info
     except Exception as e:
         logger.error(e)
+
+def fixLongWinPath(inPath, force=False):
+    """
+    Parameters
+    ----------
+    inPath: str
+        Path that is to be evaluated
+    
+    Returns
+    -------
+    str
+        The output path with extra characters allowing windows to use / understand paths
+        that exceed 260 characters.
+    """
+    if platform.system().lower() == 'windows':
+        #logger.debug("yes windows")
+        inPath = os.path.normpath(inPath)
+        #logger.debug(f"path: {inPath}, {len(inPath)}")
+        if len(inPath) >= 260 or force == True:
+            inPath = u"\\\\?\\" + inPath
+    return inPath
     
 def process(info: str, udate: str, lat: float, lng: float, rgb: str):
     """Process the Sentinel-2 tile calculating NDSI and saving GTiffs
@@ -213,25 +234,58 @@ def process(info: str, udate: str, lat: float, lng: float, rgb: str):
     """
     
     logger.info('[sentinel2.process] PROCESSING S2 SCENE')
+    logger.debug(f"info: {info}")
     gran = info['path']
+    logger.debug(f'gran: {gran}')
     intermediate_tif = os.path.join(const.INTERMEDIATE_TIF_SENTINEL, udate,f'lat{lat}_lng{lng}')
     # Clean up residual files
     files = glob(os.path.join(intermediate_tif, '*'))
-    for f in files:
-        if os.path.isfile(f):
-            os.remove(f)
-        elif os.path.isdir(f):
-            shutil.rmtree(f)
-    try:
+    for inFile in files:
+        inFile = fixLongWinPath(inFile, force=True)
+        if os.path.isfile(inFile):
+            logger.debug(f"delete file: {inFile}")
+            os.remove(inFile)
+        elif os.path.isdir(inFile):
+            shutil.rmtree(inFile)
+            logger.debug(f"delete directory: {inFile}")
+    if not os.path.exists(intermediate_tif):
+        logger.debug(f"creating directory: {intermediate_tif}")
         os.makedirs(intermediate_tif)
-    except OSError as e:
-        logger.debug(f'[sentinel2.process] {e}')
     # Unzip downloaded tile
     logger.info('[sentinel2.process] EXTRACTING ZIPFILE...')
+    logger.debug(f"sentinel file: {gran}")
+    exceedsWindowsPathLength = False
     with ZipFile(gran, 'r') as zipObj:
-        zipObj.extractall(intermediate_tif)
+        logger.debug(f"extract all from {intermediate_tif}")
+
+        fileList = zipObj.namelist()
+
+        # reading the contents of the zip file to check for violation of max path
+        # length if on windows
+        if platform.system().lower() == 'windows':
+            for inFile in fileList:
+                fulloutpath = os.path.join(intermediate_tif, inFile)
+                fulloutpath = os.path.normpath(fulloutpath)
+                #logger.debug(f"    - {fulloutpath}")
+                fulloutpath = fixLongWinPath(fulloutpath)
+                if len(str(fulloutpath)) > 260:
+                    # exceeds windows path max length, to overcome need to tweak the path 
+                    # and add \\?\ to it, which gets around the restriction
+                    exceedsWindowsPathLength = True
+                    intermediate_tif = u"\\\\?\\" + intermediate_tif
+                    logger.debug(f"intermediate path: {intermediate_tif}")
+                    break
+        try:
+            zipObj.extractall(intermediate_tif)
+        except Exception as e:
+            logger.exception('zip error')
+            logger.error(e)
+        logger.debug("unzip complete")
     unzipped = os.path.join(intermediate_tif,os.path.split(gran)[-1].split('.')[0]+'.SAFE')
     base = os.path.join(intermediate_tif, glob(unzipped)[0], 'GRANULE', '**', 'IMG_DATA', 'R20m')
+
+    logger.debug(f"unzipped path: {unzipped}")
+    logger.debug(f"base path: {base}")
 
     # Gather band paths
     bands = [
@@ -344,10 +398,9 @@ def reproject_s2(pth: str, date: str, lat: float, lng: float, dst_crs: str):
     else:
         logger.warning('[sentinel2.reproject_s2] Invalid CRS')
         return None
-    try:
+    if os.path.exists(out_pth):
         os.remove(out_pth)
-    except Exception as e:
-        logger.debug(f'[sentinel2.reproject_s2] Removing residual file:  {e}')
+        logger.debug(f'[sentinel2.reproject_s2] Removing residual file:  {out_pth}')
     with rio.open(pth, 'r') as src:
         transform, width, height = calculate_default_transform(
                 src.crs, dst_crs, src.width, src.height, *src.bounds, resolution=res) 
@@ -492,9 +545,26 @@ def kml(pth: str, date: str, name: str, coverage: float):
     with rio.open(pth) as src:
         upperleft = src.transform * (0,0)
         bottomright = src.transform * (src.width, src.height)
+
+    gdalCommand = 'gdal2tiles.py'
+    processes = 4
+    # on windows shebang interpreter asssociation in the conda install doesn't seem to work 
+    # when there is another verson of python installed... Modify the command to include the
+    # path to the conda scripts
+
+    if platform.system().lower() == 'windows':
+        gdalCommandfullPath = os.path.join(os.environ['CONDA_PREFIX'], 'Scripts', gdalCommand)
+        pythonFullPath = os.path.join(os.environ['CONDA_PREFIX'], 'python')
+        gdalCommand = f'{pythonFullPath} {gdalCommandfullPath}'
+        # spawining processes not working on windows
+        processes = 1
+
     # Create KML version of expanded EPSG:4326 GTiff
-    gdal_str = f'gdal2tiles.py -q --processes=4 -p raster -t {name} --tilesize=128 -s \
+    gdal_str = f'{gdalCommand} -q --processes={processes} -p raster -t {name} --tilesize=128 -s \
                     EPSG:4326 -k -r near {pth} {kml_pth}'
+    logger.debug("command is:")
+    logger.debug(gdal_str)
+    
     os.system(gdal_str)
     # Build top level KML to attach metadata to
     kml = simplekml.Kml(name=name)

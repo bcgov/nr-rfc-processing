@@ -16,7 +16,7 @@ import admin.constants as const
 
 from analysis.support import date_fmt
 
-logger = logging.getLogger('snow_mapping')
+logger = ('snow_mapping')
 
 def get_dates(start_year: int, months: int):
     """Get dates to calculate normals on

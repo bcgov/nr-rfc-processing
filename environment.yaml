@@ -1,4 +1,4 @@
-name: bc_forecasting
+name: rfc_processing
 channels:
   - conda-forge
   - anaconda

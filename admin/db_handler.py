@@ -16,7 +16,7 @@ class DBHandler(object):
         """
         super().__init__()
         self.conn = self._init_connection()
-        self.logger = logging.getLogger('snow_mapping')
+        self.logger = logging.getLogger(__name__)
         self._setup_tables()
 
     def __del__(self):

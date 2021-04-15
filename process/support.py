@@ -11,7 +11,7 @@ from admin.color_ramp import color_ramp
 
 from glob import glob
 
-logger = logging.getLogger('snow_mapping')
+logger = logging.getLogger(__name__)
 
 def process_normals(norm: object, orig: object, geom: object, output_pth: str, sat: str):
     """Perform calculations on watersheds

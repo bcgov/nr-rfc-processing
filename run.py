@@ -4,22 +4,27 @@ import multiprocessing
 import datetime
 import pytz
 
+
 import admin.constants as const
 
-from download_granules import download_granules
-from download_granules.download_granules import download_granules
+#from download_granules import download_granules
+#from download_granules.download_granules import download_granules
+import download_granules.download_granules
 from process import modis, viirs, sentinel2
 from analysis import analysis
 from admin import buildkml, plotter
 from admin import buildup, teardown
 from admin.check_date import check_date
-from admin.logging import setup_logger
+import admin.logging
 from admin.db_handler import DBHandler
 
 if not os.path.exists(const.LOG):
     os.makedirs(const.LOG)
 
-logger = setup_logger('snow_mapping', os.path.join(const.LOG, 'snow_mapping.log'))
+#logger = admin.logging.setup_logger('snow_mapping', os.path.join(const.LOG, 'snow_mapping.log'))
+logger = admin.logging.setup_stream_logger(__name__)
+
+
 
 @click.command()
 def build():
@@ -57,7 +62,7 @@ def download(envpth: str, sat: str, date: str, days: int = 5):
         print(f'download {sat}')
         if sat == 'viirs':
             days = 1
-        download_granules(envpth, date, sat, int(days))
+        download_granules.download_granules.download_granules(envpth, date, sat, int(days))
     else:
         print('ERROR: Date format YYYY.MM.DD')
 
@@ -98,6 +103,7 @@ def process_sentinel(creds: str, date:str, lat: float, lng: float, rgb: str,
             teardown.clean_intermediate()
     else:
         logger.error('ERROR: Date format YYYY.MM.DD')
+    logger.info("sentinal analysis complete")
 
 @click.command()
 @click.option('--date', type=str, required=True, help='Date in format YYYY.MM.DD')
@@ -174,7 +180,9 @@ def dailypipeline(envpth: str, date: str, sat: str, days: int, db_handler: DBHan
     if check_date(date):
         if sat == 'viirs':
             days = 1
-        download_granules.download_granules(envpth, date, sat, int(days))
+        #print(type())
+        #logger.debug(f'download granules: {download_granules} - {download_granules.download_granules}')
+        download_granules.download_granules.download_granules(envpth, date, sat, int(days))
         if sat == 'modis':
             modis.process_modis(date, int(days))
         elif sat == 'viirs':

@@ -16,7 +16,7 @@ from glob import glob
 from rasterio.merge import merge
 from rasterio.warp import calculate_default_transform, reproject, Resampling
 
-logger = logging.getLogger('snow_mapping')
+logger = logging.getLogger(__name__)
 
 def build_viirs_tif(date: str, scene: str):
     """

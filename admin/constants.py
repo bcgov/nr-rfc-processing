@@ -18,8 +18,8 @@ VIIRS_EPSG4326_RES= 0.006659501656959246
 # Bounding box to clip mosaics to
 BBOX = [-140.977, 46.559, -112.3242, 63.134]
 
-TOP = '/data'
-LOG = '/data/log'
+TOP = os.environ['SNOWPACK_DATA']
+LOG = os.path.join(TOP, 'log')
 BASINS = os.path.join(TOP,'basins')
 WATERSHEDS = os.path.join(TOP,'watersheds')
 KML = os.path.join(TOP,'kml')
@@ -43,7 +43,7 @@ ANALYSIS = os.path.join(TOP,'analysis')
 MODIS_TERRA = os.path.join(TOP,'modis-terra')
 SENTINEL_OUTPUT = os.path.join(TOP, 'sentinel_output')
 
-NORM = os.path.join(TOP,'norm')
+NORM = os.path.join(os.environ['NORM_ROOT'],'norm')
 MOSAICS = os.path.join(NORM, 'mosaics')
 OUTPUT_TIF_MODIS = os.path.join(MOSAICS,'modis')
 OUTPUT_TIF_VIIRS = os.path.join(MOSAICS,'viirs')

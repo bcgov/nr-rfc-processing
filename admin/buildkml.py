@@ -11,7 +11,7 @@ from glob import glob
 from admin.color_ramp import color_ramp
 from admin.db_handler import DBHandler
 
-logger = logging.getLogger('snow_mapping')
+logger = logging.getLogger(__name__)
 
 import admin.constants as const
 

@@ -1,0 +1,101 @@
+node('zavijava_rfc') {
+    withEnv([
+        "JOB_NAME=Snowpack_build", 
+        "TEMP=$WORKSPACE\\tmp",
+        "TMP=$WORKSPACE\\tmp",
+        "no_proxy=github.com"
+        ]) {
+        stage('checkout') {
+            //sh 'if [ ! -d "$TEMP" ]; then mkdir $TEMP; fi'
+            checkout([$class: 'GitSCM', branches: [[name: "${env.TAGNAME}"]], extensions: [], userRemoteConfigs: [[url: 'https://github.com/bcgov/nr-rfc-processing']]])
+        }
+        stage('mapdrives') {
+            bat '''
+            :: -------- Create RFC Drive Mapping and required folders -------
+            echo running jenkins2 branch
+            echo setting up required directories
+            wmic logicaldisk list brief
+            whoami
+
+            if NOT EXIST %ENS_DRIVEMAPPING%:\\nul  (
+                net use %RFC_DRIVEMAPPING%: %RFC_NETWORK_DRIVE% /PERSISTENT:NO
+                @REM powershell -File ./mapdrives.ps1
+            )
+
+            IF NOT EXIST %RFC_ARTIFACTS_FOLDER% (
+                echo creating the folder %RFC_ARTIFACTS_FOLDER% 
+                mkdir %RFC_ARTIFACTS_FOLDER%
+            )
+
+            IF NOT EXIST %SNOWPACK_DATA% (
+                echo creating the folder %SNOWPACK_DATA% 
+                mkdir %SNOWPACK_DATA%
+            )
+            echo complete
+            '''
+        }
+        stage('getConda') {
+            bat '''
+                :: ----- get conda ---------
+                echo %RFC_ARTIFACTS_FOLDER%
+                SET minicondaInstallDir=%RFC_ARTIFACTS_FOLDER%\\miniconda
+                SET minicondaInstallFile=miniconda_installer.exe
+                SET minicondaInstallerFullPath=%minicondaInstallDir%\\%minicondaInstallFile%
+                SET minicondaURL=https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe
+                SET DRIVELETTER=%minicondaInstallDir:~0,1%
+
+                if NOT EXIST %minicondaInstallDir% (
+                    mkdir %minicondaInstallDir%
+                )
+
+                if NOT EXIST %minicondaInstallerFullPath% (
+                    curl %minicondaURL% -o %minicondaInstallerFullPath%
+                )
+
+                if NOT EXIST %minicondaInstallDir%\\condabin (
+                    %DRIVELETTER%:
+                    cd %minicondaInstallDir%
+                    dir %DRIVELETTER%:
+                    %minicondaInstallFile% /S /InstallationType=JustMe AddToPath=0 /RegisterPython=0 /D=%minicondaInstallDir%
+                )
+            '''
+        }
+        stage('buildCondaEnv') {
+            bat '''
+                :: ----- build conda env ---------
+                SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\\rfc_conda_envs
+                SET condaEnvPath=%condaEnvPath%\\nr-rfc-processing
+                SET minicondaInstallDir=%RFC_ARTIFACTS_FOLDER%\\miniconda
+                SET minicondaBin=%minicondaInstallDir%\\condabin
+                SET condaEnvFilePath=%WORKSPACE%\\environment.yaml
+                SET HATFIELD_EGG=%condaEnvPath%\\Lib\\site-packages\\hatfieldcmr.egg-link
+                SET SIMPLE_KML_FOLDER=%condaEnvPath%\\Lib\\site-packages\\simplekml
+                SET PATH=%minicondaBin%;%PATH%
+
+                if %REBUILDCONDA% == TRUE (
+                    conda.bat env remove --prefix %condaEnvPath%
+                )
+
+                if not exist %condaEnvPath% (
+                    mkdir %condaEnvPath%
+                )
+
+                :: creates a conda env in the folder
+                if NOT EXIST %condaEnvPath%\\python.exe (
+                    ::cd %WORKSPACE%
+                    conda.bat env create --prefix %condaEnvPath% --file %condaEnvFilePath%
+                )
+
+                :: installing dependencies that are not available through conda
+                call conda.bat activate %condaEnvPath%
+                IF NOT EXIST %SIMPLE_KML_FOLDER% (
+                    pip install -r requirements.txt
+                )
+                IF NOT EXIST %HATFIELD_EGG% (
+                    pip install -e .
+                )
+                conda.bat deactivate
+            '''
+        }
+    }
+}

@@ -1,0 +1,67 @@
+node('zavijava_rfc') {
+    // ENVS to be set for this job
+    //    * ENS_NETWORK_DRIVE
+    //    * ENS_DRIVEMAPPING
+    //    * RFC_ARTIFACTS_FOLDER
+    //
+    stage('checkout') {
+        //sh 'if [ ! -d "$TEMP" ]; then mkdir $TEMP; fi'
+        checkout([$class: 'GitSCM', branches: [[name: '$TAGNAME']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/bcgov/nr-rfc-processing']]])    
+    }
+    stage('build snowpack dependencies') {
+        build job: "snowpack_analysis_BUILD_${env.BUILDENV}",
+        parameters: [
+            string(name: 'TAGNAME', value: "${TAGNAME}"), 
+            string(name: 'no_proxy', value: "${no_proxy}"), 
+            string(name: 'RFC_ARTIFACTS_FOLDER', value: "${RFC_ARTIFACTS_FOLDER}"), 
+            string(name: 'RFC_NETWORK_DRIVE', value: "${RFC_NETWORK_DRIVE}"), 
+            string(name: 'RFC_DRIVEMAPPING', value: "${RFC_DRIVEMAPPING}"), 
+            string(name: 'SNOWPACK_DATA', value: "${SNOWPACK_DATA}"), 
+            string(name: 'REBUILDCONDA', value: "${REBUILDCONDA}")]
+    }
+    stage('configure drive mappings') {
+    bat '''
+        if NOT EXIST %RFC_DRIVEMAPPING%:\\nul  (
+            net use %RFC_DRIVEMAPPING%: %RFC_NETWORK_DRIVE% /PERSISTENT:NO
+            @REM powershell -File ./mapdrives.ps1
+        )
+
+        IF NOT EXIST %RFC_ARTIFACTS_FOLDER% (
+            echo creating the folder %RFC_ARTIFACTS_FOLDER% 
+            mkdir %RFC_ARTIFACTS_FOLDER%
+        )
+
+        IF NOT EXIST %RFC_OBJ_STORE_DRIVEMAPPING%:\\nul (
+            echo creating the folder %RFC_ARTIFACTS_FOLDER% 
+            net use %RFC_OBJ_STORE_DRIVEMAPPING%: %RFC_OBJ_STOR_UNC% /PERSISTENT:NO
+        )
+
+        echo complete
+
+        :: print the network mappings
+        net use
+        '''
+    }
+    withCredentials([file(credentialsId: 'SNOWPACK_ENVS_FILE', variable: 'SNOWPACK_ENVS_PTH')]) {
+        stage('run snowpack analysis') {
+            bat '''
+                SET CONDABIN=%RFC_ARTIFACTS_FOLDER%\\miniconda\\condabin
+                SET condaEnvPath=%RFC_ARTIFACTS_FOLDER%\\rfc_conda_envs\\nr-rfc-processing
+                SET NORM_ROOT=%RFC_OBJ_STORE_DRIVEMAPPING%:\\
+                SET PATH=%CONDABIN%;%PATH%
+
+                call conda.bat activate %condaEnvPath%
+
+                :: ----------------------------------------------
+                :: SNOWPACK_ENVS_PTH
+                echo env var param is: %SNOWPACK_ENVS_PTH%
+                echo SNOWPACK_SECRETS: %SNOWPACK_SECRETS%
+
+                %condaEnvPath%\\python getDate.py > junk.txt
+                SET /p rundate= <junk.txt
+
+                %condaEnvPath%\\python run.py daily-pipeline --envpth=%SNOWPACK_ENVS_PTH% --date %rundate%
+            '''
+        }
+    }
+}

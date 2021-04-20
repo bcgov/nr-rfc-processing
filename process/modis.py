@@ -129,12 +129,14 @@ def composite_mosaics(startdate: str, dates: list):
     dates : list
         Dates of mosaics to consider for compositing
     """
+    logger.debug(f"startdate: {startdate}")
     base = os.path.join(const.INTERMEDIATE_TIF_MODIS, startdate)
-    try:
+    logger.debug(f"base dir: {base}")
+    if not os.path.exists(base):
         os.makedirs(base)
-    except Exception as e:
-        logger.debug(e)
+        logger.debug(f"created the directory {base}")
     out_pth = os.path.join(base, f'modis_composite_{"_".join(dates)}.tif')
+    logger.debug(f"out_pth: {out_pth}")
     mosaics = []
     for date in dates:
         mosaics.append(os.path.join(const.OUTPUT_TIF_MODIS,startdate.split('.')[0],f'{date}.tif'))
@@ -208,10 +210,10 @@ def process_modis(startdate, days):
     pth = os.path.join(const.MODIS_TERRA,'MOD10A1.006')
     dates = get_datespan(startdate, days)
     for date in dates:
-        try:
-            os.makedirs(os.path.join(const.INTERMEDIATE_TIF_MODIS,date))
-        except:
-            pass 
+        intTif = os.path.join(const.INTERMEDIATE_TIF_MODIS, date)
+        if not os.path.exists(intTif):
+            os.makedirs(intTif)
+            logger.debug(f"created folder: {intTif}")
         modis_granules = glob(os.path.join(pth, date,'*.hdf'))
         clean_intermediate(date)
 

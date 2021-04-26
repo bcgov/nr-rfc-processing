@@ -256,10 +256,10 @@ def plot_mosaics(sat: str, date: str):
         logger.debug(f"creating the directory: {out_dir}")
         os.makedirs(out_dir)
     if os.path.exists(out_pth):
-        logger.debug(f"deleting the file: {f}")
+        logger.debug(f"deleting the file: {out_pth}")
         os.remove(out_pth)
     try:
-        logger.debug(f"creating the file: {f}")
+        logger.debug(f"creating the file: {out_pth}")
         plt.savefig(out_pth)
         plt.close()
     except Exception as e:

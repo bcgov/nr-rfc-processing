@@ -39,7 +39,10 @@ def reproject_modis(date, name, pth, dst_crs):
         The destination CRS to be reprojected to
     """
     pthname = '.'.join(os.path.split(pth)[-1].split('.')[:-1])
+    logger.debug(f"pthname: {pthname}")
     intermediate_tif = os.path.join(const.INTERMEDIATE_TIF_MODIS, date, f'{pthname}_{dst_crs.replace(":", "")}.tif')
+    logger.debug(f"intermediate_tif: {intermediate_tif}")
+    logger.debug(f'pth: {pth}')
     with rio.open(pth, 'r') as modis_scene:
         with rio.open(modis_scene.subdatasets[0], 'r') as src:
             # transform raster to dst_crs------

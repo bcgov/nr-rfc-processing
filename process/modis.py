@@ -39,7 +39,10 @@ def reproject_modis(date, name, pth, dst_crs):
         The destination CRS to be reprojected to
     """
     pthname = '.'.join(os.path.split(pth)[-1].split('.')[:-1])
+    logger.debug(f"pthname: {pthname}")
     intermediate_tif = os.path.join(const.INTERMEDIATE_TIF_MODIS, date, f'{pthname}_{dst_crs.replace(":", "")}.tif')
+    logger.debug(f"intermediate_tif: {intermediate_tif}")
+    logger.debug(f'pth: {pth}')
     with rio.open(pth, 'r') as modis_scene:
         with rio.open(modis_scene.subdatasets[0], 'r') as src:
             # transform raster to dst_crs------
@@ -129,12 +132,14 @@ def composite_mosaics(startdate: str, dates: list):
     dates : list
         Dates of mosaics to consider for compositing
     """
+    logger.debug(f"startdate: {startdate}")
     base = os.path.join(const.INTERMEDIATE_TIF_MODIS, startdate)
-    try:
+    logger.debug(f"base dir: {base}")
+    if not os.path.exists(base):
         os.makedirs(base)
-    except Exception as e:
-        logger.debug(e)
+        logger.debug(f"created the directory {base}")
     out_pth = os.path.join(base, f'modis_composite_{"_".join(dates)}.tif')
+    logger.debug(f"out_pth: {out_pth}")
     mosaics = []
     for date in dates:
         mosaics.append(os.path.join(const.OUTPUT_TIF_MODIS,startdate.split('.')[0],f'{date}.tif'))
@@ -208,10 +213,10 @@ def process_modis(startdate, days):
     pth = os.path.join(const.MODIS_TERRA,'MOD10A1.006')
     dates = get_datespan(startdate, days)
     for date in dates:
-        try:
-            os.makedirs(os.path.join(const.INTERMEDIATE_TIF_MODIS,date))
-        except:
-            pass 
+        intTif = os.path.join(const.INTERMEDIATE_TIF_MODIS, date)
+        if not os.path.exists(intTif):
+            os.makedirs(intTif)
+            logger.debug(f"created folder: {intTif}")
         modis_granules = glob(os.path.join(pth, date,'*.hdf'))
         clean_intermediate(date)
 

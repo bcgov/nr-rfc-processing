@@ -59,7 +59,7 @@ node('zavijava_rfc') {
 
                 %condaEnvPath%\\python getDate.py > junk.txt
                 SET /p rundate= <junk.txt
-                %condaEnvPath%\\python run.py clean --target all
+                :: %condaEnvPath%\\python run.py clean --target all
                 %condaEnvPath%\\python run.py daily-pipeline --envpth=%SNOWPACK_ENVS_PTH% --date %rundate%
             '''
         }

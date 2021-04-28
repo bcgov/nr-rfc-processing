@@ -83,11 +83,14 @@ def create_modis_mosaic(pth: str):
     pth : str
         Path to directory of tiffs to be mosaic'ed
     """
+    logger.debug(f"pth: {pth}")
     date = os.path.split(pth)[-1] # Get date var from path
     outputs = glob(os.path.join(pth, '*.tif')) # Get file paths to mosaic
+    logger.debug(f"outputs to mosaic: {outputs}")
     if len(outputs) != 0:
         src_files_to_mosaic = []
         for f in outputs:
+            logger.debug(f'adding to mosaic: {f}')
             src = rio.open(f, 'r')
             src_files_to_mosaic.append(src)
         # Merge all granule tiffs into one
@@ -115,6 +118,7 @@ def create_modis_mosaic(pth: str):
                 logger.debug(f"creating dir: {dir2Create}")
         except Exception as e:
             logger.debug(e)
+        logger.debug(f"creating: {out_pth}")
         with rio.open(out_pth, "w", **out_meta) as dst:
             dst.write(mosaic)
         # Close all open tiffs that were mosaic'ed
@@ -192,6 +196,7 @@ def clean_intermediate(date):
     if len(residual_files) != 0:
         logger.info('Cleaning up residual files...')
         for f in residual_files:
+            logger.debug(f"delete: {f}")
             os.remove(f)
 
 def process_modis(startdate, days):
@@ -214,6 +219,7 @@ def process_modis(startdate, days):
     dates = get_datespan(startdate, days)
     for date in dates:
         intTif = os.path.join(const.INTERMEDIATE_TIF_MODIS, date)
+        logger.debug(f"intTif: {intTif}")
         if not os.path.exists(intTif):
             os.makedirs(intTif)
             logger.debug(f"created folder: {intTif}")

@@ -39,7 +39,10 @@ def reproject_modis(date, name, pth, dst_crs):
         The destination CRS to be reprojected to
     """
     pthname = '.'.join(os.path.split(pth)[-1].split('.')[:-1])
+    logger.debug(f"pthname: {pthname}")
     intermediate_tif = os.path.join(const.INTERMEDIATE_TIF_MODIS, date, f'{pthname}_{dst_crs.replace(":", "")}.tif')
+    logger.debug(f"intermediate_tif: {intermediate_tif}")
+    logger.debug(f'pth: {pth}')
     with rio.open(pth, 'r') as modis_scene:
         with rio.open(modis_scene.subdatasets[0], 'r') as src:
             # transform raster to dst_crs------
@@ -80,11 +83,14 @@ def create_modis_mosaic(pth: str):
     pth : str
         Path to directory of tiffs to be mosaic'ed
     """
+    logger.debug(f"pth: {pth}")
     date = os.path.split(pth)[-1] # Get date var from path
     outputs = glob(os.path.join(pth, '*.tif')) # Get file paths to mosaic
+    logger.debug(f"outputs to mosaic: {outputs}")
     if len(outputs) != 0:
         src_files_to_mosaic = []
         for f in outputs:
+            logger.debug(f'adding to mosaic: {f}')
             src = rio.open(f, 'r')
             src_files_to_mosaic.append(src)
         # Merge all granule tiffs into one
@@ -112,6 +118,7 @@ def create_modis_mosaic(pth: str):
                 logger.debug(f"creating dir: {dir2Create}")
         except Exception as e:
             logger.debug(e)
+        logger.debug(f"creating: {out_pth}")
         with rio.open(out_pth, "w", **out_meta) as dst:
             dst.write(mosaic)
         # Close all open tiffs that were mosaic'ed
@@ -129,12 +136,14 @@ def composite_mosaics(startdate: str, dates: list):
     dates : list
         Dates of mosaics to consider for compositing
     """
+    logger.debug(f"startdate: {startdate}")
     base = os.path.join(const.INTERMEDIATE_TIF_MODIS, startdate)
-    try:
+    logger.debug(f"base dir: {base}")
+    if not os.path.exists(base):
         os.makedirs(base)
-    except Exception as e:
-        logger.debug(e)
+        logger.debug(f"created the directory {base}")
     out_pth = os.path.join(base, f'modis_composite_{"_".join(dates)}.tif')
+    logger.debug(f"out_pth: {out_pth}")
     mosaics = []
     for date in dates:
         mosaics.append(os.path.join(const.OUTPUT_TIF_MODIS,startdate.split('.')[0],f'{date}.tif'))
@@ -187,6 +196,7 @@ def clean_intermediate(date):
     if len(residual_files) != 0:
         logger.info('Cleaning up residual files...')
         for f in residual_files:
+            logger.debug(f"delete: {f}")
             os.remove(f)
 
 def process_modis(startdate, days):
@@ -208,10 +218,11 @@ def process_modis(startdate, days):
     pth = os.path.join(const.MODIS_TERRA,'MOD10A1.006')
     dates = get_datespan(startdate, days)
     for date in dates:
-        try:
-            os.makedirs(os.path.join(const.INTERMEDIATE_TIF_MODIS,date))
-        except:
-            pass 
+        intTif = os.path.join(const.INTERMEDIATE_TIF_MODIS, date)
+        logger.debug(f"intTif: {intTif}")
+        if not os.path.exists(intTif):
+            os.makedirs(intTif)
+            logger.debug(f"created folder: {intTif}")
         modis_granules = glob(os.path.join(pth, date,'*.hdf'))
         clean_intermediate(date)
 

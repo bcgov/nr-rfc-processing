@@ -1,3 +1,5 @@
+[![Lifecycle:Stable](https://img.shields.io/badge/Lifecycle-Stable-97ca00)](<Redirect-URL>)
+
 # Credential YAML
 
 This YAML file will be passed to the ``--envpth`` argument to be able to download MODIS/VIIRS/Sentinel-2 data. This file needs to be located inside the mounted volume store in order for the internal processes to access the credentials. 
@@ -328,4 +330,3 @@ docker run --rm -it -v <mount point>:/data <tag name> process-sentinel --creds /
 Pick which product to download and process [0-2/n]:
 ```
 
-[![Lifecycle:Stable](https://img.shields.io/badge/Lifecycle-Stable-97ca00)](<Redirect-URL>)

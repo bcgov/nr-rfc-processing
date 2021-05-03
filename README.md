@@ -327,3 +327,5 @@ docker run --rm -it -v <mount point>:/data <tag name> process-sentinel --creds /
 2 : DATE: 2021-01-28 || CLOUD%:  2.606739
 Pick which product to download and process [0-2/n]:
 ```
+
+[![Lifecycle:Stable](https://img.shields.io/badge/Lifecycle-Stable-97ca00)](<Redirect-URL>)

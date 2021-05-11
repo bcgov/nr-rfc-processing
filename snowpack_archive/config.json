@@ -1,0 +1,47 @@
+{
+    "inputDirectoryList": [
+        {
+            "basins": [
+                "*",
+                [
+                    "modis",
+                    "viirs"
+                ]
+            ]
+        },
+        {
+            "intermediate_tif": [
+                [
+                    "modis",
+                    "viirs"
+                ]
+            ]
+        },
+        {
+            "kml": ""
+        },
+        {
+            "modis-terra": [
+                "*"
+            ]
+        },
+        {
+            "plot": [
+                [
+                    "modis",
+                    "viirs"
+                ],
+                "*"
+            ]
+        },
+        {
+            "watersheds": [
+                "*",
+                [
+                    "modis",
+                    "viirs"
+                ]
+            ]
+        }
+    ]
+}

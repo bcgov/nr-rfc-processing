@@ -32,6 +32,8 @@ node('zavijava_rfc') {
                 SET virtTmp=%RFC_ARTIFACTS_FOLDER%\\ve\\tmp
                 SET virtEnvDir=%RFC_ARTIFACTS_FOLDER%\\ve\\snow_ve
                 SET PATH=%minicondaInstallDir%;%PATH%
+                SET PYTHONPATH=%virtTmp%
+
                 if NOT EXIST %virtDir% (
                     mkdir %virtDir%
                 )
@@ -43,10 +45,9 @@ node('zavijava_rfc') {
                     echo miniconda dir %minicondaInstallDir%
                     dir %minicondaInstallDir%
                     %minicondaInstallDir%\\python --version
-                    python.exe -m pip install -t %virtTmp% virtualenv
+                    %minicondaInstallDir%\\python.exe -m pip install -t %virtTmp% virtualenv
                     :: SET PATH=%minicondaInstallDir%;%virtTmp%;%PATH%
-                    :: SET PYTHONPATH=%virtTmp%
-                    virtualenv %virtEnvDir%
+                    %virtTmp%\\bin\\virtualenv %virtEnvDir%
                     pip install -r .\\snowpack_archive\\requirements.txt
                 )
             '''

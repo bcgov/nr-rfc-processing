@@ -15,11 +15,11 @@ node('zavijava_rfc') {
             echo running jenkins2 branch
             echo setting up required directories
 
-            if NOT EXIST %ENS_DRIVEMAPPING%:\\nul  (
+            if NOT EXIST %RFC_DRIVEMAPPING%:\\nul  (
                 net use %RFC_DRIVEMAPPING%: %RFC_NETWORK_DRIVE% /PERSISTENT:NO
                 @REM powershell -File ./mapdrives.ps1
             )
-
+            dir
             echo complete
             '''
         }

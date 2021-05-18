@@ -32,6 +32,12 @@ node('zavijava_rfc') {
                 SET virtTmp=%RFC_ARTIFACTS_FOLDER%\\ve\\tmp
                 SET virtEnvDir=%RFC_ARTIFACTS_FOLDER%\\ve\\snow_ve
                 SET PATH=%minicondaInstallDir%;%PATH%
+                if NOT EXIST %virtDir% (
+                    mkdir %virtDir%
+                )
+                if NOT EXIST %virtTmp% (
+                    mkdir %virtTmp%
+                )
                 if NOT EXIST %virtEnvDir% (
                     python.exe -m pip install -t %virtTmp% virtualenv
                     SET PATH=%minicondaInstallDir%;%virtTmp%;%PATH%

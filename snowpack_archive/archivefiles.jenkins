@@ -48,6 +48,7 @@ node('zavijava_rfc') {
                     ::dir %minicondaInstallDir%
                     %virtTmp%\\bin\\virtualenv %virtEnvDir%
                     call %virtEnvDir%\\Scripts\\activate.bat
+                    pip install virtualenv
                     pip install -r .\\snowpack_archive\\requirements.txt
                 )
             '''

@@ -41,7 +41,7 @@ node('zavijava_rfc') {
                     mkdir %virtTmp%
                     %minicondaInstallDir%\\python.exe -m pip install -t %virtTmp% virtualenv
                 )
-                rmdir  %virtEnvDir%
+                rmdir  %virtEnvDir% /s
                 if NOT EXIST %virtEnvDir% (
                     echo running python
                     echo miniconda dir %minicondaInstallDir%

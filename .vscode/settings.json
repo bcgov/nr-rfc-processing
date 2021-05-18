@@ -3,16 +3,26 @@
     "python.linting.flake8Enabled": true,
     "python.linting.enabled": true,
     "python.linting.pylintArgs": [],
-    "python.pythonPath": "/home/kjnether/proj/rfc/envs/snowpack/bin/python",
     "python.formatting.provider": "black",
     "python.testing.unittestArgs": [
         "-v",
         "-s",
-        "./snowpack_archive",
+        "./snowpack_archive/tests/",
         "-p",
-        "*_test.py"
+        "*_Test.py"
     ],
     "python.testing.pytestEnabled": false,
     "python.testing.nosetestsEnabled": false,
-    "python.testing.unittestEnabled": true
+    "python.testing.unittestEnabled": true,
+    "autoDocstring.docstringFormat": "sphinx",
+    "autoDocstring.generateDocstringOnEnter": true,
+    "editor.rulers": [
+        79,
+        100,
+        130
+      ],
+    "files.trimTrailingWhitespace": true,
+    "files.associations": {
+        "*.jenkins": "Jenkinsfile"
+    }
 }

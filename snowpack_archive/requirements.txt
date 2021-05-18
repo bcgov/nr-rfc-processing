@@ -1,0 +1,4 @@
+minio==6.0.2
+#pyminio==0.2.1
+scandir==1.10.0
+python-dotenv==0.17.1

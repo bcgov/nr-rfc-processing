@@ -40,7 +40,7 @@ node('zavijava_rfc') {
                 )
                 if NOT EXIST %virtEnvDir% (
                     echo running python
-                    python --version
+                    %minicondaInstallDir%\\python --version
                     python.exe -m pip install -t %virtTmp% virtualenv
                     SET PATH=%minicondaInstallDir%;%virtTmp%;%PATH%
                     SET PYTHONPATH=%virtTmp%

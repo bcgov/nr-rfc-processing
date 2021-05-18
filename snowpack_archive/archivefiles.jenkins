@@ -41,12 +41,13 @@ node('zavijava_rfc') {
                     mkdir %virtTmp%
                     %minicondaInstallDir%\\python.exe -m pip install -t %virtTmp% virtualenv
                 )
+                rmdir  %virtEnvDir%
                 if NOT EXIST %virtEnvDir% (
                     echo running python
                     echo miniconda dir %minicondaInstallDir%
                     ::dir %minicondaInstallDir%
                     %virtTmp%\\bin\\virtualenv %virtEnvDir%
-                    %virtEnvDir%\\Scripts\\activate.bat
+                    call %virtEnvDir%\\Scripts\\activate.bat
                     pip install -r .\\snowpack_archive\\requirements.txt
                 )
             '''

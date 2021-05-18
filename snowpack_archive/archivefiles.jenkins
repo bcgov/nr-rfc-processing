@@ -53,6 +53,7 @@ node('zavijava_rfc') {
         }
         stage('runArchive') {
             bat '''
+                dir
                 SET virtEnvDir=%RFC_ARTIFACTS_FOLDER%\\ve\\snow_ve
                 %virtEnvDir%\\Scripts\\activate.bat
                 %virtEnvDir%\\Scripts\\python snowpack_archive\\runS3Backup.py

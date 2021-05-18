@@ -1,0 +1,51 @@
+node('zavijava_rfc') {
+    withEnv([
+        "JOB_NAME=Snowpack Data Archive",
+        "TEMP=$WORKSPACE\\tmp",
+        "TMP=$WORKSPACE\\tmp",
+        "no_proxy=github.com"
+        ]) {
+        stage('checkout') {
+            //sh 'if [ ! -d "$TEMP" ]; then mkdir $TEMP; fi'
+            checkout([$class: 'GitSCM', branches: [[name: "${env.TAGNAME}"]], extensions: [], userRemoteConfigs: [[url: 'https://github.com/bcgov/nr-rfc-processing']]])
+        }
+        stage('mapdrives') {
+            bat '''
+            :: -------- Create RFC Drive Mapping and required folders -------
+            echo running jenkins2 branch
+            echo setting up required directories
+
+            if NOT EXIST %ENS_DRIVEMAPPING%:\\nul  (
+                net use %RFC_DRIVEMAPPING%: %RFC_NETWORK_DRIVE% /PERSISTENT:NO
+                @REM powershell -File ./mapdrives.ps1
+            )
+
+            echo complete
+            '''
+        }
+        stage('virtualenv') {
+            bat '''
+                :: ----- install virtualenv to tmp dir to build a ve ---------
+                echo %RFC_ARTIFACTS_FOLDER%
+                SET minicondaInstallDir=%RFC_ARTIFACTS_FOLDER%\\miniconda
+                SET virtDir=%RFC_ARTIFACTS_FOLDER%\\ve
+                SET virtTmp=%RFC_ARTIFACTS_FOLDER%\\ve\\tmp
+                SET virtEnvDir=%RFC_ARTIFACTS_FOLDER%\\ve\\snow_ve
+                if NOT EXIST %virtEnvDir% (
+                    %minicondaInstallDir%\\python -m pip install -t %virtTmp% virtualenv
+                    SET PATH=%minicondaInstallDir%\\python;%virtTmp%;%PATH%
+                    SET PYTHONPATH=%virtTmp%
+                    virtualenv %virtEnvDir%
+                    pip install -r .\\snowpack_archive\\requirements.txt
+                )
+            '''
+        }
+        stage('runArchive') {
+            bat '''
+                SET virtEnvDir=%RFC_ARTIFACTS_FOLDER%\\ve\\snow_ve
+                %virtEnvDir%\\Scripts\\activate.bat
+                python snowpack_archive\\runS3Backup.py
+            '''
+        }
+    }
+}

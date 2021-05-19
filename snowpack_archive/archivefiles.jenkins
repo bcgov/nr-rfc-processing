@@ -29,7 +29,7 @@ node('zavijava_rfc') {
                 echo %RFC_ARTIFACTS_FOLDER%
                 SET minicondaInstallDir=%RFC_ARTIFACTS_FOLDER%\\miniconda
                 SET virtDir=%RFC_ARTIFACTS_FOLDER%\\ve
-                SET virtTmp=%RFC_ARTIFACTS_FOLDER%\\ve\\tmp
+                SET virtTmp=%RFC_ARTIFACTS_FOLDER%\\ve\\virtenv
                 SET virtEnvDir=%RFC_ARTIFACTS_FOLDER%\\ve\\snow_ve
                 SET PATH=%minicondaInstallDir%;%virtTmp%;%PATH%
                 SET PYTHONPATH=%virtTmp%
@@ -57,6 +57,9 @@ node('zavijava_rfc') {
             bat '''
                 dir
                 SET virtEnvDir=%RFC_ARTIFACTS_FOLDER%\\ve\\snow_ve
+                SET virtTmp=%RFC_ARTIFACTS_FOLDER%\\ve\\virtenv
+                SET PYTHONPATH=%virtTmp%
+
                 call %virtEnvDir%\\Scripts\\activate.bat
                 %virtEnvDir%\\Scripts\\python snowpack_archive\\runS3Backup.py
             '''

@@ -1,8 +1,9 @@
 {
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
+    "python.linting.flake8Args": [],
     "python.linting.enabled": true,
-    "python.linting.pylintArgs": [],
+    "python.linting.pylintArgs": [""],
     "python.formatting.provider": "black",
     "python.testing.unittestArgs": [
         "-v",

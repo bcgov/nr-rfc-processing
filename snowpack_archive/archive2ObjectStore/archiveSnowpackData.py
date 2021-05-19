@@ -44,12 +44,13 @@ import re
 import sys
 
 import minio
-#import pyminio
 import scandir
 
 from . import constants
 
 LOGGER = logging.getLogger(__name__)
+
+# pylint: disable=anomalous-backslash-in-string
 
 
 class ArchiveSnowData(object):
@@ -149,7 +150,8 @@ class DirectoryList(object):
                 if self.inputDirRegex.match(iterdir):
                     fullpath = os.path.join(rootdir, iterdir)
                     dirs.append(fullpath)
-                    LOGGER.debug(f'datedir being added to iterator: {fullpath}')
+                    LOGGER.debug('datedir being added to iterator: ' +
+                                 f'{fullpath}')
             if not dirs:
                 dirs = self.getNextDirList()
             self.dirList = dirs
@@ -189,7 +191,6 @@ class ObjectStore(object):
                                        os.environ['OBJ_STORE_USER'],
                                        os.environ['OBJ_STORE_SECRET'])
 
-        #self.pyMinIoClient = pyminio.Pyminio(minio_obj=self.minIoClient)
         self.objIndex = {}
         self.curDir = None
         self.copyDateDirCnt = 0
@@ -272,8 +273,8 @@ class ObjectStore(object):
         rootPathObj = pathlib.PurePath(constants.SRC_ROOT_DIR)
         inPathObj = pathlib.PurePath(inPath)
         if rootPathObj not in inPathObj.parents:
-            msg = f'expecting the root path {self.srcRootDir} to be part ' + \
-                  f'of the input path {inPath}'
+            msg = f'expecting the root path {constants.SRC_ROOT_DIR} to ' + \
+                  f'be part of the input path {inPath}'
             LOGGER.error(msg)
             raise ValueError(msg)
 

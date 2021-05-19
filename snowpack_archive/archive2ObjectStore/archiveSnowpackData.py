@@ -99,7 +99,7 @@ class ArchiveSnowData(object):
         """
         dateRegex = re.compile(constants.DIRECTORY_DATE_REGEX)
         pathObj = pathlib.PurePath(inPath)
-        print(f"pathObj : {len(pathObj.parts)}, {pathObj.parts}")
+        LOGGER.debug(f"pathObj : {len(pathObj.parts)}, {pathObj.parts}")
         # iterate from end to start
         iterCnt = len(pathObj.parts) - 1
         dateObj = None
@@ -149,7 +149,7 @@ class DirectoryList(object):
                 if self.inputDirRegex.match(iterdir):
                     fullpath = os.path.join(rootdir, iterdir)
                     dirs.append(fullpath)
-                    print(f'datedir being added to iterator: {fullpath}')
+                    LOGGER.debug(f'datedir being added to iterator: {fullpath}')
             if not dirs:
                 dirs = self.getNextDirList()
             self.dirList = dirs

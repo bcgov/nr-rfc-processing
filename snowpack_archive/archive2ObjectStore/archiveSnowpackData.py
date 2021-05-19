@@ -245,9 +245,9 @@ class ObjectStore(object):
         LOGGER.info(f'copying: {srcDir}...')
         self.copyDirectoryRecurive(srcDir)
         LOGGER.info(f"copied the path: {srcDir}, to object storage")
-        if self.copyDateDirCnt > 17:
-            LOGGER.debug("stopping here")
-            sys.exit()
+        # if self.copyDateDirCnt > 17:
+        #     LOGGER.debug("stopping here")
+        #     sys.exit()
         self.copyDateDirCnt += 1
 
     def removeSrcRootDir(self, inPath):

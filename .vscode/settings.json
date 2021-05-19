@@ -1,0 +1,29 @@
+{
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8Args": [],
+    "python.linting.enabled": true,
+    "python.linting.pylintArgs": [""],
+    "python.formatting.provider": "black",
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./snowpack_archive/tests/",
+        "-p",
+        "*_Test.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.unittestEnabled": true,
+    "autoDocstring.docstringFormat": "sphinx",
+    "autoDocstring.generateDocstringOnEnter": true,
+    "editor.rulers": [
+        79,
+        100,
+        130
+      ],
+    "files.trimTrailingWhitespace": true,
+    "files.associations": {
+        "*.jenkins": "Jenkinsfile"
+    }
+}

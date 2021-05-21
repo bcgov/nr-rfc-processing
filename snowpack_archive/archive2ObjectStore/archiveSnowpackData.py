@@ -56,21 +56,72 @@ LOGGER = logging.getLogger(__name__)
 class ArchiveSnowData(object):
     def __init__(self):
         LOGGER.debug("init object")
-        self.dirIterator = DirectoryList(constants.SRC_ROOT_DIR)
+        omitDirs = self.getOmitDirs()
+        self.dirIterator = DirectoryList(constants.SRC_ROOT_DIR,
+                                         omitDirectoryList=omitDirs)
 
     def archiveDirs(self):
         objStore = ObjectStore()
+        cnt = 0
         for currentDirectory in self.dirIterator:
             LOGGER.debug(f"currentdir: {currentDirectory}")
-            if self.isReadyForArchive(currentDirectory):
+            if self.isReadyForArchive(currentDirectory, daysBack=20):
                 LOGGER.debug(f"directory for archive: {currentDirectory}")
                 objStore.copy(currentDirectory)
+                self.deleteDir(currentDirectory)
+                # used when testing to run on limited number of directories
+                # if cnt > 20:
+                #     raise
+                cnt += 1
 
-    def isReadyForArchive(self, inPath):
+    def deleteDir(self, inDir):
+        """tests to make sure the directory is empty, if it is it gets deleted
+
+        :param inDir: directory to delete
+        :type inDir: str
+        """
+        contents = os.listdir(inDir)
+        if not contents:
+            LOGGER.info(f"removing the directory: {inDir}")
+            os.rmdir(inDir)
+        else:
+            LOGGER.info(f"cannot remove the directory as its not empty: {inDir}")
+
+    def getOmitDirs(self):
+        """ determines if a constants ROOTDIRECTORIES_OMIT parameter has been
+        defined.  If it has, then looks at the directories defined there, makes
+        sure that they exist, if they do the full paths for those directories
+        are added to a list and returned
+
+        :return: full paths to any directories that should be ommitted
+        :rtype: list
+        """
+        omitDirList = []
+        if (hasattr(constants, 'ROOTDIRECTORIES_OMIT')) and \
+                constants.ROOTDIRECTORIES_OMIT:
+            dirStringList = constants.ROOTDIRECTORIES_OMIT.split(',')
+            LOGGER.debug(f"dirStringList: {dirStringList}")
+            for omitDir in dirStringList:
+                omitDirFullPath = os.path.join(constants.SRC_ROOT_DIR, omitDir)
+                omitDirFullPath = os.path.normcase(os.path.normpath(omitDirFullPath))
+                if os.path.exists(omitDirFullPath):
+                    omitDirList.append(omitDirFullPath)
+                    LOGGER.info(f"adding {omitDirFullPath} to omit list")
+                else:
+                    LOGGER.warning(f"the omit directory: {omitDirFullPath} could " +
+                                   "not be found")
+        LOGGER.debug(f"omitDirList: {omitDirList}")
+        return omitDirList
+
+    def isReadyForArchive(self, inPath, daysBack=20):
         """ river forecast snowpack data has directories with the string
         YYYY.MM.DD to identify what dates the data is for.  This method will
         recieve a path, extract the date portion of the path, convert it into
         a date object and return true if the date is older than 15 days.
+
+        Note: longer term, thinking that this could be moved to the directory
+              iterator.  Iterator could get passed a method definition that
+              gets executed per directory?  mixin kind of pattern idea
 
         :param inPath: input path string
         :type inPath: str
@@ -78,8 +129,10 @@ class ArchiveSnowData(object):
             date threhold (default is 15 days)
         :rtype: boolean
         """
+        if daysBack > 0:
+            daysBack = 0 - daysBack
         dateObj = self.getDirectoryDate(inPath)
-        daysBack = datetime.timedelta(days=-15)
+        daysBack = datetime.timedelta(days=daysBack)
         currentDate = datetime.datetime.now()
         Threshold = currentDate + daysBack
         isOlderThanThreshold = False
@@ -120,8 +173,9 @@ class DirectoryList(object):
     that needs to be backed up
     '''
 
-    def __init__(self, srcRootDir, inputDirRegex=None):
+    def __init__(self, srcRootDir, inputDirRegex=None, omitDirectoryList=[]):
         self.srcRootDir = srcRootDir
+        self.omitDirectoryList = omitDirectoryList
         if not inputDirRegex:
             self.inputDirRegex = re.compile(constants.DIRECTORY_DATE_REGEX)
         self.dirList = []
@@ -147,8 +201,9 @@ class DirectoryList(object):
             rootdir, tmpDirs, files = self.dirWalker.__next__()
             dirs = []
             for iterdir in tmpDirs:
-                if self.inputDirRegex.match(iterdir):
-                    fullpath = os.path.join(rootdir, iterdir)
+                fullpath = os.path.join(rootdir, iterdir)
+                if not self.isDirInOmitList(fullpath) and \
+                                            self.inputDirRegex.match(iterdir):
                     dirs.append(fullpath)
                     LOGGER.debug('datedir being added to iterator: ' +
                                  f'{fullpath}')
@@ -160,6 +215,45 @@ class DirectoryList(object):
 
         except StopIteration:
             self.dirWalkingComplete = True
+
+    def isDirInOmitList(self, inDir):
+        """Checks to see if the input directory is a subdirectory
+        of the omit list
+
+        :param inDir: [description]
+        :type inDir: [type]
+        """
+        isInOmitList = False
+        if self.omitDirectoryList:
+            for omitDir in self.omitDirectoryList:
+                if self.isSubDir(inDir, omitDir):
+                    isInOmitList = True
+                    break
+        return isInOmitList
+
+    def isSubDir(self, pth1, pth2):
+        """Gets two paths, and return true if either of them are subpaths
+        of the other.
+
+        :param pth1: [description]
+        :type pth1: [type]
+        :param pth2: [description]
+        :type pth2: [type]
+        :return: [description]
+        :rtype: [type]
+        """
+        areEqual = True
+        pth1Corrected = os.path.normcase(os.path.normpath(pth1))
+        pth2Corrected = os.path.normcase(os.path.normpath(pth2))
+
+        pth1List = list(pathlib.PurePath(pth1Corrected).parts)
+        pth2List = list(pathlib.PurePath(pth2Corrected).parts)
+        if pth1List != pth2List:
+            for x, y in zip(pth1List, pth2List):
+                #LOGGER.debug(f'x: {x}, y: {y}')
+                if x != y:
+                    areEqual = False
+        return areEqual
 
 
 class ObjectStore(object):

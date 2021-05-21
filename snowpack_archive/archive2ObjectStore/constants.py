@@ -14,4 +14,9 @@ OBJ_STORE_USER = os.environ['OBJ_STORE_USER']
 OBJ_STORE_HOST = os.environ['OBJ_STORE_HOST']
 
 # used to identify directories that contain dates in them
-DIRECTORY_DATE_REGEX = '^[0-9]{4}\.{1}[0-9]{2}\.{1}[0-9]{2}$' # noqa: W605
+DIRECTORY_DATE_REGEX = '^[0-9]{4}\.{1}[0-9]{2}\.{1}[0-9]{2}$'  # noqa: W605
+
+#  identifies the root directories (sub dirs in SRC_ROOT_DIR) that should
+#  be ommitted (a comma delimited list) for example:
+#  ROOTDIRECTORIES_OMIT=dir1,dir2\\someotherdir,dir3
+ROOTDIRECTORIES_OMIT = os.environ['ROOTDIRECTORIES_OMIT']

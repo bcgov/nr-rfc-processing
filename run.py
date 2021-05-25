@@ -31,7 +31,7 @@ def build():
     buildup.buildall()
 
 @click.command()
-@click.option('--target', required=True, 
+@click.option('--target', required=True,
         type=click.Choice(['intermediate','output','watersheds','basins','downloads','kml','all']),
         help="Target directory to clean up/remove"
         )
@@ -58,7 +58,7 @@ def clean(target):
 @click.option('--days', required=False, default='5', type=const.DAYS, help='Select 1, 5 or 8 day composite for MODIS')
 @click.option('--sat', type=const.SATS, required=True, help='Which satellite source to process [ modis | viirs ]')
 def download(envpth: str, sat: str, date: str, days: int = 5):
-    if check_date(date):    
+    if check_date(date):
         print(f'download {sat}')
         if sat == 'viirs':
             days = 1
@@ -91,7 +91,7 @@ def process(date: str, sat: str, days: int):
 @click.option('--max-allowable-cloud', required=False, default=50, help='Percentage of max allowable cloud to query with')
 @click.option('--force-download', required=False, default='false', type=click.Choice(['true','false']), help='Force download by removing existing files for scene')
 @click.option('--clean' ,required=False, default='false', type=click.Choice(['true', 'false']), help='Option to clean up intermediate files')
-def process_sentinel(creds: str, date:str, lat: float, lng: float, rgb: str, 
+def process_sentinel(creds: str, date:str, lat: float, lng: float, rgb: str,
                         max_allowable_cloud: int, force_download: str,
                         day_tolerance: int, clean: str):
     if check_date(date):
@@ -167,7 +167,7 @@ def daily_pipeline(envpth: str, date: str, clean: str, days: int = 5):
         date_l = date.split('.')
         target_date = datetime.datetime(int(date_l[0]), int(date_l[1]), int(date_l[2]))
         if target_date.date() == datetime.datetime.now(pst).date():
-            date = datetime.datetime.strftime(target_date - datetime.timedelta(days=3), '%Y.%m.%d')
+            date = datetime.datetime.strftime(target_date - datetime.timedelta(days=4), '%Y.%m.%d')
         for sat in ['modis','viirs']:
             logger.info(f'Daily Pipeline running {sat} process')
             dailypipeline(envpth, date, sat, int(days), db_handler)
@@ -231,4 +231,3 @@ cli.add_command(process_sentinel)
 if __name__ == '__main__':
     multiprocessing.freeze_support()
     cli()
-    

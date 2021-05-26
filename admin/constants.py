@@ -57,3 +57,13 @@ VIIRS_DAILY_10YR = os.path.join(VIIRS_DAILY_NORM, '10yr')
 VIIRS_DAILY_20YR = os.path.join(VIIRS_DAILY_NORM, '20yr')
 
 AOI = os.path.join(os.path.dirname(__file__), '..', 'aoi')
+
+# set default values and then override with what is in the
+# env vars if populated with a valid value
+VIIRS_OFFSET = 1
+if ('VIIRS_OFFSET' in os.environ ) and os.environ['VIIRS_OFFSET']:
+    VIIRS_OFFSET=os.environ['VIIRS_OFFSET']
+
+MODIS_OFFSET = 3
+if ('MODIS_OFFSET' in os.environ) and os.environ['MODIS_OFFSET']:
+    MODIS_OFFSET=os.environ['MODIS_OFFSET']

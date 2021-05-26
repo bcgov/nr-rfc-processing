@@ -62,8 +62,8 @@ AOI = os.path.join(os.path.dirname(__file__), '..', 'aoi')
 # env vars if populated with a valid value
 VIIRS_OFFSET = 1
 if ('VIIRS_OFFSET' in os.environ ) and os.environ['VIIRS_OFFSET']:
-    VIIRS_OFFSET=os.environ['VIIRS_OFFSET']
+    VIIRS_OFFSET=int(os.environ['VIIRS_OFFSET'])
 
 MODIS_OFFSET = 3
 if ('MODIS_OFFSET' in os.environ) and os.environ['MODIS_OFFSET']:
-    MODIS_OFFSET=os.environ['MODIS_OFFSET']
+    MODIS_OFFSET=int(os.environ['MODIS_OFFSET'])

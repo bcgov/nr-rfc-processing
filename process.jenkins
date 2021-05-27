@@ -6,17 +6,17 @@ node('zavijava_rfc') {
     //
     stage('checkout') {
         //sh 'if [ ! -d "$TEMP" ]; then mkdir $TEMP; fi'
-        checkout([$class: 'GitSCM', branches: [[name: '$TAGNAME']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/bcgov/nr-rfc-processing']]])    
+        checkout([$class: 'GitSCM', branches: [[name: '$TAGNAME']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/bcgov/nr-rfc-processing']]])
     }
     stage('build snowpack dependencies') {
         build job: "snowpack_analysis_BUILD_${env.BUILDENV}",
         parameters: [
-            string(name: 'TAGNAME', value: "${TAGNAME}"), 
-            string(name: 'no_proxy', value: "${no_proxy}"), 
-            string(name: 'RFC_ARTIFACTS_FOLDER', value: "${RFC_ARTIFACTS_FOLDER}"), 
-            string(name: 'RFC_NETWORK_DRIVE', value: "${RFC_NETWORK_DRIVE}"), 
-            string(name: 'RFC_DRIVEMAPPING', value: "${RFC_DRIVEMAPPING}"), 
-            string(name: 'SNOWPACK_DATA', value: "${SNOWPACK_DATA}"), 
+            string(name: 'TAGNAME', value: "${TAGNAME}"),
+            string(name: 'no_proxy', value: "${no_proxy}"),
+            string(name: 'RFC_ARTIFACTS_FOLDER', value: "${RFC_ARTIFACTS_FOLDER}"),
+            string(name: 'RFC_NETWORK_DRIVE', value: "${RFC_NETWORK_DRIVE}"),
+            string(name: 'RFC_DRIVEMAPPING', value: "${RFC_DRIVEMAPPING}"),
+            string(name: 'SNOWPACK_DATA', value: "${SNOWPACK_DATA}"),
             string(name: 'REBUILDCONDA', value: "${REBUILDCONDA}")]
     }
     stage('configure drive mappings') {
@@ -27,12 +27,12 @@ node('zavijava_rfc') {
         )
 
         IF NOT EXIST %RFC_ARTIFACTS_FOLDER% (
-            echo creating the folder %RFC_ARTIFACTS_FOLDER% 
+            echo creating the folder %RFC_ARTIFACTS_FOLDER%
             mkdir %RFC_ARTIFACTS_FOLDER%
         )
 
         IF NOT EXIST %RFC_OBJ_STORE_DRIVEMAPPING%:\\nul (
-            echo creating the folder %RFC_ARTIFACTS_FOLDER% 
+            echo creating the folder %RFC_ARTIFACTS_FOLDER%
             net use %RFC_OBJ_STORE_DRIVEMAPPING%: %RFC_OBJ_STOR_UNC% /PERSISTENT:NO
         )
 
@@ -57,10 +57,24 @@ node('zavijava_rfc') {
                 echo env var param is: %SNOWPACK_ENVS_PTH%
                 echo SNOWPACK_SECRETS: %SNOWPACK_SECRETS%
 
-                %condaEnvPath%\\python getDate.py > junk.txt
-                SET /p rundate= <junk.txt
-                :: %condaEnvPath%\\python run.py clean --target all
-                %condaEnvPath%\\python run.py daily-pipeline --envpth=%SNOWPACK_ENVS_PTH% --date %rundate%
+                IF NOT DEFINED SNOW_PIPELINE_DATE (
+                    %condaEnvPath%\\python getDate.py > junk.txt
+                    SET /p SNOW_PIPELINE_DATE= <junk.txt
+                    DEL /f junk.txt
+                )
+                ELSE (
+                    IF "%SNOW_PIPELINE_DATE%"=="" (
+                        %condaEnvPath%\\python getDate.py > junk.txt
+                        SET /p SNOW_PIPELINE_DATE= <junk.txt
+                        DEL /f junk.txt
+                    )
+                )
+                echo snow pipeline date is %SNOW_PIPELINE_DATE%
+
+
+                :: %condaEnvPath%\\python getDate.py > junk.txt
+                :: SET /p rundate= <junk.txt
+                :: %condaEnvPath%\\python run.py daily-pipeline --envpth=%SNOWPACK_ENVS_PTH% --date %SNOW_PIPELINE_DATE%
             '''
         }
     }

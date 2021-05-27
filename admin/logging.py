@@ -1,4 +1,4 @@
-import logging 
+import logging
 formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s {%(module)s:%(lineno)d} : %(message)s')
 
 def setup_logger(name, log_file, level=logging.INFO):
@@ -77,17 +77,7 @@ def setup_stream_logger(name, level=logging.DEBUG):
     logger = logging.getLogger('caluculate_norm')
     logger.setLevel(hatfieldLogLevel)
 
-
-
-
-
-
-
-
-
     logger = logging.getLogger('__main__')
     logger.setLevel(hatfieldLogLevel)
-
-
 
     return logger

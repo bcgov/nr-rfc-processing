@@ -167,7 +167,7 @@ def daily_pipeline(envpth: str, date: str, clean: str, days: int = 5):
         date_l = date.split('.')
         target_date = datetime.datetime(int(date_l[0]), int(date_l[1]), int(date_l[2]))
         if target_date.date() == datetime.datetime.now(pst).date():
-            date = datetime.datetime.strftime(target_date - datetime.timedelta(days=4), '%Y.%m.%d')
+            date = datetime.datetime.strftime(target_date - datetime.timedelta(days=const.MODIS_OFFSET), '%Y.%m.%d')
         for sat in ['modis','viirs']:
             logger.info(f'Daily Pipeline running {sat} process')
             dailypipeline(envpth, date, sat, int(days), db_handler)
@@ -179,7 +179,7 @@ def daily_pipeline(envpth: str, date: str, clean: str, days: int = 5):
 def dailypipeline(envpth: str, date: str, sat: str, days: int, db_handler: DBHandler):
     if check_date(date):
         if sat == 'viirs':
-            days = 1
+            days = const.VIIRS_OFFSET #1
         #print(type())
         #logger.debug(f'download granules: {download_granules} - {download_granules.download_granules}')
         download_granules.download_granules.download_granules(envpth, date, sat, int(days))

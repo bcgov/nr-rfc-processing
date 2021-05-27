@@ -25,5 +25,6 @@
     "files.trimTrailingWhitespace": true,
     "files.associations": {
         "*.jenkins": "Jenkinsfile"
-    }
+    },
+    "python.pythonPath": "/home/kjnether/proj/rfc/envs/snowpack/bin/python"
 }

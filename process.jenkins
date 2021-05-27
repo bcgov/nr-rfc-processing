@@ -61,8 +61,7 @@ node('zavijava_rfc') {
                     %condaEnvPath%\\python getDate.py > junk.txt
                     SET /p SNOW_PIPELINE_DATE= <junk.txt
                     DEL /f junk.txt
-                )
-                ELSE (
+                ) ELSE (
                     IF "%SNOW_PIPELINE_DATE%"=="" (
                         %condaEnvPath%\\python getDate.py > junk.txt
                         SET /p SNOW_PIPELINE_DATE= <junk.txt

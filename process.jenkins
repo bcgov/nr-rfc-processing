@@ -70,10 +70,7 @@ node('zavijava_rfc') {
                 )
                 echo snow pipeline date is %SNOW_PIPELINE_DATE%
 
-
-                :: %condaEnvPath%\\python getDate.py > junk.txt
-                :: SET /p rundate= <junk.txt
-                :: %condaEnvPath%\\python run.py daily-pipeline --envpth=%SNOWPACK_ENVS_PTH% --date %SNOW_PIPELINE_DATE%
+                %condaEnvPath%\\python run.py daily-pipeline --envpth=%SNOWPACK_ENVS_PTH% --date %SNOW_PIPELINE_DATE%
             '''
         }
     }

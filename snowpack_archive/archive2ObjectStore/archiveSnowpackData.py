@@ -1,36 +1,23 @@
 """
-expects the following environment variables be set:
-  ROOT_DIR = the root directory for the snowpack data
-  BACKUP_ROOT = the directory where snowpack data should get backed up
 
-Script reads the config.json file that describes what exactly to backup:
+Archives snowpack data to object store that exceeds a specified time period.
 
-config.json format:
+Script iterates through data defined on the path $SRC_ROOT_DIR.  Looks for
+directories that match the expression defined in the
+constant.DIRECTORY_DATE_REGEX (example of default pattern: 2021.05.15).  If the
+date folder is older than constants.DAYS_BACK.  The archive process first
+uploads the file to boject
 
-    inputDirectoryList:
-        list of objects with the following format:
+Environment Variables Used by Script:
+* ROOT_DIR = the root directory for the snowpack data
+* BACKUP_ROOT = the directory where snowpack data should get backed up
 
-        {directory_name: [list describing file paths]}
+Constants used:
+* DAYS_BACK - How many days old a directories name describes when compared with
+              the current date, to determine if it should be archived or not
+* ROOTDIRECTORIES_OMIT - a list of sub directories off of the root directory
+              that should be ignored from the archive process
 
-        where:
-          * directory_name: is the name of the directory in the ROOT_DIR
-                that needs to be backed up
-          * list describing file paths: a list describing the path to a
-                directory containing a bunch of date delimited directories
-
-        The file path list can contain:
-        * name of a directory
-        * a '*' meaning iterate through each directory evaluating the contents
-        * a list describing a subset of the directories that are expected
-
-
-The script:
-* iterates through all of the dated directories
-* parses the date directories into a date object
-* if the directory is older than (default=2weeks) it archives the
-  directory into object store
-* archive calculates md5 on source, copies, calculates again on destination
-  then deletes.
 """
 
 import datetime
@@ -47,13 +34,17 @@ import minio
 import scandir
 
 from . import constants
+import VerifyETag
 
 LOGGER = logging.getLogger(__name__)
 
 # pylint: disable=anomalous-backslash-in-string
+#
 
 
 class ArchiveSnowData(object):
+    """High level functionality for archiving snowpack data."""
+
     def __init__(self):
         LOGGER.debug("init object")
         omitDirs = self.getOmitDirs()
@@ -65,17 +56,18 @@ class ArchiveSnowData(object):
         cnt = 0
         for currentDirectory in self.dirIterator:
             LOGGER.debug(f"currentdir: {currentDirectory}")
-            if self.isReadyForArchive(currentDirectory, daysBack=20):
+            if self.isReadyForArchive(currentDirectory,
+                                      daysBack=constants.DAYS_BACK):
                 LOGGER.debug(f"directory for archive: {currentDirectory}")
                 objStore.copy(currentDirectory)
                 self.deleteDir(currentDirectory)
                 # used when testing to run on limited number of directories
-                # if cnt > 20:
-                #     raise
                 cnt += 1
 
     def deleteDir(self, inDir):
-        """tests to make sure the directory is empty, if it is it gets deleted
+        """Deletes empty directoires.
+
+        Tests to make sure the directory is empty, if it is it gets deleted.
 
         :param inDir: directory to delete
         :type inDir: str
@@ -85,10 +77,12 @@ class ArchiveSnowData(object):
             LOGGER.info(f"removing the directory: {inDir}")
             os.rmdir(inDir)
         else:
-            LOGGER.info(f"cannot remove the directory as its not empty: {inDir}")
+            LOGGER.info(f"cannot remove the directory as its not empty: {inDir}")  # noqa: E501
 
     def getOmitDirs(self):
-        """ determines if a constants ROOTDIRECTORIES_OMIT parameter has been
+        """Retrieves the list of directories to omit.
+
+        Determines if a constants ROOTDIRECTORIES_OMIT parameter has been
         defined.  If it has, then looks at the directories defined there, makes
         sure that they exist, if they do the full paths for those directories
         are added to a list and returned
@@ -103,21 +97,25 @@ class ArchiveSnowData(object):
             LOGGER.debug(f"dirStringList: {dirStringList}")
             for omitDir in dirStringList:
                 omitDirFullPath = os.path.join(constants.SRC_ROOT_DIR, omitDir)
-                omitDirFullPath = os.path.normcase(os.path.normpath(omitDirFullPath))
+                omitDirFullPath = os.path.normcase(
+                    os.path.normpath(omitDirFullPath))
                 if os.path.exists(omitDirFullPath):
                     omitDirList.append(omitDirFullPath)
                     LOGGER.info(f"adding {omitDirFullPath} to omit list")
                 else:
-                    LOGGER.warning(f"the omit directory: {omitDirFullPath} could " +
-                                   "not be found")
+                    LOGGER.warning(f"the omit directory: {omitDirFullPath} " +
+                                   "could not be found")
         LOGGER.debug(f"omitDirList: {omitDirList}")
         return omitDirList
 
     def isReadyForArchive(self, inPath, daysBack=20):
-        """ river forecast snowpack data has directories with the string
+        """Should the input directory be archived.
+
+        River forecast snowpack data has directories with the string
         YYYY.MM.DD to identify what dates the data is for.  This method will
         recieve a path, extract the date portion of the path, convert it into
-        a date object and return true if the date is older than 15 days.
+        a date object and return true if the date is older than the defined
+        number of days in the constant DAYS_BACK.
 
         Note: longer term, thinking that this could be moved to the directory
               iterator.  Iterator could get passed a method definition that
@@ -142,7 +140,9 @@ class ArchiveSnowData(object):
         return isOlderThanThreshold
 
     def getDirectoryDate(self, inPath):
-        """gets a path, Iterates through it starting at the end
+        """Get directory as a date.
+
+        Gets a path, Iterates through it starting at the end
         of the tree and working back towards the root for a directory
         name that matches the
 
@@ -168,10 +168,11 @@ class ArchiveSnowData(object):
 
 
 class DirectoryList(object):
-    '''
+    """Iterator class for directories.
+
     Provides an iterable, with each iteration gets the path to a new directory
     that needs to be backed up
-    '''
+    """
 
     def __init__(self, srcRootDir, inputDirRegex=None, omitDirectoryList=[]):
         self.srcRootDir = srcRootDir
@@ -197,13 +198,41 @@ class DirectoryList(object):
         return dir2Return
 
     def getNextDirList(self):
+        r"""Gets a directory list.
+
+        recursion approach reached maximum stack size, couldn't get
+        past:
+        Z:\snowpack_data\basins\HORSESHOE_RIVER_ABOVE_LOIS_LAKE\viirs\2021.05.31  # noqa: E501
+
+        so restructing how to populate directories to be iterated
+        """
+        try:
+            while True:
+                rootdir, tmpDirs, files = self.dirWalker.__next__()
+                dirs = []
+                for iterdir in tmpDirs:
+                    fullpath = os.path.join(rootdir, iterdir)
+                    if not self.isDirInOmitList(fullpath) and \
+                            self.inputDirRegex.match(iterdir):
+                        dirs.append(fullpath)
+                        LOGGER.debug('datedir being added to iterator: ' +
+                                     f'{fullpath}')
+                if dirs:
+                    break
+            self.dirList = dirs
+            self.dirIndex = 0
+            return dirs
+        except StopIteration:
+            self.dirWalkingComplete = True
+
+    def getNextDirList_old(self):
         try:
             rootdir, tmpDirs, files = self.dirWalker.__next__()
             dirs = []
             for iterdir in tmpDirs:
                 fullpath = os.path.join(rootdir, iterdir)
                 if not self.isDirInOmitList(fullpath) and \
-                                            self.inputDirRegex.match(iterdir):
+                        self.inputDirRegex.match(iterdir):
                     dirs.append(fullpath)
                     LOGGER.debug('datedir being added to iterator: ' +
                                  f'{fullpath}')
@@ -217,7 +246,9 @@ class DirectoryList(object):
             self.dirWalkingComplete = True
 
     def isDirInOmitList(self, inDir):
-        """Checks to see if the input directory is a subdirectory
+        """Should input directory be omitted.
+
+        Checks to see if the input directory is a subdirectory
         of the omit list
 
         :param inDir: [description]
@@ -232,7 +263,9 @@ class DirectoryList(object):
         return isInOmitList
 
     def isSubDir(self, pth1, pth2):
-        """Gets two paths, and return true if either of them are subpaths
+        """Is a subdirectory.
+
+        Gets two paths, and return true if either of them are subpaths
         of the other.
 
         :param pth1: [description]
@@ -250,7 +283,6 @@ class DirectoryList(object):
         pth2List = list(pathlib.PurePath(pth2Corrected).parts)
         if pth1List != pth2List:
             for x, y in zip(pth1List, pth2List):
-                #LOGGER.debug(f'x: {x}, y: {y}')
                 if x != y:
                     areEqual = False
         return areEqual
@@ -281,6 +313,8 @@ class ObjectStore(object):
     '''
 
     def __init__(self):
+        """contructor, sets up object store client, and inits obj store obj.
+        """
         self.minIoClient = minio.Minio(os.environ['OBJ_STORE_HOST'],
                                        os.environ['OBJ_STORE_USER'],
                                        os.environ['OBJ_STORE_SECRET'])
@@ -393,6 +427,7 @@ class ObjectStore(object):
         :raises ValueError: if the file has been copied by the md5's do not
             align between source and destination this error will be raised.
         """
+        part_size = 15728640
         for local_file in glob.glob(srcDir + '/**'):
             objStorePath = self.getObjStorePath(local_file,
                                                 prependBucket=False)
@@ -405,22 +440,51 @@ class ObjectStore(object):
                     copyObj = self.minIoClient.fput_object(
                         constants.OBJ_STORE_BUCKET,
                         objStorePath,
-                        local_file)
+                        local_file,
+                        part_size=part_size)
                     LOGGER.debug(f'copyObj: {copyObj}')
                     etagDest = copyObj[0]
                 else:
                     etagDest = self.objIndex[objStorePath]
-                md5Dest = \
+                md5Src = \
                     hashlib.md5(open(local_file, 'rb').read()).hexdigest()
-                if etagDest == md5Dest:
+                LOGGER.debug(f"etagDest: {etagDest}")
+                if etagDest == md5Src:
                     # delete the source
                     LOGGER.info("md5's of source / dest match deleting the " +
                                 f"src: {srcDir}")
                     os.remove(local_file)
+                elif (len(etagDest.split('-')) == 2) and \
+                        self.checkMultipartEtag(local_file, etagDest):
+                    # etag format suggests the file was uploaded as a multipart
+                    # which impacts how the etags are calculated
+                    LOGGER.info("md5's of source / dest match as multipart " +
+                                f"deleting the src: {srcDir}")
+                    os.remove(local_file)
                 else:
-                    msg = f'source: {srcDir} and {objStorePath} both ' + \
+                    # if the md5 doesn't match either file isn't valid on the
+                    # s3 side in which case we won't delete the source and we
+                    # will throw and error in the log.
+                    #    OR
+                    # the etag doesn't match because the file was uploaded as a
+                    # multipart object
+
+                    msg = f'source: {local_file} and {objStorePath} both ' + \
                           'exists, but md5s don\'t align'
-                    raise ValueError(msg)
+                    LOGGER.error(msg)
+
+    def checkMultipartEtag(self, localFile, etagFromDest):
+        """checks to see if the etag from S3 can be validated locally
+
+        :param localFile: path to the local file
+        :type localFile: str
+        :param etagFromDest: the etag that was returned from s3
+        :type etagFromDest: str
+        :return: a boolean that tells us if the etag can be validated
+        :rtype: bool
+        """
+        verifyEtag = VerifyETag.CalcETags()
+        return verifyEtag.etagIsValid(localFile, etagFromDest)
 
     def objExists(self, inFile):
         """Identifies if the path 'inFile' exists in object storage

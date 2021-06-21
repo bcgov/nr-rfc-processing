@@ -1,3 +1,5 @@
+""" Declaring constants used by the archive script. """
+
 import os
 import dotenv
 
@@ -20,3 +22,7 @@ DIRECTORY_DATE_REGEX = '^[0-9]{4}\.{1}[0-9]{2}\.{1}[0-9]{2}$'  # noqa: W605
 #  be ommitted (a comma delimited list) for example:
 #  ROOTDIRECTORIES_OMIT=dir1,dir2\\someotherdir,dir3
 ROOTDIRECTORIES_OMIT = os.environ['ROOTDIRECTORIES_OMIT']
+
+# if a direcotory's naming (YYYY.mm-dd) is older
+# than this number of days it will be archived
+DAYS_BACK = 20

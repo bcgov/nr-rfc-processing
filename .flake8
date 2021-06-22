@@ -1,3 +1,3 @@
 [flake8]
 per-file-ignores =
-    snowpack_archive\archive2ObjectStore\archiveSnowpackData.py:W605
+    snowpack_archive\archive2ObjectStore\archiveSnowpackData.py:W605,D107,D102,D401,D105

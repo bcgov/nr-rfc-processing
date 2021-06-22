@@ -1,9 +1,9 @@
 node('zavijava_rfc') {
     withEnv([
-        "JOB_NAME=Snowpack_build", 
+        "JOB_NAME=Snowpack_build",
         "TEMP=$WORKSPACE\\tmp",
         "TMP=$WORKSPACE\\tmp",
-        "no_proxy=github.com"
+        "no_proxy=notgithub.com"
         ]) {
         stage('checkout') {
             //sh 'if [ ! -d "$TEMP" ]; then mkdir $TEMP; fi'

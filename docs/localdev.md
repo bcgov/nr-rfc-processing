@@ -48,3 +48,16 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
+## Environments
+ENS_NETWORK_DRIVE
+ENS_DRIVEMAPPING
+RFC_ARTIFACTS_FOLDER
+
+
+-- these get stuffed into a yaml file
+-- thinking keep it simple and store in env vars.
+
+EARTHDATA_USER
+EARTHDATA_PASS
+SENTINELSAT_USER
+SENTINELSAT_PASS

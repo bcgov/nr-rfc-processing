@@ -159,3 +159,6 @@ cython_debug/
 
 junk*
 snowpack_archive/tmp
+
+ldev/*
+miniconda_install.sh

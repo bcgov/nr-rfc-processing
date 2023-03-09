@@ -47,13 +47,13 @@ def reproject_modis(date, name, pth, dst_crs):
         with rio.open(modis_scene.subdatasets[0], 'r') as src:
             # transform raster to dst_crs------
             transform, width, height = calculate_default_transform(
-                                            src.crs, 
-                                            dst_crs, 
-                                            src.width, 
-                                            src.height, 
-                                            *src.bounds, 
+                                            src.crs,
+                                            dst_crs,
+                                            src.width,
+                                            src.height,
+                                            *src.bounds,
                                             resolution=const.MODIS_EPSG4326_RES
-                                        ) 
+                                        )
             kwargs = src.meta.copy()
             kwargs.update({
                 'driver': 'GTiff',
@@ -95,7 +95,7 @@ def create_modis_mosaic(pth: str):
             src_files_to_mosaic.append(src)
         # Merge all granule tiffs into one
         mosaic, out_trans = merge(
-            src_files_to_mosaic, 
+            src_files_to_mosaic,
             bounds=[*const.BBOX],
             res=const.MODIS_EPSG4326_RES
             )
@@ -125,7 +125,7 @@ def create_modis_mosaic(pth: str):
         for f in src_files_to_mosaic:
             f.close()
 
-        
+
 def composite_mosaics(startdate: str, dates: list):
     """
     Create a composite GTiff of the mosaics of a given range
@@ -201,7 +201,7 @@ def clean_intermediate(date):
 
 def process_modis(startdate, days):
     """
-    Main trigger for processing modis from HDF4 -> GTiff and 
+    Main trigger for processing modis from HDF4 -> GTiff and
     then clipping to watersheds/basins
 
     Parameters
@@ -210,7 +210,7 @@ def process_modis(startdate, days):
         The startdate which modis process will base it's 5 or 8 day processing from
     days : int
         Number of days to process raw HDF5 granules into mosaic -> composites before clipping
-        to watersheds/basins. days = 5 or days = 8 only. 
+        to watersheds/basins. days = 5 or days = 8 only.
     """
     logger.info('MODIS Process Started')
     bc_albers = 'EPSG:3153'
@@ -224,6 +224,7 @@ def process_modis(startdate, days):
             os.makedirs(intTif)
             logger.debug(f"created folder: {intTif}")
         modis_granules = glob(os.path.join(pth, date,'*.hdf'))
+        # why delete these files?  why not pick up where left off?
         clean_intermediate(date)
 
         logger.info(f'REPROJ GRANULES: {date}')
@@ -231,12 +232,12 @@ def process_modis(startdate, days):
         for gran in modis_granules:
             try:
                 name = os.path.split(gran)[-1]
-                reproj_args.append((date, name, gran, dst_crs))           
+                reproj_args.append((date, name, gran, dst_crs))
             except Exception as e:
                 logger.error(f'Could not append {gran} : {e}')
                 continue
         distribute(reproject_modis, reproj_args)
-        
+
         logger.info(f'CREATING MOSAICS: {date}')
         create_modis_mosaic(os.path.join(const.INTERMEDIATE_TIF_MODIS,date))
 
@@ -247,4 +248,6 @@ def process_modis(startdate, days):
 
     for task in ['watersheds', 'basins']:
         logger.info(f'CREATING {task.upper()}')
+        # pull the 10y 20y data from object storage
+        
         process_by_watershed_or_basin('modis', task, startdate)

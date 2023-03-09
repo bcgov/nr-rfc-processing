@@ -25,7 +25,7 @@ def download_granules(envpath: str, date: str, sat: str, days: int = 5):
     envvars = open(envpath ,'r')
     secrets = yaml.load(envvars, Loader=yaml.FullLoader)
     envvars.close()
-    
+
     if sat == 'modis':
         product = {
                 'name': 'daily',
@@ -47,7 +47,9 @@ def download_granules(envpath: str, date: str, sat: str, days: int = 5):
         const.TOP
     )
 
-    ed_client = CMRClient(storage_wrapper, earthdata_user=secrets['EARTHDATA_USER'], earthdata_pass=secrets['EARTHDATA_PASS'])
+    ed_client = CMRClient(storage_wrapper,
+                          earthdata_user=secrets['EARTHDATA_USER'],
+                          earthdata_pass=secrets['EARTHDATA_PASS'])
     start_date = end_date - timedelta(product['date_span'])
     granules = ed_client.query(
         str(start_date.date()),
@@ -55,9 +57,10 @@ def download_granules(envpath: str, date: str, sat: str, days: int = 5):
         product,
         bbox=[*const.BBOX]
     )
-    print(f"queried product {product}, got {len(granules)} granules, downloading")
+    msg = "queried product {product}, got {len(granules)} granules, downloading"
+    logger.info(msg)
     try:
         with Pool(4) as p:
             p.map(ed_client.download_granule, granules)
     except KeyboardInterrupt:
-        print('Exiting download pool')
+        logger.error('keyboard interupt... Exiting download pool')

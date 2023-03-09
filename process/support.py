@@ -65,7 +65,7 @@ def process_by_watershed_or_basin(sat: str, typ: str, startdate: str):
         base = const.WATERSHEDS
     if typ == 'basins':
         base = const.BASINS
-    
+
     # Gather respective data files and prepare path bases
     if sat == 'modis':
         mosaic = glob(os.path.join(const.INTERMEDIATE_TIF_MODIS, startdate, 'modis_composite*.tif'))[0]
@@ -77,9 +77,15 @@ def process_by_watershed_or_basin(sat: str, typ: str, startdate: str):
         norm20yr_base = os.path.join(const.VIIRS_DAILY_20YR)
     else: # @click will make sure this else is never hit
         return
-
+    # base=basins root/basins
+    # wrap this up into a script centralized pathlib
+    # gets the shape files list in each basin
     sheds = glob(os.path.join(base, '**', 'shape', 'EPSG4326', '*.shp'))
     for shed in sheds:
+        # shed = TOP/basins/<basin name>/shape/EPSG4326/<basin name>.shp
+        # TODO: should have used basename!!! then splitext
+        # filename operations could be centralized into a single library with
+        # documentation and tests
         name = os.path.split(shed)[-1].split('.')[0]
         logger.debug(f'Processing {name} for {sat}')
         pth = os.path.join(base, name, sat, startdate)

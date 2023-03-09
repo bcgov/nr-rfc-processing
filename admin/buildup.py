@@ -66,6 +66,7 @@ def build_shapefiles(typ, dataset):
             tmp = gdf[gdf[col] == name]
             name = name.translate({ord("("): None, ord(")"):None})
             name = "_".join(name.replace('.','').split(" "))
+            # shouldn't rely on exceptions here
             try:
                 os.makedirs(os.path.join(base, name))
             except Exception as e:

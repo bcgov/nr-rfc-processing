@@ -14,7 +14,7 @@
             "justMyCode": false
         },
         {
-            "name": "run.py with default configs",
+            "name": "dailypipeline",
             "type": "python",
             "request": "launch",
             "program": "run.py",
@@ -22,6 +22,23 @@
             "justMyCode": false,
             "args" : ["daily-pipeline", "--envpth=env.yaml", "--date", "2023.02.16"]
         },
-
+        {
+            "name": "download modis",
+            "type": "python",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args" : ["download", "--sat", "modis", "--envpth=env.yaml", "--date", "2023.02.16"]
+        },
+        {
+            "name": "process modis",
+            "type": "python",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args" : ["process", "--sat", "modis", "--date", "2023.02.16"]
+        }
     ]
 }

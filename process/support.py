@@ -9,9 +9,14 @@ import admin.constants as const
 
 from admin.color_ramp import color_ramp
 
+import admin.object_store_util as objstr_util
+import admin.snow_path_lib as spath_lib
+
 from glob import glob
 
 logger = logging.getLogger(__name__)
+ostore = objstr_util.OStore()
+snow_paths = spath_lib.SnowPathLib()
 
 def process_normals(norm: object, orig: object, geom: object, output_pth: str, sat: str):
     """Perform calculations on watersheds
@@ -68,7 +73,7 @@ def process_by_watershed_or_basin(sat: str, typ: str, startdate: str):
 
     # Gather respective data files and prepare path bases
     if sat == 'modis':
-        mosaic = glob(os.path.join(const.INTERMEDIATE_TIF_MODIS, startdate, 'modis_composite*.tif'))[0]
+        mosaic = snow_paths.get_modis_mosaic_composite(startdate)
         norm10yr_base = os.path.join(const.MODIS_DAILY_10YR)
         norm20yr_base = os.path.join(const.MODIS_DAILY_20YR)
     elif sat == 'viirs':
@@ -77,6 +82,11 @@ def process_by_watershed_or_basin(sat: str, typ: str, startdate: str):
         norm20yr_base = os.path.join(const.VIIRS_DAILY_20YR)
     else: # @click will make sure this else is never hit
         return
+
+    logger.debug(f"mosaic path: {mosaic}")
+    logger.debug(f"norm10yr_base path: {norm10yr_base}")
+    logger.debug(f"norm20yr_base path: {norm20yr_base}")
+
     # base=basins root/basins
     # wrap this up into a script centralized pathlib
     # gets the shape files list in each basin
@@ -86,14 +96,17 @@ def process_by_watershed_or_basin(sat: str, typ: str, startdate: str):
         # TODO: should have used basename!!! then splitext
         # filename operations could be centralized into a single library with
         # documentation and tests
-        name = os.path.split(shed)[-1].split('.')[0]
+        #name = os.path.split(shed)[-1].split('.')[0]
+        name = snow_paths.file_name_no_suffix(shed)
         logger.debug(f'Processing {name} for {sat}')
         pth = os.path.join(base, name, sat, startdate)
+        logger.debug(f"watershed path: {pth}")
         if not os.path.exists(pth):
             os.makedirs(pth)
         else:
             for f in glob(os.path.join(pth, '*tif')):
                 os.remove(f)
+
         gdf = gpd.read_file(shed) # shapefile to cut to
         gdf = gdf.to_crs('EPSG:4326')
         for _, row in gdf.iterrows():
@@ -111,12 +124,23 @@ def process_by_watershed_or_basin(sat: str, typ: str, startdate: str):
             clipped.rio.to_raster(output_pth)
             color_ramp(output_pth)
             d_splt = startdate.split('.')
+            d_year = d_splt[0]
+            d_month = d_splt[1]
+            d_day = d_splt[1]
+
+
             # Calculate % change against normals for each watershed/basin
-            with rioxr.open_rasterio(os.path.join(norm10yr_base, f'{d_splt[1]}.{d_splt[2]}.tif')) as norm10yr:
+            # './data/norm/modis/daily/10yr/02.16.tif'
+            norm10yr_tif = os.path.join(norm10yr_base, f'{d_month}.{d_day}.tif')
+            ostore.get_10yr_tif(d_month, d_day, norm10yr_tif)
+            with rioxr.open_rasterio(norm10yr_tif) as norm10yr:
                 out_pth = os.path.join(os.path.split(output_pth)[0], f'{name}_10yrNorm.tif')
                 norm = norm10yr.rio.clip([row.geometry], drop=True, all_touched=True)
             process_normals(norm, clipped_, row.geometry, out_pth, sat)
-            with rioxr.open_rasterio(os.path.join(norm20yr_base, f'{d_splt[1]}.{d_splt[2]}.tif')) as norm20yr:
+
+            norm20yr_tif = os.path.join(norm20yr_base, f'{d_month}.{d_day}.tif')
+            ostore.get_20yr_tif(d_month, d_day, norm20yr_tif)
+            with rioxr.open_rasterio(norm20yr_tif) as norm20yr:
                 out_pth = os.path.join(os.path.split(output_pth)[0], f'{name}_20yrNorm.tif')
                 norm = norm20yr.rio.clip([row.geometry], drop=True, all_touched=True)
             process_normals(norm, clipped_, row.geometry, out_pth, sat)

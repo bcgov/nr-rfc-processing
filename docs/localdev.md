@@ -61,6 +61,11 @@ doing further development you should install these deps.
 pip install -r requirements-dev.txt
 ```
 
+## Update conda
+
+After modifying the environment.yaml, update conda env
+`conda env update --file environment.yaml --prune`
+
 ## Environment Variables
 
 The script currently looks for an environments.yaml file for the username and

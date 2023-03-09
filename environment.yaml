@@ -18,12 +18,11 @@ dependencies:
   - future==0.18.2
   - pystac==0.5.4
   - sentinelsat==0.14
-  - python-dotenv==0.15.0
+  - python-dotenv==1.0.0
   - requests==2.25.1
   - urllib3==1.26.3
   - sqlite==3.34.0
   - descartes==1.1.0
   - rioxarray==0.3.1
   - dask==2021.2.0
-  - minio==7.0.3
-  
+  - minio==7.1.0

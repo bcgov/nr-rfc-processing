@@ -25,5 +25,6 @@
     "files.trimTrailingWhitespace": true,
     "files.associations": {
         "*.jenkins": "Jenkinsfile"
-    }
+    },
+    "python.defaultInterpreterPath": "./ldev/bin/python"
 }

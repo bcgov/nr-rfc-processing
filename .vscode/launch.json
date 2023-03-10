@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "Python: Current File",
             "type": "python",
@@ -11,6 +12,33 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false
+        },
+        {
+            "name": "dailypipeline",
+            "type": "python",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args" : ["daily-pipeline", "--envpth=env.yaml", "--date", "2023.02.16"]
+        },
+        {
+            "name": "download modis",
+            "type": "python",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args" : ["download", "--sat", "modis", "--envpth=env.yaml", "--date", "2023.02.16"]
+        },
+        {
+            "name": "process modis",
+            "type": "python",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args" : ["process", "--sat", "modis", "--date", "2023.02.16"]
         }
     ]
 }

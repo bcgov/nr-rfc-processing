@@ -3,7 +3,8 @@ import click
 import multiprocessing
 import datetime
 import pytz
-
+import logging.config
+import logging
 
 import admin.constants as const
 
@@ -15,16 +16,15 @@ from analysis import analysis
 from admin import buildkml, plotter
 from admin import buildup, teardown
 from admin.check_date import check_date
-import admin.logging
 from admin.db_handler import DBHandler
 
 if not os.path.exists(const.LOG):
     os.makedirs(const.LOG)
 
-#logger = admin.logging.setup_logger('snow_mapping', os.path.join(const.LOG, 'snow_mapping.log'))
-logger = admin.logging.setup_stream_logger(__name__)
+log_config_path = os.path.join(os.path.dirname(__file__), 'config', 'logging.config')
+logging.config.fileConfig(log_config_path)
 
-
+LOGGER = logging.getLogger(__name__)
 
 @click.command()
 def build():
@@ -77,9 +77,9 @@ def process(date: str, sat: str, days: int):
         elif sat == 'viirs':
             viirs.process_viirs(date)
         else: # Will never reach here due to click.Choice
-            logger.error(f'ERR SAT {sat} NOT VALID INPUT')
+            LOGGER.error(f'ERR SAT {sat} NOT VALID INPUT')
     else:
-        logger.error('ERROR: Date format YYYY.MM.DD')
+        LOGGER.error('ERROR: Date format YYYY.MM.DD')
 
 @click.command()
 @click.option('--creds', type=str, required=True, help='Path to credential file.')
@@ -102,8 +102,8 @@ def process_sentinel(creds: str, date:str, lat: float, lng: float, rgb: str,
         if clean == 'true':
             teardown.clean_intermediate()
     else:
-        logger.error('ERROR: Date format YYYY.MM.DD')
-    logger.info("sentinal analysis complete")
+        LOGGER.error('ERROR: Date format YYYY.MM.DD')
+    LOGGER.info("sentinal analysis complete")
 
 @click.command()
 @click.option('--date', type=str, required=True, help='Date in format YYYY.MM.DD')
@@ -114,7 +114,7 @@ def build_kml(date: str, typ: str, sat: str):
         db_handler = DBHandler()
         buildkml.daily_kml(date, typ.lower(), sat.lower(), db_handler)
     else:
-        logger.error('ERROR: Date format YYYY.MM.DD')
+        LOGGER.error('ERROR: Date format YYYY.MM.DD')
 
 @click.command()
 @click.option('--sat', type=const.SATS, required=True, help='Which satellite source to process [ modis | viirs ]')
@@ -123,7 +123,7 @@ def compose_kmls(date: str, sat: str):
     if check_date(date):
         buildkml.composite_kml(date, sat.lower())
     else:
-        logger.error('ERROR: Date format YYYY.MM.DD')
+        LOGGER.error('ERROR: Date format YYYY.MM.DD')
 
 @click.command()
 @click.option('--typ', type=const.TYPS, required=True)
@@ -134,7 +134,7 @@ def run_analysis(typ: str, sat: str, date: str):
         db_handler = DBHandler()
         analysis.calculate_stats(typ, sat, date, db_handler)
     else:
-        logger.error('ERROR: Date format YYYY.MM.DD')
+        LOGGER.error('ERROR: Date format YYYY.MM.DD')
 
 @click.command()
 def dbtocsv():
@@ -149,7 +149,7 @@ def plot(date: str, sat: str):
     if check_date(date):
         plotter.plot_handler(date, sat)
     else:
-        logger.error('ERROR: Date format YYYY.MM.DD')
+        LOGGER.error('ERROR: Date format YYYY.MM.DD')
 
 
 @click.command()
@@ -160,7 +160,7 @@ def plot(date: str, sat: str):
 def daily_pipeline(envpth: str, date: str, clean: str, days: int = 5):
     if check_date(date):
         # MODIS/VIIRS NASA server products are about 2 days behind current date
-        logger.info('Daily Pipeline Started')
+        LOGGER.info('Daily Pipeline Started')
         buildup.buildall()
         db_handler = DBHandler()
         pst = pytz.timezone('US/Pacific')
@@ -169,19 +169,19 @@ def daily_pipeline(envpth: str, date: str, clean: str, days: int = 5):
         if target_date.date() == datetime.datetime.now(pst).date():
             date = datetime.datetime.strftime(target_date - datetime.timedelta(days=const.MODIS_OFFSET), '%Y.%m.%d')
         for sat in ['modis','viirs']:
-            logger.info(f'Daily Pipeline running {sat} process')
+            LOGGER.info(f'Daily Pipeline running {sat} process')
             dailypipeline(envpth, date, sat, int(days), db_handler)
         if clean == 'true':
             teardown.clean_intermediate()
     else:
-        logger.error('ERROR: Date format YYYY.MM.DD')
+        LOGGER.error('ERROR: Date format YYYY.MM.DD')
 
 def dailypipeline(envpth: str, date: str, sat: str, days: int, db_handler: DBHandler):
     if check_date(date):
         if sat == 'viirs':
             days = const.VIIRS_OFFSET #1
         #print(type())
-        #logger.debug(f'download granules: {download_granules} - {download_granules.download_granules}')
+        #LOGGER.debug(f'download granules: {download_granules} - {download_granules.download_granules}')
         download_granules.download_granules.download_granules(envpth, date, sat, int(days))
         if sat == 'modis':
             modis.process_modis(date, int(days))
@@ -194,7 +194,7 @@ def dailypipeline(envpth: str, date: str, sat: str, days: int, db_handler: DBHan
         plotter.plot_handler(date, sat)
         buildkml.composite_kml(date, sat.lower())
     else:
-        logger.error('ERROR: Date format YYYY.MM.DD')
+        LOGGER.error('ERROR: Date format YYYY.MM.DD')
 
 @click.group()
 def cli():

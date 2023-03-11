@@ -17,7 +17,10 @@ from matplotlib.patches import Patch
 from glob import glob
 from collections import defaultdict
 
+import admin.object_store_util
+
 logger = logging.getLogger(__name__)
+ostore = admin.object_store_util.OStore()
 
 def plot_sheds(sheds: list, typ: str, sat: str, date: str):
     """Plot individual watersheds/basins
@@ -37,75 +40,84 @@ def plot_sheds(sheds: list, typ: str, sat: str, date: str):
     org = defaultdict(list) # Organizer for all open sheds to be plot
     for shed in sheds:
         logger.debug(f'PLOTTING {os.path.split(shed)[-1]}')
+        # shed will be just the name of the watershed
         name = os.path.split(shed)[-1]
         base = os.path.join(shed, sat, date)
-        # prepare
-        try: # If the shed is not accessible, skip to next
-            daily = glob(os.path.join(base, '*EPSG3153.tif'))[0]
-        except Exception as e:
-            logger.warning(e)
-            continue
-        d = rioxr.open_rasterio(daily, chunks={'band': 1, 'x': chunk, 'y': chunk})
-        d.data[(d.data == d._FillValue)] = np.nan
-        d.data[(d.data > 100)] = np.nan
-        org['daily'].append(d)
-        try: # If generated normal file is missing, skip to next
-            norm10yr = glob(os.path.join(base, f'{name}_10yrNorm.tif'))[0]
-        except Exception as e:
-            logger.warning(e)
-            continue
-        d = rioxr.open_rasterio(norm10yr, chunks={'band': 1, 'x': chunk, 'y': chunk})
-        d.data[(d.data == d._FillValue)] = np.nan
-        org['10yrnorm'].append(d)
-        try: # If generated normal file is missing, skip to next
-            norm20yr = glob(os.path.join(base, f'{name}_20yrNorm.tif'))[0]
-        except Exception as e:
-            logger.warning(e)
-            continue
-        d = rioxr.open_rasterio(norm20yr, chunks={'band': 1, 'x': chunk, 'y': chunk})
-        d.data[(d.data == d._FillValue)] = np.nan
-        org['20yrnorm'].append(d)
-        ######################
-        # Plot individual shed
-        ######################
-        fig, ax = plt.subplots(1,3, figsize=(15,5))
-        fig.suptitle(f'{name.upper()} - {sat.upper()} - {date}')
-        # Plot date generated raster
-        ax[0].set_title(date)
-        ax[0].axis('off')
-        im1 = ax[0].imshow(org['daily'][-1].data.transpose(1,2,0), cmap=plt.cm.RdYlBu,
-                                vmin=0, vmax=100, clim=[0,100], interpolation='none')
-        fig.colorbar(im1, ax=ax[0])
-        # Plot % difference to 10 year normal
-        ax[1].set_title('% Difference to 10 Year Normal')
-        ax[1].axis('off')
-        im2 = ax[1].imshow(org['10yrnorm'][-1].data.transpose(1,2,0), cmap=plt.cm.RdYlBu,
-                                vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
-        fig.colorbar(im2, ax=ax[1])
-        # Plot % different to 20 year normal
-        ax[2].set_title('% Difference to 20 Year Normal')
-        ax[2].axis('off')
-        im3 = ax[2].imshow(org['20yrnorm'][-1].data.transpose(1,2,0), cmap=plt.cm.RdYlBu,
-                                vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
-        fig.colorbar(im3, ax=ax[2])
 
-        # Make sure the output dir is accessible and replace with
-        # most up to date version
         out_pth = os.path.join(const.PLOT, sat, typ, date, f'{name}.png')
         out_dir = os.path.dirname(out_pth)
-        if not os.path.exists(out_dir):
-            logger.debug(f"creating directory: {out_dir}")
-            os.makedirs(out_dir)
-        if os.path.exists(out_pth):
-            logger.debug(f"removing the path: {out_pth}")
-            os.remove(out_pth)
-        try:
-            logger.debug(f"creating the plot: {out_pth}")
-            plt.savefig(out_pth)
-            plt.close()
-        except Exception as e:
-            logger.debug(e)
-            continue  
+        if not os.path.exists(out_pth):
+
+
+            # prepare
+            try: # If the shed is not accessible, skip to next
+                daily = glob(os.path.join(base, '*EPSG3153.tif'))[0]
+            except Exception as e:
+                logger.warning(e)
+                continue
+            d = rioxr.open_rasterio(daily, chunks={'band': 1, 'x': chunk, 'y': chunk})
+            d.data[(d.data == d._FillValue)] = np.nan
+            d.data[(d.data > 100)] = np.nan
+            org['daily'].append(d)
+            try: # If generated normal file is missing, skip to next
+                norm10yr = glob(os.path.join(base, f'{name}_10yrNorm.tif'))[0]
+            except Exception as e:
+                logger.warning(e)
+                continue
+            d = rioxr.open_rasterio(norm10yr, chunks={'band': 1, 'x': chunk, 'y': chunk})
+            d.data[(d.data == d._FillValue)] = np.nan
+            org['10yrnorm'].append(d)
+            try: # If generated normal file is missing, skip to next
+                norm20yr = glob(os.path.join(base, f'{name}_20yrNorm.tif'))[0]
+            except Exception as e:
+                logger.warning(e)
+                continue
+            d = rioxr.open_rasterio(norm20yr, chunks={'band': 1, 'x': chunk, 'y': chunk})
+            d.data[(d.data == d._FillValue)] = np.nan
+            org['20yrnorm'].append(d)
+            ######################
+            # Plot individual shed
+            ######################
+            fig, ax = plt.subplots(1,3, figsize=(15,5))
+            fig.suptitle(f'{name.upper()} - {sat.upper()} - {date}')
+            # Plot date generated raster
+            ax[0].set_title(date)
+            ax[0].axis('off')
+            im1 = ax[0].imshow(org['daily'][-1].data.transpose(1,2,0), cmap=plt.cm.RdYlBu,
+                                    vmin=0, vmax=100, clim=[0,100], interpolation='none')
+            fig.colorbar(im1, ax=ax[0])
+            # Plot % difference to 10 year normal
+            ax[1].set_title('% Difference to 10 Year Normal')
+            ax[1].axis('off')
+            im2 = ax[1].imshow(org['10yrnorm'][-1].data.transpose(1,2,0), cmap=plt.cm.RdYlBu,
+                                    vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
+            fig.colorbar(im2, ax=ax[1])
+            # Plot % different to 20 year normal
+            ax[2].set_title('% Difference to 20 Year Normal')
+            ax[2].axis('off')
+            im3 = ax[2].imshow(org['20yrnorm'][-1].data.transpose(1,2,0), cmap=plt.cm.RdYlBu,
+                                    vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
+            fig.colorbar(im3, ax=ax[2])
+
+            # Make sure the output dir is accessible and replace with
+            # most up to date version
+            out_pth = os.path.join(const.PLOT, sat, typ, date, f'{name}.png')
+            out_dir = os.path.dirname(out_pth)
+            if not os.path.exists(out_dir):
+                logger.debug(f"creating directory: {out_dir}")
+                os.makedirs(out_dir)
+            # why overwrite!!!!!?????
+            # if os.path.exists(out_pth):
+            #     logger.debug(f"removing the path: {out_pth}")
+            #     os.remove(out_pth)
+            # could multiprocess this
+            try:
+                logger.debug(f"creating the plot: {out_pth}")
+                plt.savefig(out_pth)
+                plt.close()
+            except Exception as e:
+                logger.debug(e)
+                continue
 
 def norm_math(orig: np.array, norm: np.array):
     """Perform math against normal to calculate
@@ -152,19 +164,35 @@ def plot_mosaics(sat: str, date: str):
     fig, ax = plt.subplots(1,3, figsize=(25,5))
     fig.suptitle(f'{sat.upper()} - {date}')
     date_split = date.split('.')
+    d_year = date_split[0]
+    d_month = date_split[1]
+    d_day = date_split[2]
+
     # Gather satellite respective data and prepare path bases
     if sat == 'modis':
         orig = glob(os.path.join(const.INTERMEDIATE_TIF_MODIS, date, '*modis_composite*.tif'))[0]
         base10yr = const.MODIS_DAILY_10YR
         base20yr = const.MODIS_DAILY_20YR
     elif sat == 'viirs':
-        orig = glob(os.path.join(const.OUTPUT_TIF_VIIRS, date.split('.')[0], f'{date}.tif'))[0]
+        orig = glob(os.path.join(const.OUTPUT_TIF_VIIRS, d_year, f'{date}.tif'))[0]
         base10yr = const.VIIRS_DAILY_10YR
         base20yr = const.VIIRS_DAILY_20YR
     else: # @click should not let this else ever be reached
         return
-    norm10yr = glob(os.path.join(base10yr, f'{date_split[1]}.{date_split[2]}.tif'))[0]
-    norm20yr = glob(os.path.join(base20yr, f'{date_split[1]}.{date_split[2]}.tif'))[0]
+
+    # pull any 10 year data required
+    norm10yr_tif = os.path.join(base10yr, f'{date_split[1]}.{date_split[2]}.tif')
+    ostore.get_10yr_tif(sat=sat, month=d_month, day=d_day, out_path=norm10yr_tif)
+    logger.debug(f"norm10yr_tif: {norm10yr_tif}")
+    norm10yr_glob = glob(norm10yr_tif[2:])
+    norm10yr = norm10yr_glob.pop()
+
+    norm20yr_tif = os.path.join(base20yr, f'{date_split[1]}.{date_split[2]}.tif')
+    ostore.get_20yr_tif(sat=sat, month=d_month, day=d_day, out_path=norm20yr_tif)
+    norm20yr_glob = glob(norm20yr_tif)
+    norm20yr = norm20yr_glob.pop()
+
+    #norm20yr = glob(os.path.join(base20yr, f'{date_split[1]}.{date_split[2]}.tif'))[0]
 
     # Plot user generated mosaic and clip to prov boundary
     ax[0].set_title(f'{date}')
@@ -187,7 +215,7 @@ def plot_mosaics(sat: str, date: str):
     with rio.open(daily_pth, 'r') as src:
         im1 = ax[0].imshow(src.read().transpose(1,2,0), cmap=plt.cm.RdYlBu,
                             vmin=0, vmax=100, clim=[0,100], interpolation='none')
-        rasterio.plot.show((src.read()), transform=src.transform, ax=ax[0], cmap=plt.cm.RdYlBu, 
+        rasterio.plot.show((src.read()), transform=src.transform, ax=ax[0], cmap=plt.cm.RdYlBu,
                             vmin=0, vmax=100, clim=[0,100], interpolation='none')
         fig.colorbar(im1, ax=ax[0])
 
@@ -243,12 +271,12 @@ def plot_mosaics(sat: str, date: str):
         fig.colorbar(im3, ax=ax[2])
         rasterio.plot.show((d), ax=ax[2], cmap=plt.cm.RdYlBu,
                             vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
-    
+
     # Add legend for nodata
     legend_elements = [Patch(facecolor='black', edgecolor='k',
                             label='NoData')]
     fig.legend(handles=legend_elements, loc='lower center')
-    # Make sure output path is accessible and 
+    # Make sure output path is accessible and
     # replace with most up to date version
     out_pth = os.path.join(const.PLOT, sat, 'mosaic', date, f'{date}.png')
     out_dir = os.path.dirname(out_pth)
@@ -282,4 +310,4 @@ def plot_handler(date: str, sat: str):
     basins = glob(os.path.join(const.TOP, 'basins', '*'))
     plot_sheds(basins, 'basins', sat, date)
     plot_mosaics(sat, date)
-    
+

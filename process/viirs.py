@@ -16,11 +16,15 @@ from glob import glob
 from rasterio.merge import merge
 from rasterio.warp import calculate_default_transform, reproject, Resampling
 
+import admin.snow_path_lib
+
 logger = logging.getLogger(__name__)
+snow_path = admin.snow_path_lib.SnowPathLib()
+
 
 def build_viirs_tif(date: str, scene: str):
     """
-    Build GTiff from raw HDF5 format so the pipeline can 
+    Build GTiff from raw HDF5 format so the pipeline can
     use the /data
 
     Parameters
@@ -34,8 +38,10 @@ def build_viirs_tif(date: str, scene: str):
         url: https://lpdaac.usgs.gov/resources/e-learning/working-daily-nasa-viirs-surface-reflectance-/data/
     """
     name = ".".join(os.path.split(scene)[-1].split('.')[:-1])
+    logger.debug(f"name: {name}")
     dest = os.path.join(const.INTERMEDIATE_TIF_VIIRS, date, f'{name}.tif')
-    
+    logger.debug(f"dest file: {dest}")
+
     prj = 'PROJCS["unnamed",\
         GEOGCS["Unknown datum based upon the custom spheroid", \
         DATUM["Not specified (based on custom spheroid)", \
@@ -47,7 +53,7 @@ def build_viirs_tif(date: str, scene: str):
         PARAMETER["false_easting",0], \
         PARAMETER["false_northing",0], \
         UNIT["Meter",1]]'
-    
+
     f = h5py.File(scene, 'r')
     fileMetadata = f['HDFEOS INFORMATION']['StructMetadata.0'][()].split() # Read file metadata
     fileMetadata = [m.decode('utf-8') for m in fileMetadata]
@@ -57,7 +63,7 @@ def build_viirs_tif(date: str, scene: str):
     h5_objs = []            # Create empty list
     f.visit(h5_objs.append) # Walk through directory tree, retrieve objects and append to list
 
-    all_datasets = [obj for grid in grids for obj in h5_objs if isinstance(f[obj],h5py.Dataset) and grid in obj] 
+    all_datasets = [obj for grid in grids for obj in h5_objs if isinstance(f[obj],h5py.Dataset) and grid in obj]
 
     snow = f[[a for a in all_datasets if 'CGF_NDSI_Snow_Cover' in a][0]] # Cloud gap filled
     #snow = f[[a for a in all_datasets if 'VNP10A1_NDSI_Snow_Cover' in a][0]] # Non-cloud gap filled
@@ -70,7 +76,7 @@ def build_viirs_tif(date: str, scene: str):
     ulcLon = float(ulc.split('=(')[-1].replace(')', '').split(',')[0]) # Parse metadata string for upper left corner lon value
     ulcLat = float(ulc.split('=(')[-1].replace(')', '').split(',')[1]) # Parse metadata string for upper left corner lat value
 
-    yRes, xRes = -375,  375 # Define the x and y resolution   
+    yRes, xRes = -375,  375 # Define the x and y resolution
     geoInfo = (ulcLon, xRes, 0, ulcLat, 0, yRes)        # Define geotransform parameters
 
     nRow, nCol = snow.shape[0], snow.shape[1]
@@ -80,7 +86,7 @@ def build_viirs_tif(date: str, scene: str):
     band = outFile.GetRasterBand(1)
     band.WriteArray(snow)
     band.FlushCache
-    band.SetNoDataValue(float(fillValue))                                                  
+    band.SetNoDataValue(float(fillValue))
     outFile.SetGeoTransform(geoInfo)
     outFile.SetProjection(prj)
     f.close()
@@ -104,14 +110,14 @@ def reproject_viirs(date: str, name: str, src: str, dst_crs: str):
     intermediate_tif = os.path.join(const.INTERMEDIATE_TIF_VIIRS,date,f'{name}_out.tif')
     with rio.open(src, 'r') as src:
         transform, width, height = calculate_default_transform(
-                                        src.crs, 
-                                        dst_crs, 
-                                        src.width, 
-                                        src.height, 
+                                        src.crs,
+                                        dst_crs,
+                                        src.width,
+                                        src.height,
                                         src.bounds.left, src.bounds.bottom,
                                         src.bounds.right, src.bounds.top,
                                         resolution=const.VIIRS_EPSG4326_RES
-                                    ) 
+                                    )
         kwargs = src.meta.copy()
         kwargs.update({
             'driver': 'GTiff',
@@ -154,7 +160,7 @@ def create_viirs_mosaic(pth: str, startdate: str):
         src_files_to_mosaic.append(src)
     if len(src_files_to_mosaic) != 0:
         mosaic, out_trans = merge(
-            src_files_to_mosaic, 
+            src_files_to_mosaic,
             bounds=[*const.BBOX],
             res=const.VIIRS_EPSG4326_RES
             )
@@ -178,7 +184,7 @@ def distribute(func, args):
 
 def process_viirs(date: str):
     """
-    Main trigger for processing modis from HDF5 -> GTiff and 
+    Main trigger for processing modis from HDF5 -> GTiff and
     then clipping to watersheds/basins
 
     Parameters
@@ -190,26 +196,35 @@ def process_viirs(date: str):
     logger.info('VIIRS Process Started')
     bc_alberes = 'EPSG:3153'
     dst_crs = 'EPSG:4326'
-    intermediate_pth = os.path.join(const.INTERMEDIATE_TIF_VIIRS, date)
+    #intermediate_pth = os.path.join(const.INTERMEDIATE_TIF_VIIRS, date)
+    intermediate_pth = snow_path.get_viirs_int_tif(date)
     if not os.path.exists(intermediate_pth):
         os.makedirs(intermediate_pth)
-    viirs_granules = glob(os.path.join(const.MODIS_TERRA, 'VNP10A1F.001', date, '*.h5'))    
-    
-    residual_files = glob(os.path.join(intermediate_pth, '*.tif'))
+    #viirs_granules = glob(os.path.join(const.MODIS_TERRA, 'VNP10A1F.001', date, '*.h5'))
+    viirs_granules = snow_path.get_viirs_granules(date)
+    logger.debug(f"int tif dir: {intermediate_pth}")
+
+
+    #residual_files = glob(os.path.join(intermediate_pth, '*.tif'))
+    residual_files = snow_path.get_intermediate_viirs_files(date)
+
     if len(residual_files) != 0:
         logger.info('Cleaning up residual files...')
         for f in residual_files:
+            # TODO: uncomment once debugging complete
+            logger.debug(f"deleting residual file: {f}")
             os.remove(f)
 
     logger.info('BUILDING INITIAL TIFS FROM HDF5')
     proc_inputs = []
-    for i in range(len(viirs_granules)): 
+    for i in range(len(viirs_granules)):
         proc_inputs.append((date, viirs_granules[i]))
     distribute(build_viirs_tif, proc_inputs)
-    
+
     logger.info('REPROJECTING TIFFS')
-    intermediate_tifs = glob(os.path.join(intermediate_pth, '*.tif'))
-    
+    intermediate_tifs = snow_path.get_intermediate_viirs_files(date)
+    #intermediate_tifs = glob(os.path.join(intermediate_pth, '*.tif'))
+
     reproj_args = []
     for tif in intermediate_tifs:
         name = ".".join(os.path.split(tif)[-1].split('.')[:-1])
@@ -220,7 +235,7 @@ def process_viirs(date: str):
     out_pth = create_viirs_mosaic(intermediate_pth, date)
     color_ramp(out_pth)
 
-    
+
     for task in ['watersheds', 'basins']:
         logger.info(f'CREATING {task.upper()}')
         process_by_watershed_or_basin('viirs', task, date)

@@ -39,6 +39,42 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args" : ["process", "--sat", "modis", "--date", "2023.02.16"]
-        }
+        },
+        {
+            "name": "plot modis",
+            "type": "python",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args" : ["plot", "--sat", "modis", "--date", "2023.02.16"]
+        },
+        {
+            "name": "download viirs",
+            "type": "python",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args" : ["download", "--sat", "viirs", "--envpth=env.yaml", "--date", "2023.02.16"]
+        },
+        {
+            "name": "process viirs",
+            "type": "python",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args" : ["process", "--sat", "viirs", "--date", "2023.02.16"]
+        },
+        {
+            "name": "plot viirs",
+            "type": "python",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args" : ["plot", "--sat", "viirs", "--date", "2023.02.16"]
+        },
     ]
 }

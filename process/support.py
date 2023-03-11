@@ -132,14 +132,14 @@ def process_by_watershed_or_basin(sat: str, typ: str, startdate: str):
             # Calculate % change against normals for each watershed/basin
             # './data/norm/modis/daily/10yr/02.16.tif'
             norm10yr_tif = os.path.join(norm10yr_base, f'{d_month}.{d_day}.tif')
-            ostore.get_10yr_tif(d_month, d_day, norm10yr_tif)
+            ostore.get_10yr_tif(sat, d_month, d_day, norm10yr_tif)
             with rioxr.open_rasterio(norm10yr_tif) as norm10yr:
                 out_pth = os.path.join(os.path.split(output_pth)[0], f'{name}_10yrNorm.tif')
                 norm = norm10yr.rio.clip([row.geometry], drop=True, all_touched=True)
             process_normals(norm, clipped_, row.geometry, out_pth, sat)
 
             norm20yr_tif = os.path.join(norm20yr_base, f'{d_month}.{d_day}.tif')
-            ostore.get_20yr_tif(d_month, d_day, norm20yr_tif)
+            ostore.get_20yr_tif(sat, d_month, d_day, norm20yr_tif)
             with rioxr.open_rasterio(norm20yr_tif) as norm20yr:
                 out_pth = os.path.join(os.path.split(output_pth)[0], f'{name}_20yrNorm.tif')
                 norm = norm20yr.rio.clip([row.geometry], drop=True, all_touched=True)

@@ -93,7 +93,7 @@ SENTINELSAT_PASS: sc0resLots0fGoals
     mkdir -p $SNOWPACK_DATA
     export SNOW_PIPELINE_DATE=$(python getDate.py)
     export SNOWPACK_ENVS_PTH=./env.yaml
-    export NORM_ROOT=./data
+    export NORM_ROOT=data
     python run.py daily-pipeline --envpth=$SNOWPACK_ENVS_PTH --date $SNOW_PIPELINE_DATE
     ```
 

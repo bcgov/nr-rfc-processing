@@ -3,6 +3,11 @@
 Current implementation does a LOT of different things.  With all the various
 tasks that get completed by the dailyupdate process, failures are likely.
 
+# Short Term Plan
+
+* migrate processing of data from on prem servers to GHA.
+*
+
 # Future Direction
 
 Dissect daily pipeline into smaller steps processes.  Can piggy back on the
@@ -60,3 +65,12 @@ process modis:
 
 download viirs:
 `python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.02.16`
+
+create plots - modis
+`python run.py plot --sat modis --date 2023.02.16`
+
+create kmls - modis
+`python run.py build-kml --sat modis --date 2023.02.16 --typ watersheds`
+`python run.py build-kml --sat modis --date 2023.02.16 --typ basins`
+`python run.py build-kml --sat viirs --date 2023.02.16 --typ watersheds`
+`python run.py build-kml --sat viirs --date 2023.02.16 --typ basins`

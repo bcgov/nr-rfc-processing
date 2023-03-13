@@ -82,7 +82,7 @@ SENTINELSAT_USER: YvonneC
 SENTINELSAT_PASS: sc0resLots0fGoals
 ```
 
-## Running the script:
+## Running the daily pipeline script:
 
 * activate conda env path:
     `conda activate ./ldev`
@@ -99,3 +99,17 @@ SENTINELSAT_PASS: sc0resLots0fGoals
 
 See the re-architect.md doc for bullets to dissect up the tasks that are part
 of the daily update into smaller chunks.
+
+## run the archive / s3 backup / save operation
+
+### set the following env vars:
+    * OBJ_STORE_BUCKET
+    * OBJ_STORE_SECRET
+    * OBJ_STORE_USER
+    * OBJ_STORE_HOST
+    * SRC_ROOT_DIR (optional) - defaults to 'data'
+    * OBJ_STORE_ROOT_DIR(optional) - defaults to 'snowpack_archive'
+    * ROOTDIRECTORIES_OMIT(optional) - defaults to None
+
+run the archive script (assume the dependencies have been installed):
+`python snowpack_archive\runS3Backup.py`

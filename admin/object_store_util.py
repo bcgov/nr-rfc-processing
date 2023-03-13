@@ -27,3 +27,8 @@ class OStore:
             )
             LOGGER.debug(f"pulling the 20yr file: {ostore_path} down from obj store")
             self.ostore.get_object(file_path=ostore_path, local_path=out_path)
+
+    def sync(self):
+        """saves the results from a daily pipeline analysis to object storage
+        """
+        paths2Sync

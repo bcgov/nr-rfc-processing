@@ -8,8 +8,9 @@ if os.path.exists(envPath):
     print("loading dot env...")
     dotenv.load_dotenv()
 
-SRC_ROOT_DIR = os.environ['SRC_ROOT_DIR']
-OBJ_STORE_ROOT_DIR = os.environ['OBJ_STORE_ROOT_DIR']
+#
+SRC_ROOT_DIR = os.getenv('SRC_ROOT_DIR', 'data')
+OBJ_STORE_ROOT_DIR = os.getenv('OBJ_STORE_ROOT_DIR', 'snowpack_archive')
 OBJ_STORE_BUCKET = os.environ['OBJ_STORE_BUCKET']
 OBJ_STORE_SECRET = os.environ['OBJ_STORE_SECRET']
 OBJ_STORE_USER = os.environ['OBJ_STORE_USER']
@@ -21,7 +22,7 @@ DIRECTORY_DATE_REGEX = '^[0-9]{4}\.{1}[0-9]{2}\.{1}[0-9]{2}$'  # noqa: W605
 #  identifies the root directories (sub dirs in SRC_ROOT_DIR) that should
 #  be ommitted (a comma delimited list) for example:
 #  ROOTDIRECTORIES_OMIT=dir1,dir2\\someotherdir,dir3
-ROOTDIRECTORIES_OMIT = os.environ['ROOTDIRECTORIES_OMIT']
+ROOTDIRECTORIES_OMIT = os.getenv('ROOTDIRECTORIES_OMIT', '')
 
 # if a direcotory's naming (YYYY.mm-dd) is older
 # than this number of days it will be archived

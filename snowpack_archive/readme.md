@@ -21,12 +21,12 @@ complete the archive process.
 
 # Environment Variables Required
 
-* SRC_ROOT_DIR - The source root directory that will be traversed for backup
+* SRC_ROOT_DIR(optional) - The source root directory that will be traversed for backup
 * OBJ_STORE_BUCKET - name of the object store bucket
 * OBJ_STORE_SECRET - name of the object store secret
 * OBJ_STORE_HOST - host name of the object store service
 * OBJ_STORE_USER - name of the object store user associated with the secret
-* OBJ_STORE_ROOT_DIR - directory path in the object store to backup to
+* OBJ_STORE_ROOT_DIR(optional) - directory path in the object store to backup to
 
 # Perform Backup
 

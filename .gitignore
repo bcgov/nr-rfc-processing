@@ -163,3 +163,4 @@ snowpack_archive/tmp
 ldev/*
 miniconda_install.sh
 env.yaml
+venvarch/

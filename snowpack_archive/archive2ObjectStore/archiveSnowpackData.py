@@ -33,7 +33,7 @@ import sys
 import minio
 import scandir
 
-from . import constants
+from archive2ObjectStore import constants as constants
 import VerifyETag
 
 LOGGER = logging.getLogger(__name__)
@@ -359,6 +359,7 @@ class ObjectStore(object):
         if sys.platform == 'win32':
             objStoreAbsPath = objStoreAbsPath.replace(os.path.sep,
                                                       posixpath.sep)
+        LOGGER.debug(f"object store absolute path: {objStoreAbsPath}")
         return objStoreAbsPath
 
     def copy(self, srcDir):
@@ -429,11 +430,12 @@ class ObjectStore(object):
         """
         part_size = 15728640
         for local_file in glob.glob(srcDir + '/**'):
+            LOGGER.debug(f"local_file: {local_file}")
             objStorePath = self.getObjStorePath(local_file,
                                                 prependBucket=False)
             LOGGER.debug(f"objStorePath: {objStorePath}")
             if not os.path.isfile(local_file):
-                self.copyDirectoryRecurive(local_file, objStorePath)
+                self.copyDirectoryRecurive(local_file)
             else:
                 if not self.objExists(objStorePath):
                     LOGGER.debug(f"uploading: {local_file} to {objStorePath}")

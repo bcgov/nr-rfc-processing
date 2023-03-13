@@ -1,0 +1,73 @@
+name: Snowpack Daily Pipeline
+
+on:
+  # push action for debugging purposes
+  push:
+    branches: ["main", "feat/35-gha-for-processing"]
+  schedule:
+   - cron: '1 16 * * *'
+  workflow_dispatch:
+
+jobs:
+  retrieve_images:
+    defaults:
+      run:
+        shell: bash
+    name: 'Run the Snowpack historical norms comparison analysis'
+    runs-on: ubuntu-22.04
+    environment: RUN
+    env:
+      OBJ_STORE_BUCKET: ${{ secrets.OBJ_STORE_BUCKET }}
+      OBJ_STORE_SECRET: ${{ secrets.OBJ_STORE_SECRET }}
+      OBJ_STORE_USER: ${{ secrets.OBJ_STORE_USER }}
+      OBJ_STORE_HOST: ${{ secrets.OBJ_STORE_HOST }}
+
+    steps:
+    - uses: actions/checkout@v3
+      id: checkout
+      with:
+       fetch-depth: 0
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Set up Conda environment
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: ldev
+        python-version: 3.8
+
+    - name: Install dependencies (conda)
+      id: install_deps_conda
+      shell: bash
+      run: |
+        conda env update python=3.8 --file environment.yaml --name ldev
+        conda env list
+        conda init bash
+        . ~/.bashrc
+        conda activate ldev
+
+    - name: Install Dependencies (pip)
+      id: install_deps_pip
+      shell: bash
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Download the Modis imagery
+      id: download_modis_DEBUG
+      shell: bash
+      run: |
+        python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.02.17
+
+    - name: Install S3 Archive Deps
+      id: install_deps_archive_pip
+      shell: bash
+      run: |
+        pip install -r snow_archive/requirements.txt
+
+    - name: Run S3 Archive
+      id: run_s3_archive
+      run: |
+        python snowpack_archive/runS3Backup.py

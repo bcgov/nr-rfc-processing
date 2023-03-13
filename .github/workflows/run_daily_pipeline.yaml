@@ -15,7 +15,7 @@ jobs:
         shell: bash
     name: 'Run the Snowpack historical norms comparison analysis'
     runs-on: ubuntu-22.04
-    environment: RUN
+    environment: PROD
     env:
       OBJ_STORE_BUCKET: ${{ secrets.OBJ_STORE_BUCKET }}
       OBJ_STORE_SECRET: ${{ secrets.OBJ_STORE_SECRET }}

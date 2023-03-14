@@ -116,4 +116,17 @@ run the archive script (assume the dependencies have been installed):
 
 # Mamba
 
-Builds of the env in GHA were taking 2+ hours... never waited longer than that.
+Builds of the env in GHA were taking 2+ hours... then cancelled.  Pivot to
+explicit lock files and mamba build to save time.
+
+## create lock file
+
+`conda list --explicit --md5 > explicit.lock`
+
+## build env using micromamba
+
+`micromamba create -n testenv -f explicit.lock -y`
+
+## activate
+
+`conda activate testenv`

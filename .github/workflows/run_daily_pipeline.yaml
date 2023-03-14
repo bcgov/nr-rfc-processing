@@ -61,6 +61,7 @@ jobs:
       id: install_deps_pip
       shell: bash
       run: |
+        micromamba activate snowpack_env
         pip install --upgrade pip
         pip install -r requirements.txt
 
@@ -68,6 +69,7 @@ jobs:
       id: download_modis_DEBUG
       shell: bash
       run: |
+        micromamba activate snowpack_env
         python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.02.17
 
     - name: Install S3 Archive Deps

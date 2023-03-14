@@ -61,6 +61,8 @@ jobs:
       id: install_deps_pip
       shell: bash
       run: |
+        eval "$(micromamba shell hook --shell=bash)"
+        micromamba shell init --shell=bash --prefix=~/micromamba
         micromamba activate snowpack_env
         pip install --upgrade pip
         pip install -r requirements.txt

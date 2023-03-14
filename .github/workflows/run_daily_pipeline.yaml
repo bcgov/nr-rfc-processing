@@ -36,11 +36,10 @@ jobs:
       uses: mamba-org/provision-with-micromamba@main
       with:
         cache-env: false
-        environment-file: environment.yaml
+        environment-file: explicit.lock
         environment-name: snowpack_env
         extra-specs: |
             python=3.8
-
 
     # - name: Set up Conda environment
     #   uses: conda-incubator/setup-miniconda@v2

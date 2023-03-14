@@ -1,0 +1,4 @@
+name: /home/kjnether/micromamba/envs/ldev-mamba
+channels:
+  - defaults
+prefix: /home/kjnether/micromamba/envs/ldev-mamba

@@ -21,6 +21,10 @@ jobs:
       OBJ_STORE_SECRET: ${{ secrets.OBJ_STORE_SECRET }}
       OBJ_STORE_USER: ${{ secrets.OBJ_STORE_USER }}
       OBJ_STORE_HOST: ${{ secrets.OBJ_STORE_HOST }}
+      SNOWPACK_DATA: ./data
+      EARTHDATA_USER: ${{ secrets.EARTHDATA_USER }}
+      EARTHDATA_PASS: ${{ secrets.EARTHDATA_PASS }}
+      SNOWPACK_ENVS_PTH: ./env.yaml
 
     steps:
     - uses: actions/checkout@v3
@@ -73,7 +77,10 @@ jobs:
       run: |
         eval "$(micromamba shell hook --shell=bash)"
         micromamba activate snowpack_env
+        echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
+        echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
         python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.02.17
+        rm -f $SNOWPACK_ENVS_PTH
 
     - name: Install S3 Archive Deps
       id: install_deps_archive_pip

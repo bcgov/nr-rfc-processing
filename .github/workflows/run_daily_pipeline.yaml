@@ -30,23 +30,32 @@ jobs:
 
     - uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.8'
 
-    - name: Set up Conda environment
-      uses: conda-incubator/setup-miniconda@v2
+    - name: Install Conda environment from environment.yml
+      uses: mamba-org/provision-with-micromamba@main
       with:
-        activate-environment: ldev
-        python-version: 3.8
+        cache-env: true
+        environment-name: environment.yaml
+        extra-specs: |
+            python=3.8
 
-    - name: Install dependencies (conda)
-      id: install_deps_conda
-      shell: bash
-      run: |
-        conda env update python=3.8 --file environment.yaml --name ldev
-        conda env list
-        conda init bash
-        . ~/.bashrc
-        conda activate ldev
+
+    # - name: Set up Conda environment
+    #   uses: conda-incubator/setup-miniconda@v2
+    #   with:
+    #     activate-environment: ldev
+    #     python-version: 3.8
+
+    # - name: Install dependencies (conda)
+    #   id: install_deps_conda
+    #   shell: bash
+    #   run: |
+    #     conda env update python=3.8 --file environment.yaml --name ldev
+    #     conda env list
+    #     conda init bash
+    #     . ~/.bashrc
+    #     conda activate ldev
 
     - name: Install Dependencies (pip)
       id: install_deps_pip

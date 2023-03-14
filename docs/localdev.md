@@ -113,3 +113,7 @@ of the daily update into smaller chunks.
 
 run the archive script (assume the dependencies have been installed):
 `python snowpack_archive\runS3Backup.py`
+
+# Mamba
+
+Builds of the env in GHA were taking 2+ hours... never waited longer than that.

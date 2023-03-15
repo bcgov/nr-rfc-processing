@@ -36,7 +36,7 @@ jobs:
     #   with:
     #     python-version: '3.9'
 
-    - name: Install Conda environment from environment.yml
+    - name: Install micromamba (conda) environment from explicit.lock
       uses: mamba-org/provision-with-micromamba@main
       with:
         cache-env: false
@@ -91,9 +91,9 @@ jobs:
       id: install_deps_archive_pip
       shell: bash
       run: |
-        pip install -r snow_archive/requirements.txt
+        pip install -r snowpack_archive/requirements.txt
 
     - name: Run S3 Archive
       id: run_s3_archive
       run: |
-        python snowpack_archive/runS3Backup.py
+        python3 snowpack_archive/runS3Backup.py

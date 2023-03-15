@@ -32,9 +32,9 @@ jobs:
       with:
        fetch-depth: 0
 
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.8'
+    # - uses: actions/setup-python@v4
+    #   with:
+    #     python-version: '3.9'
 
     - name: Install Conda environment from environment.yml
       uses: mamba-org/provision-with-micromamba@main
@@ -42,8 +42,8 @@ jobs:
         cache-env: false
         environment-file: explicit.lock
         environment-name: snowpack_env
-        extra-specs: |
-            python=3.8
+        # extra-specs: |
+        #     python=3.9
 
     # - name: Set up Conda environment
     #   uses: conda-incubator/setup-miniconda@v2
@@ -71,6 +71,7 @@ jobs:
         micromamba env list
         pip install --upgrade pip
         pip install -r requirements.txt
+        pip install -e .
 
     - name: Download the Modis imagery
       id: download_modis_DEBUG

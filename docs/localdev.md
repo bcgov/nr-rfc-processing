@@ -119,14 +119,20 @@ run the archive script (assume the dependencies have been installed):
 Builds of the env in GHA were taking 2+ hours... then cancelled.  Pivot to
 explicit lock files and mamba build to save time.
 
+all examples assume an env is to be created called `ldev`
+
 ## create lock file
 
-`conda list --explicit --md5 > explicit.lock`
+`micromamba env export -n ldev --explicit > explicit.lock`
 
 ## build env using micromamba
+Build from environment.yaml
+`micromamba create -n ldev --file environment.yaml`
 
-`micromamba create -n testenv -f explicit.lock -y`
+
+Build from lock file
+`micromamba create -n ldev -f explicit.lock -y`
 
 ## activate
 
-`conda activate testenv`
+`micromamba activate ldev`

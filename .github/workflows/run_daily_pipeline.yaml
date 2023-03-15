@@ -68,6 +68,7 @@ jobs:
         eval "$(micromamba shell hook --shell=bash)"
         # micromamba shell init --shell=bash --prefix=~/micromamba
         micromamba activate snowpack_env
+        micromamba env list
         pip install --upgrade pip
         pip install -r requirements.txt
 
@@ -75,8 +76,11 @@ jobs:
       id: download_modis_DEBUG
       shell: bash
       run: |
+        python3 --version
         eval "$(micromamba shell hook --shell=bash)"
         micromamba activate snowpack_env
+        micromamba env list
+        python3 --version
         echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
         echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
         python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.02.17

@@ -43,6 +43,8 @@ ANALYSIS = os.path.join(TOP,'analysis')
 MODIS_TERRA = os.path.join(TOP,'modis-terra')
 SENTINEL_OUTPUT = os.path.join(TOP, 'sentinel_output')
 
+NORM_ROOT = os.getenv('NORM_ROOT', TOP)
+
 NORM = os.path.join(os.environ['NORM_ROOT'],'norm')
 MOSAICS = os.path.join(NORM, 'mosaics')
 OUTPUT_TIF_MODIS = os.path.join(MOSAICS,'modis')

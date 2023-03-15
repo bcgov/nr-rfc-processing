@@ -45,7 +45,7 @@ SENTINEL_OUTPUT = os.path.join(TOP, 'sentinel_output')
 
 NORM_ROOT = os.getenv('NORM_ROOT', TOP)
 
-NORM = os.path.join(os.environ['NORM_ROOT'],'norm')
+NORM = os.path.join(NORM_ROOT,'norm')
 MOSAICS = os.path.join(NORM, 'mosaics')
 OUTPUT_TIF_MODIS = os.path.join(MOSAICS,'modis')
 OUTPUT_TIF_VIIRS = os.path.join(MOSAICS,'viirs')

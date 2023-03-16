@@ -26,10 +26,15 @@ def download_granules(envpath: str, date: str, sat: str, days: int = 5):
     secrets = yaml.load(envvars, Loader=yaml.FullLoader)
     envvars.close()
 
+    # MODIS product is MOD10A1.61, (used to be just MOD10A1.6)
+    # should be a single reference to this product comming from either
+    # snow_path_lib function or from const.DEFAULT_PRODUCT, which should be
+    # comming from MODIS Product parameter that doesn't exist.
     if sat == 'modis':
         product = {
                 'name': 'daily',
-                'products': ['MOD10A1.6'],
+                #'products': ['MOD10A1.61'],
+                'products': [const.MODIS_PRODUCT],
                 'date_span': int(days)-1
             }
     elif sat == 'viirs':
@@ -57,7 +62,7 @@ def download_granules(envpath: str, date: str, sat: str, days: int = 5):
         product,
         bbox=[*const.BBOX]
     )
-    msg = "queried product {product}, got {len(granules)} granules, downloading"
+    msg = f"queried product {product}, got {len(granules)} granules, downloading"
     logger.info(msg)
     try:
         with Pool(4) as p:

@@ -39,30 +39,48 @@ import VerifyETag
 LOGGER = logging.getLogger(__name__)
 
 # pylint: disable=anomalous-backslash-in-string
-#
 
 
 class ArchiveSnowData(object):
     """High level functionality for archiving snowpack data."""
 
-    def __init__(self):
+    def __init__(self, backup_threshold:int = None, delete:bool=True):
+        """_summary_
+
+        :param backup_threshold: This parameter determines how old a directory
+            needs to be in order to trigger a backup of the data to object
+            storage.  The default value is set in the constants.py file in the
+            property DAYS_BACK.  This property allows that property to be
+            overridden, defaults to None
+        :type backup_threshold: int, optional
+        :param delete: identifies if the original data should be deleted after
+            it has been copied to object storage, if this arg is not supplied
+            it is assumed that it is True, ie the data SHOULD be deleted
+        :type delete: bool, optional
+        """
         LOGGER.debug("init object")
+        if backup_threshold is not None:
+            constants.DAYS_BACK = backup_threshold
+        self.delete = delete
         omitDirs = self.getOmitDirs()
         self.dirIterator = DirectoryList(constants.SRC_ROOT_DIR,
                                          omitDirectoryList=omitDirs)
 
     def archiveDirs(self):
+        """initiates the actual backup of the directories defined in
+        constants.SRC_ROOT_DIR, where any exception are defined in
+        the environment variable ROOTDIRECTORIES_OMIT
+        """
         objStore = ObjectStore()
-        cnt = 0
         for currentDirectory in self.dirIterator:
             LOGGER.debug(f"currentdir: {currentDirectory}")
             if self.isReadyForArchive(currentDirectory,
                                       daysBack=constants.DAYS_BACK):
                 LOGGER.debug(f"directory for archive: {currentDirectory}")
-                objStore.copy(currentDirectory)
-                self.deleteDir(currentDirectory)
-                # used when testing to run on limited number of directories
-                cnt += 1
+                objStore.copy(currentDirectory, delete=self.delete)
+                if self.delete:
+                    LOGGER.info(f"removing the original directory: {currentDirectory}")
+                    self.deleteDir(currentDirectory)
 
     def deleteDir(self, inDir):
         """Deletes empty directoires.
@@ -108,7 +126,7 @@ class ArchiveSnowData(object):
         LOGGER.debug(f"omitDirList: {omitDirList}")
         return omitDirList
 
-    def isReadyForArchive(self, inPath, daysBack=20):
+    def isReadyForArchive(self, inPath:str, daysBack:int=20):
         """Should the input directory be archived.
 
         River forecast snowpack data has directories with the string
@@ -129,12 +147,12 @@ class ArchiveSnowData(object):
         """
         if daysBack > 0:
             daysBack = 0 - daysBack
-        dateObj = self.getDirectoryDate(inPath)
+        current_directory_date = self.getDirectoryDate(inPath)
         daysBack = datetime.timedelta(days=daysBack)
         currentDate = datetime.datetime.now()
         Threshold = currentDate + daysBack
         isOlderThanThreshold = False
-        if dateObj < Threshold:
+        if current_directory_date < Threshold:
             # date of directory is older than 2 weeks
             isOlderThanThreshold = True
         return isOlderThanThreshold
@@ -225,25 +243,6 @@ class DirectoryList(object):
         except StopIteration:
             self.dirWalkingComplete = True
 
-    def getNextDirList_old(self):
-        try:
-            rootdir, tmpDirs, files = self.dirWalker.__next__()
-            dirs = []
-            for iterdir in tmpDirs:
-                fullpath = os.path.join(rootdir, iterdir)
-                if not self.isDirInOmitList(fullpath) and \
-                        self.inputDirRegex.match(iterdir):
-                    dirs.append(fullpath)
-                    LOGGER.debug('datedir being added to iterator: ' +
-                                 f'{fullpath}')
-            if not dirs:
-                dirs = self.getNextDirList()
-            self.dirList = dirs
-            self.dirIndex = 0
-            return dirs
-
-        except StopIteration:
-            self.dirWalkingComplete = True
 
     def isDirInOmitList(self, inDir):
         """Should input directory be omitted.
@@ -362,7 +361,7 @@ class ObjectStore(object):
         LOGGER.debug(f"object store absolute path: {objStoreAbsPath}")
         return objStoreAbsPath
 
-    def copy(self, srcDir):
+    def copy(self, srcDir, delete=True):
         """Copies the contents of a source directory recursively to object
         storage.
 
@@ -372,7 +371,7 @@ class ObjectStore(object):
         objStorePath = self.getObjStorePath(srcDir, prependBucket=False)
         LOGGER.debug(f'objStorePath: {objStorePath}')
         LOGGER.info(f'copying: {srcDir}...')
-        self.copyDirectoryRecurive(srcDir)
+        self.copyDirectoryRecurive(srcDir, delete=delete)
         LOGGER.info(f"copied the path: {srcDir}, to object storage")
         # if self.copyDateDirCnt > 17:
         #     LOGGER.debug("stopping here")
@@ -411,7 +410,7 @@ class ObjectStore(object):
         LOGGER.debug(f"newpath: {newPath}")
         return newPath
 
-    def copyDirectoryRecurive(self, srcDir):
+    def copyDirectoryRecurive(self, srcDir, delete=True):
         """Recursive copy of directory contents to object store.
 
         Iterates over all the files and directoris in the 'srcDir' parameter,
@@ -435,7 +434,7 @@ class ObjectStore(object):
                                                 prependBucket=False)
             LOGGER.debug(f"objStorePath: {objStorePath}")
             if not os.path.isfile(local_file):
-                self.copyDirectoryRecurive(local_file)
+                self.copyDirectoryRecurive(local_file, delete=delete)
             else:
                 if not self.objExists(objStorePath):
                     LOGGER.debug(f"uploading: {local_file} to {objStorePath}")
@@ -445,35 +444,37 @@ class ObjectStore(object):
                         local_file,
                         part_size=part_size)
                     LOGGER.debug(f'copyObj: {copyObj}')
-                    etagDest = copyObj[0]
+                    #etagDest = copyObj[0]
+                    etagDest = copyObj.etag
                 else:
                     etagDest = self.objIndex[objStorePath]
-                md5Src = \
-                    hashlib.md5(open(local_file, 'rb').read()).hexdigest()
-                LOGGER.debug(f"etagDest: {etagDest}")
-                if etagDest == md5Src:
-                    # delete the source
-                    LOGGER.info("md5's of source / dest match deleting the " +
-                                f"src: {srcDir}")
-                    os.remove(local_file)
-                elif (len(etagDest.split('-')) == 2) and \
-                        self.checkMultipartEtag(local_file, etagDest):
-                    # etag format suggests the file was uploaded as a multipart
-                    # which impacts how the etags are calculated
-                    LOGGER.info("md5's of source / dest match as multipart " +
-                                f"deleting the src: {srcDir}")
-                    os.remove(local_file)
-                else:
-                    # if the md5 doesn't match either file isn't valid on the
-                    # s3 side in which case we won't delete the source and we
-                    # will throw and error in the log.
-                    #    OR
-                    # the etag doesn't match because the file was uploaded as a
-                    # multipart object
+                if delete:
+                    md5Src = \
+                        hashlib.md5(open(local_file, 'rb').read()).hexdigest()
+                    LOGGER.debug(f"etagDest: {etagDest}")
+                    if etagDest == md5Src:
+                        # delete the source
+                        LOGGER.info("md5's of source / dest match deleting the " +
+                                    f"src: {srcDir}")
+                        os.remove(local_file)
+                    elif (len(etagDest.split('-')) == 2) and \
+                            self.checkMultipartEtag(local_file, etagDest):
+                        # etag format suggests the file was uploaded as a multipart
+                        # which impacts how the etags are calculated
+                        LOGGER.info("md5's of source / dest match as multipart " +
+                                    f"deleting the src: {srcDir}")
+                        os.remove(local_file)
+                    else:
+                        # if the md5 doesn't match either file isn't valid on the
+                        # s3 side in which case we won't delete the source and we
+                        # will throw and error in the log.
+                        #    OR
+                        # the etag doesn't match because the file was uploaded as a
+                        # multipart object
 
-                    msg = f'source: {local_file} and {objStorePath} both ' + \
-                          'exists, but md5s don\'t align'
-                    LOGGER.error(msg)
+                        msg = f'source: {local_file} and {objStorePath} both ' + \
+                            'exists, but md5s don\'t align'
+                        LOGGER.error(msg)
 
     def checkMultipartEtag(self, localFile, etagFromDest):
         """checks to see if the etag from S3 can be validated locally

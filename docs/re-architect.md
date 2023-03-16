@@ -58,7 +58,7 @@ chunks described above.
 
 
 download modis:
-`python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.02.16`
+`python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.02.18`
 
 process modis:
 `python run.py process --sat modis --date 2023.02.16`
@@ -74,3 +74,16 @@ create kmls - modis
 `python run.py build-kml --sat modis --date 2023.02.16 --typ basins`
 `python run.py build-kml --sat viirs --date 2023.02.16 --typ watersheds`
 `python run.py build-kml --sat viirs --date 2023.02.16 --typ basins`
+
+run archive to object store
+
+python 
+
+# MODIS data discontinued
+
+https://lpdaac.usgs.gov/news/modis-version-6-forward-processing-ends-february-15-2023/
+product code: MOD10A1.6
+DOI:10.5067/MODIS/MOD10_L2.061
+
+example product file for 61:
+MOD10A1.A2023072.h10v03.061.2023074072724.hdf

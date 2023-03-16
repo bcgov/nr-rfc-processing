@@ -1,7 +1,7 @@
 name: Snowpack Daily Pipeline
 
 on:
-  # push action for debugging purposes
+  # push action for debugging purposes, comment up when working
   push:
     branches: ["main", "feat/35-gha-for-processing"]
   schedule:
@@ -84,7 +84,7 @@ jobs:
         python3 --version
         echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
         echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
-        python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.02.18
+        python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.03.14
         rm -f $SNOWPACK_ENVS_PTH
 
     - name: Install S3 Archive Deps
@@ -96,4 +96,5 @@ jobs:
     - name: Run S3 Archive
       id: run_s3_archive
       run: |
-        python3 snowpack_archive/runS3Backup.py
+        #export ROOTDIRECTORIES_OMIT=
+        python3 snowpack_archive/runS3Backup.py --days_back 0 --delete False

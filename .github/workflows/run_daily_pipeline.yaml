@@ -85,7 +85,7 @@ jobs:
         echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
         echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
         # python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.03.14
-        python run.py daily-pipeline --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.03.14
+        python run.py daily-pipeline --envpth=$SNOWPACK_ENVS_PTH --date 2023.03.14
 
         rm -f $SNOWPACK_ENVS_PTH
 

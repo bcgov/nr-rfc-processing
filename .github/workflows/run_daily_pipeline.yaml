@@ -2,10 +2,12 @@ name: Snowpack Daily Pipeline
 
 on:
   # push action for debugging purposes, comment up when working
-  push:
-    branches: ["main", "feat/35-gha-for-processing"]
+  # push:
+  #   branches: ["main", "feat/35-gha-for-processing"]
+  # 2pm utc = 6am pst.. gha uses utc for timezone so action needs to be
+  # described as utc time.
   schedule:
-   - cron: '1 16 * * *'
+   - cron: '0 14 * * *'
   workflow_dispatch:
 
 jobs:
@@ -77,15 +79,22 @@ jobs:
       id: download_modis_DEBUG
       shell: bash
       run: |
-        python3 --version
+        # setup / invoke conda env
         eval "$(micromamba shell hook --shell=bash)"
         micromamba activate snowpack_env
-        micromamba env list
-        python3 --version
+
+        # populate the secret file
         echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
         echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
+
+
+        # calculate current date:
+        export TZ=America/Vancouver
+        date_less_2_daze=$(date -d '-2 days' '+%Y-%m-%d')
+
+        # run the pipeline
         # python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.03.14
-        python run.py daily-pipeline --envpth=$SNOWPACK_ENVS_PTH --date 2023.03.14
+        python run.py daily-pipeline --envpth=$SNOWPACK_ENVS_PTH --date $date_less_2_daze
 
         rm -f $SNOWPACK_ENVS_PTH
 

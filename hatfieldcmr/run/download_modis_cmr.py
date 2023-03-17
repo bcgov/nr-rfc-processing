@@ -15,6 +15,7 @@ from google.cloud import storage
 from hatfieldcmr import CMRClient
 from hatfieldcmr.ingest import AbstractStorageClientWrapper, LocalStorageWrapper, GCSClientWrapper
 from hatfieldcmr.version import __version__
+import admin.constants as const
 
 # quiet these loggers
 logging.getLogger('nose').setLevel(logging.CRITICAL)
@@ -29,7 +30,7 @@ SLEEP_DURATION = 3 # seconds
 DEFAULT_LOG_PATH = "/logs/hatfieldcmr.log"
 
 # default product
-DEFAULT_PRODUCT = 'MOD10A1.6'
+DEFAULT_PRODUCT = const.MODIS_PRODUCT #'MOD10A1.61'#'MOD10A1.6'
 
 # bounding box is of british columbia
 DEFAULT_BOUNDING_BOX = [-139.06, 48.30, -114.03, 60]
@@ -38,7 +39,7 @@ DEFAULT_BOUNDING_BOX = [-139.06, 48.30, -114.03, 60]
 EARTHDATA_USER = os.getenv('EARTHDATA_USER')
 EARTHDATA_PASS = os.getenv('EARTHDATA_PASS')
 
-# 
+#
 
 bucket = os.getenv('EO_GCS_MTL_BUCKET')
 secret_path = os.getenv('EO_INGEST_SECRET')
@@ -86,14 +87,14 @@ def parse_args(args):
     parser.add_argument('--version',
                         help='Print version and exit',
                         action='version',
-                        version=__version__)    
+                        version=__version__)
     parser.add_argument('--log-path', default=DEFAULT_LOG_PATH, type=str)
     parser.add_argument('--log-level', default=2, type=int)
     parser.set_defaults(func=lambda x: parser.print_help())
     subparsers = parser.add_subparsers(
         title='subcommands',
         description='valid subcommands',
-        help='sub-command help')    
+        help='sub-command help')
 
     download_sp = subparsers.add_parser('download')
     configure_granule_query_parser_parameters(download_sp)
@@ -110,8 +111,8 @@ def configure_granule_query_parser_parameters(sp):
                         default=DEFAULT_BOUNDING_BOX,
                         help='Bounding box',
                         metavar=('[lower left lon]', '[lower left lat]',
-                                 '[upper left lon]', '[upper left lat]')) 
-    sp.add_argument('-n', '--dry-run', action="store_true")       
+                                 '[upper left lon]', '[upper left lat]'))
+    sp.add_argument('-n', '--dry-run', action="store_true")
     sp.add_argument('--log-path', default=DEFAULT_LOG_PATH, type=str)
     sp.add_argument('--log-level', default=2, type=int)
 
@@ -122,19 +123,19 @@ def configure_listener(log_path: str = DEFAULT_LOG_PATH):
     log_dir = os.path.dirname(log_path)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-    
+
     h = logging.handlers.RotatingFileHandler(log_path, 'a', 3e6, 5)
     f = logging.Formatter(fmt)
     h.setFormatter(f)
     logger.addHandler(h)
-    return logger 
+    return logger
 
 def get_date(gid):
     """ Get date from granule ID """
     d = gid.split('.')[1].replace('A', '')
     return datetime.datetime.strptime(d, '%Y%j')
 
-def configure_storage_wrapper(secret_path, bucket):    
+def configure_storage_wrapper(secret_path, bucket):
     gcs_client = storage.Client.from_service_account_json(secret_path)
     storage_wrapper = GCSClientWrapper(gcs_client, bucket)
     return storage_wrapper
@@ -149,4 +150,4 @@ def main(input_args):
         raise e
 
 if __name__ == "__main__":
-    main(sys.argv[1:])    
+    main(sys.argv[1:])

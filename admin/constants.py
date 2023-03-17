@@ -18,6 +18,9 @@ VIIRS_EPSG4326_RES= 0.006659501656959246
 # Bounding box to clip mosaics to
 BBOX = [-140.977, 46.559, -112.3242, 63.134]
 
+# MODIS PRODUCT
+MODIS_PRODUCT = 'MOD10A1.61' # 'MOD10A1.6', good up to feb 15 2023
+
 TOP = os.environ['SNOWPACK_DATA']
 LOG = os.path.join(TOP, 'log')
 BASINS = os.path.join(TOP,'basins')
@@ -43,7 +46,9 @@ ANALYSIS = os.path.join(TOP,'analysis')
 MODIS_TERRA = os.path.join(TOP,'modis-terra')
 SENTINEL_OUTPUT = os.path.join(TOP, 'sentinel_output')
 
-NORM = os.path.join(os.environ['NORM_ROOT'],'norm')
+NORM_ROOT = os.getenv('NORM_ROOT', TOP)
+
+NORM = os.path.join(NORM_ROOT,'norm')
 MOSAICS = os.path.join(NORM, 'mosaics')
 OUTPUT_TIF_MODIS = os.path.join(MOSAICS,'modis')
 OUTPUT_TIF_VIIRS = os.path.join(MOSAICS,'viirs')

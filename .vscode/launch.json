@@ -29,7 +29,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["download", "--sat", "modis", "--envpth=env.yaml", "--date", "2023.02.16"]
+            "args" : ["download", "--sat", "modis", "--envpth=env.yaml", "--date", "2023.03.13"]
         },
         {
             "name": "process modis",
@@ -38,7 +38,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["process", "--sat", "modis", "--date", "2023.02.16"]
+            "args" : ["process", "--sat", "modis", "--date", "2023.03.13"]
         },
         {
             "name": "plot modis",
@@ -47,7 +47,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["plot", "--sat", "modis", "--date", "2023.02.16"]
+            "args" : ["plot", "--sat", "modis", "--date", "2023.03.13"]
         },
         {
             "name": "download viirs",
@@ -76,5 +76,15 @@
             "justMyCode": false,
             "args" : ["plot", "--sat", "viirs", "--date", "2023.02.16"]
         },
+        {
+            "name": "archive data to object store",
+            "type": "python",
+            "request": "launch",
+            "program": "snowpack_archive/runS3Backup.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args" : ["--days_back", "0", "--delete", "False"]
+        },
+
     ]
 }

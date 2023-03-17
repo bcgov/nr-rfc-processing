@@ -113,3 +113,26 @@ of the daily update into smaller chunks.
 
 run the archive script (assume the dependencies have been installed):
 `python snowpack_archive\runS3Backup.py`
+
+# Mamba
+
+Builds of the env in GHA were taking 2+ hours... then cancelled.  Pivot to
+explicit lock files and mamba build to save time.
+
+all examples assume an env is to be created called `ldev`
+
+## create lock file
+
+`micromamba env export -n ldev --explicit > explicit.lock`
+
+## build env using micromamba
+Build from environment.yaml
+`micromamba create -n ldev --file environment.yaml`
+
+
+Build from lock file
+`micromamba create -n ldev -f explicit.lock -y`
+
+## activate
+
+`micromamba activate ldev`

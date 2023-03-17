@@ -26,5 +26,6 @@
     "files.associations": {
         "*.jenkins": "Jenkinsfile"
     },
-    "python.defaultInterpreterPath": "./ldev/bin/python"
+    "python.defaultInterpreterPath": "./ldev/bin/python",
+    "terminal.integrated.scrollback": 5000
 }

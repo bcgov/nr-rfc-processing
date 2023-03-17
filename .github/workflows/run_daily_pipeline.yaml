@@ -1,0 +1,111 @@
+name: Snowpack Daily Pipeline
+
+on:
+  # push action for debugging purposes, comment up when working
+  # push:
+  #   branches: ["main", "feat/35-gha-for-processing"]
+  # 2pm utc = 6am pst.. gha uses utc for timezone so action needs to be
+  # described as utc time.
+  schedule:
+   - cron: '0 14 * * *'
+  workflow_dispatch:
+
+jobs:
+  retrieve_images:
+    defaults:
+      run:
+        shell: bash
+    name: 'Run the Snowpack historical norms comparison analysis'
+    runs-on: ubuntu-22.04
+    environment: PROD
+    env:
+      OBJ_STORE_BUCKET: ${{ secrets.OBJ_STORE_BUCKET }}
+      OBJ_STORE_SECRET: ${{ secrets.OBJ_STORE_SECRET }}
+      OBJ_STORE_USER: ${{ secrets.OBJ_STORE_USER }}
+      OBJ_STORE_HOST: ${{ secrets.OBJ_STORE_HOST }}
+      SNOWPACK_DATA: ./data
+      EARTHDATA_USER: ${{ secrets.EARTHDATA_USER }}
+      EARTHDATA_PASS: ${{ secrets.EARTHDATA_PASS }}
+      SNOWPACK_ENVS_PTH: ./env.yaml
+
+    steps:
+    - uses: actions/checkout@v3
+      id: checkout
+      with:
+       fetch-depth: 0
+
+    # - uses: actions/setup-python@v4
+    #   with:
+    #     python-version: '3.9'
+
+    - name: Install micromamba (conda) environment from explicit.lock
+      uses: mamba-org/provision-with-micromamba@main
+      with:
+        cache-env: false
+        environment-file: explicit.lock
+        environment-name: snowpack_env
+        # extra-specs: |
+        #     python=3.9
+
+    # - name: Set up Conda environment
+    #   uses: conda-incubator/setup-miniconda@v2
+    #   with:
+    #     activate-environment: ldev
+    #     python-version: 3.8
+
+    # - name: Install dependencies (conda)
+    #   id: install_deps_conda
+    #   shell: bash
+    #   run: |
+    #     conda env update python=3.8 --file environment.yaml --name ldev
+    #     conda env list
+    #     conda init bash
+    #     . ~/.bashrc
+    #     conda activate ldev
+
+    - name: Install Dependencies (pip)
+      id: install_deps_pip
+      shell: bash
+      run: |
+        eval "$(micromamba shell hook --shell=bash)"
+        # micromamba shell init --shell=bash --prefix=~/micromamba
+        micromamba activate snowpack_env
+        micromamba env list
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -e .
+
+    - name: Download the Modis imagery
+      id: download_modis_DEBUG
+      shell: bash
+      run: |
+        # setup / invoke conda env
+        eval "$(micromamba shell hook --shell=bash)"
+        micromamba activate snowpack_env
+
+        # populate the secret file
+        echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
+        echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
+
+
+        # calculate current date:
+        export TZ=America/Vancouver
+        date_less_2_daze=$(date -d '-2 days' '+%Y-%m-%d')
+
+        # run the pipeline
+        # python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.03.14
+        python run.py daily-pipeline --envpth=$SNOWPACK_ENVS_PTH --date $date_less_2_daze
+
+        rm -f $SNOWPACK_ENVS_PTH
+
+    - name: Install S3 Archive Deps
+      id: install_deps_archive_pip
+      shell: bash
+      run: |
+        pip install -r snowpack_archive/requirements.txt
+
+    - name: Run S3 Archive
+      id: run_s3_archive
+      run: |
+        #export ROOTDIRECTORIES_OMIT=
+        python3 snowpack_archive/runS3Backup.py --days_back 0 --delete False

@@ -11,6 +11,20 @@ if os.path.exists(envPath):
 #
 SRC_ROOT_DIR = os.getenv('SRC_ROOT_DIR', 'data')
 OBJ_STORE_ROOT_DIR = os.getenv('OBJ_STORE_ROOT_DIR', 'snowpack_archive')
+
+# get required environments:
+required_envs = ['OBJ_STORE_BUCKET', 'OBJ_STORE_SECRET', 'OBJ_STORE_USER', 'OBJ_STORE_HOST']
+for req_env_name in required_envs:
+    env = os.getenv(req_env_name)
+    if not env:
+        msg = (
+                'These are the environment varialbes that must be set in ' +
+                'order for the script to function: ' +
+                f'{", ".join(required_envs)} Cannot find the env var: ' +
+                f"{req_env_name}"
+            )
+        raise ValueError(msg)
+
 OBJ_STORE_BUCKET = os.environ['OBJ_STORE_BUCKET']
 OBJ_STORE_SECRET = os.environ['OBJ_STORE_SECRET']
 OBJ_STORE_USER = os.environ['OBJ_STORE_USER']

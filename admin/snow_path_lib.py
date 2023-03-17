@@ -12,8 +12,31 @@ class SnowPathLib:
     def __init__(self):
         pass
 
+    def get_modis_product_version(self):
+        """
+        The daily gridded snow cover product contains the ‘best’
+        NDSI_Snow_Cover, snow albedo and QA observation selected from all the
+        M*D10_L2 swaths mapped into a grid cell on the sinusoidal projection in
+        the M*D10GA
+
+        version 6 is discontinued... https://nsidc.org/data/mod10a1/versions/6
+        revised / new version is 6.1 or 61
+
+        product is MOD10A1
+        version is 61
+        """
+        product, version = const.MODIS_PRODUCT.split('.')
+        return product, version
+
+
+
     def get_modis_MOD10A1V6(self):
-        pth = os.path.join(const.MODIS_TERRA, 'MOD10A1.006')
+        # TODO: path should be derived from const.DEFAULT_PRODUCT
+        product, version = self.get_modis_product_version()
+        version_zero_padded = version.rjust(3, '0')
+        modis_dir = f'{product}.{version_zero_padded}'
+
+        pth = os.path.join(const.MODIS_TERRA, modis_dir)
         return pth
 
     def get_modis_int_tif(self, date):

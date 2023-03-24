@@ -56,7 +56,11 @@ def plot_sheds(sheds: list, typ: str, sat: str, date: str):
                 logger.warning(e)
                 continue
             d = rioxr.open_rasterio(daily, chunks={'band': 1, 'x': chunk, 'y': chunk})
-            d.data[(d.data == d._FillValue)] = np.nan
+            # replace values that are = to _FillValue to non number
+            #d.data[(d.data == d._FillValue)] = np.nan
+            # raster = raster.where(raster != raster.rio.nodata, np.nan)
+
+            d = d.where(d != d._FillValue, np.nan)
             d.data[(d.data > 100)] = np.nan
             org['daily'].append(d)
             try: # If generated normal file is missing, skip to next

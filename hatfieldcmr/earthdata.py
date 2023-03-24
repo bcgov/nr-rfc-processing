@@ -26,7 +26,7 @@ from .ingest import AbstractStorageClientWrapper, format_object_name, IngestExce
 # load_dotenv(find_dotenv())
 
 # logging
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 CHUNK_SIZE = 256 * 1024
 
@@ -46,7 +46,7 @@ class CMRClient():
               product: str,
               provider: str = 'LPDAAC_ECS',
               bbox: List = []) -> List[Dict]:
-        """ 
+        """
         Search CMR database for spectral MODIS tiles matching a temporal range,
         defined by a start date and end date. Returns metadata containing the URL of
         each image.
@@ -58,7 +58,7 @@ class CMRClient():
         end_date: string
             End date yyyy-mm-dd
         product: string
-            Product name 
+            Product name
         provider: string
             Provider (default is 'LPDAAC_ECS')
         bbox: List[float]
@@ -128,7 +128,7 @@ class CMRClient():
                 self.siesta()
 
         # download browse image
-        fn_browse = None 
+        fn_browse = None
         if links.get('text/jpeg'):
             fn_browse, sk = self.download_file(links['image/jpeg'],
                                             meta,
@@ -188,7 +188,7 @@ class CMRClient():
                               fout,
                               buf,
                               content_type=content_type)
-        retry_func(upload_func)        
+        retry_func(upload_func)
         logger.info(f"fetched and uploaded file {fout} from {url}")
         return fout, False
 

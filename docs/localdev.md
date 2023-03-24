@@ -123,11 +123,17 @@ all examples assume an env is to be created called `ldev`
 
 ## create lock file
 
-`micromamba env export -n ldev --explicit > explicit.lock`
+`micromamba env export -n ldev -e > explicit.lock`
 
 ## build env using micromamba
 Build from environment.yaml
 `micromamba create -n ldev --file environment.yaml`
+
+Install other deps to conda env
+```
+pip install -r requirements.txt
+pip install -e .
+```
 
 
 Build from lock file
@@ -136,3 +142,9 @@ Build from lock file
 ## activate
 
 `micromamba activate ldev`
+
+## upgrade a package and any dependencies
+`mm install click=8.1.2 -n ldev2 -c conda-forge`
+
+## regenerate a env file... doesn't always create a valid one
+`mm env export -n ldev2 > env2.yaml`

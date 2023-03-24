@@ -20,7 +20,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["daily-pipeline", "--envpth=env.yaml", "--date", "2023.02.16"]
+            "args" : ["daily-pipeline", "--envpth=env.yaml", "--date", "2023.03.22"]
         },
         {
             "name": "download modis",
@@ -29,7 +29,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["download", "--sat", "modis", "--envpth=env.yaml", "--date", "2023.03.13"]
+            "args" : ["download", "--sat", "modis", "--envpth=env.yaml", "--date", "2023.03.22"]
         },
         {
             "name": "process modis",
@@ -38,7 +38,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["process", "--sat", "modis", "--date", "2023.03.13"]
+            "args" : ["process", "--sat", "modis", "--date", "2023.03.22"]
         },
         {
             "name": "plot modis",
@@ -47,7 +47,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["plot", "--sat", "modis", "--date", "2023.03.13"]
+            "args" : ["plot", "--sat", "modis", "--date", "2023.03.22"]
         },
         {
             "name": "download viirs",
@@ -56,7 +56,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["download", "--sat", "viirs", "--envpth=env.yaml", "--date", "2023.02.16"]
+            "args" : ["download", "--sat", "viirs", "--envpth=env.yaml", "--date", "2023.03.21"]
         },
         {
             "name": "process viirs",
@@ -65,7 +65,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["process", "--sat", "viirs", "--date", "2023.02.16"]
+            "args" : ["process", "--sat", "viirs", "--date", "2023.03.21"]
         },
         {
             "name": "plot viirs",
@@ -74,7 +74,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["plot", "--sat", "viirs", "--date", "2023.02.16"]
+            "args" : ["plot", "--sat", "viirs", "--date", "2023.03.21"]
         },
         {
             "name": "archive data to object store",
@@ -85,6 +85,5 @@
             "justMyCode": true,
             "args" : ["--days_back", "0", "--delete", "False"]
         },
-
     ]
 }

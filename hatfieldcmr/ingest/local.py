@@ -5,20 +5,22 @@ from io import BytesIO
 from typing import Dict
 from .push import AbstractStorageClientWrapper
 
+LOGGER = logging.getLogger(__name__)
+
 class LocalStorageWrapper(AbstractStorageClientWrapper):
-    
+
     def __init__(self, out_dir: str):
         self._out_dir = out_dir
-        self.logger = logging.getLogger()
-    
+        #self.logger = logging.getLogger()
+
     def exists(self, blob_name: str) -> bool:
         path = self._make_path(blob_name)
         return os.path.exists(path)
 
     def upload(
         self,
-        blob_name: str, 
-        buf: BytesIO, 
+        blob_name: str,
+        buf: BytesIO,
         metadata: Dict = None,
         content_type = None
         ):
@@ -29,7 +31,7 @@ class LocalStorageWrapper(AbstractStorageClientWrapper):
                 os.makedirs(dir_path)
             except Exception as e:
                 pass
-        print(f'storing {path}')     
+        LOGGER.info(f'storing {path}')
         with open(path, 'wb') as f:
             f.write(buf.read())
 

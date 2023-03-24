@@ -4,11 +4,13 @@ from codecs import open
 from setuptools import setup, find_packages
 import imp
 
+cmr_dir = 'hatfieldcmr'
+
 here = os.path.abspath(os.path.dirname(__file__))
 __version__ = imp.load_source('hatfieldcmr.version',
                               'hatfieldcmr/version.py').__version__
 # get the dependencies and installs
-with open(os.path.join(here, 'requirements.txt'), encoding='utf-8') as f:
+with open(os.path.join(here, cmr_dir, 'requirements.txt'), encoding='utf-8') as f:
     reqa = f.read().split('\n')
 install_requires = [x.strip() for x in reqa if 'git+' not in x]
 

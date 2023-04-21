@@ -68,11 +68,11 @@ jobs:
 
         # calculate current date:
         export TZ=America/Vancouver
-        date_less_2_daze=$(date -d '-2 days' '+%Y.%m.%d')
+        date_less_5_daze=$(date -d '-5 days' '+%Y.%m.%d')
 
         # run the pipeline
         # python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.03.14
-        python run.py daily-pipeline --envpth=$SNOWPACK_ENVS_PTH --date $date_less_2_daze
+        python run.py daily-pipeline --envpth=$SNOWPACK_ENVS_PTH --date $date_less_5_daze
 
         rm -f $SNOWPACK_ENVS_PTH
 

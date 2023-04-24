@@ -70,20 +70,21 @@ jobs:
         export TZ=America/Vancouver
         date_less_5_daze=$(date -d '-5 days' '+%Y.%m.%d')
 
-        # run the pipeline
+        # debug the pipeline - static date
         # python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.03.14
+
+        # debug pipeline - just download (smaller / faster) good to test
+        # python run.py download --envpth=$SNOWPACK_ENVS_PTH --date $date_less_5_daze --sat modis
+
+        # prod pipeline - runs the daily pipeline with the calculated delay
         python run.py daily-pipeline --envpth=$SNOWPACK_ENVS_PTH --date $date_less_5_daze
-
-        rm -f $SNOWPACK_ENVS_PTH
-
-    - name: Install S3 Archive Deps
-      id: install_deps_archive_pip
-      shell: bash
-      run: |
-        pip install -r snowpack_archive/requirements.txt
 
     - name: Run S3 Archive
       id: run_s3_archive
       run: |
-        #export ROOTDIRECTORIES_OMIT=
+        # start micromamba env - try running archive with same env as other
+        # code
+        eval "$(micromamba shell hook --shell=bash)"
+        micromamba activate snowpack_env
+
         python3 snowpack_archive/runS3Backup.py --days_back 0 --delete False

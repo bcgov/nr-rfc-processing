@@ -77,6 +77,15 @@
             "args" : ["plot", "--sat", "viirs", "--date", "2023.03.23"]
         },
         {
+            "name": "analysis viirs",
+            "type": "python",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args" : ["run-analysis", "--sat", "viirs", "--date", "2023.04.21", "--typ", "watersheds"]
+        },
+        {
             "name": "archive data to object store",
             "type": "python",
             "request": "launch",

@@ -72,18 +72,28 @@ jobs:
 
         # run the pipeline
         # python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.03.14
-        python run.py daily-pipeline --envpth=$SNOWPACK_ENVS_PTH --date $date_less_5_daze
 
-        rm -f $SNOWPACK_ENVS_PTH
+        # USE THIS - commented out for gha testing
+        # python run.py daily-pipeline --envpth=$SNOWPACK_ENVS_PTH --date $date_less_5_daze
+        python run.py download --envpth=$SNOWPACK_ENVS_PTH --date $date_less_5_daze --sat modis
 
-    - name: Install S3 Archive Deps
-      id: install_deps_archive_pip
-      shell: bash
-      run: |
-        pip install -r snowpack_archive/requirements.txt
+        #rm -f $SNOWPACK_ENVS_PTH
+
+    # comment out as going to run using the same env as was created for the
+    # pipeline
+    # ---------------------------------------------------------------------
+    # - name: Install S3 Archive Deps
+    #   id: install_deps_archive_pip
+    #   shell: bash
+    #   run: |
+    #     pip install -r snowpack_archive/requirements.txt
 
     - name: Run S3 Archive
       id: run_s3_archive
       run: |
-        #export ROOTDIRECTORIES_OMIT=
+        # start micromamba env - try running archive with same env as other
+        # code
+        eval "$(micromamba shell hook --shell=bash)"
+        micromamba activate snowpack_env
+
         python3 snowpack_archive/runS3Backup.py --days_back 0 --delete False

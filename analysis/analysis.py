@@ -29,13 +29,27 @@ def calculate_stats(typ: str, sat: str, date: str, db_handler):
             snow = (((clipped.data <= 100)&(clipped.data > 20)).sum())
             area = nodata + below + snow
 
+            # failing here when the snow/area are either or both 0
+            coverage = 0
+            if snow != 0 and area != 0:
+                coverage = (snow/area)*100
+
+            nodata = 0
+            if nodata != 0 and area != 0:
+                nodata = (nodata/area)*100
+
+            below_threshold = 0
+            if below != 0 and area != 0:
+                below_threshold = (below/area)*100
+
+            # TODO: 
             prepare = {
                 'sat': sat,
                 'name': name,
                 'date_': date,
-                'coverage': (snow/area)*100,
-                'nodata': (nodata/area)*100,
-                'below_threshold': (below/area)*100
+                'coverage': coverage,
+                'nodata': nodata,
+                'below_threshold': below_threshold
             }
-            
+
             db_handler.insert(**prepare)

@@ -62,7 +62,7 @@ class DBHandler(object):
             Connection object to sqlite3 db
         """
         return self.conn
-    
+
     def execute(self, stmt):
         """Execute and commit a generic statement to the db
 
@@ -79,7 +79,7 @@ class DBHandler(object):
             self.logger.error(e)
 
     def insert(self, sat, name, date_, coverage, nodata, below_threshold):
-        """Insert statement 
+        """Insert statement
 
         Parameters
         ----------
@@ -95,7 +95,7 @@ class DBHandler(object):
             % of nodata in aoi
         below_threshold : float
             % of values below 20% NDSI threshold
-        """        
+        """
         insert = f"""INSERT OR REPLACE INTO {sat}(
                 id, name, date_, snow_coverage, nodata, below_threshold
             ) VALUES(
@@ -108,6 +108,7 @@ class DBHandler(object):
             self.conn.commit()
         except sqlite3.Error as e:
             self.logger.error(e)
+            self.logger.debug(f'data to handler: {insert}')
 
     def select(self, stmt):
         """Select statement for sqlite3 db

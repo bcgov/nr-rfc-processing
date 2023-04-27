@@ -77,7 +77,7 @@ class ArchiveSnowData(object):
             if self.isReadyForArchive(currentDirectory,
                                       daysBack=constants.DAYS_BACK):
                 LOGGER.debug(f"directory for archive: {currentDirectory}")
-                objStore.copy(currentDirectory, delete=self.delete)
+                objStore.copy(currentDirectory, delete=self.delete, public=True)
                 if self.delete:
                     LOGGER.info(f"removing the original directory: {currentDirectory}")
                     self.deleteDir(currentDirectory)
@@ -361,7 +361,7 @@ class ObjectStore(object):
         LOGGER.debug(f"object store absolute path: {objStoreAbsPath}")
         return objStoreAbsPath
 
-    def copy(self, srcDir, delete=True):
+    def copy(self, srcDir, delete=True, public=False):
         """Copies the contents of a source directory recursively to object
         storage.
 
@@ -371,7 +371,7 @@ class ObjectStore(object):
         objStorePath = self.getObjStorePath(srcDir, prependBucket=False)
         LOGGER.debug(f'objStorePath: {objStorePath}')
         LOGGER.info(f'copying: {srcDir}...')
-        self.copyDirectoryRecurive(srcDir, delete=delete)
+        self.copyDirectoryRecurive(srcDir, delete=delete, public=public)
         LOGGER.info(f"copied the path: {srcDir}, to object storage")
         # if self.copyDateDirCnt > 17:
         #     LOGGER.debug("stopping here")
@@ -410,7 +410,7 @@ class ObjectStore(object):
         LOGGER.debug(f"newpath: {newPath}")
         return newPath
 
-    def copyDirectoryRecurive(self, srcDir, delete=True):
+    def copyDirectoryRecurive(self, srcDir, delete=True, public=False):
         """Recursive copy of directory contents to object store.
 
         Iterates over all the files and directoris in the 'srcDir' parameter,
@@ -428,6 +428,9 @@ class ObjectStore(object):
             align between source and destination this error will be raised.
         """
         part_size = 15728640
+        metadata = {}
+        if public:
+            metadata = {'x-amz-acl': 'public-read'}
         for local_file in glob.glob(srcDir + '/**'):
             LOGGER.debug(f"local_file: {local_file}")
             objStorePath = self.getObjStorePath(local_file,
@@ -442,7 +445,9 @@ class ObjectStore(object):
                         constants.OBJ_STORE_BUCKET,
                         objStorePath,
                         local_file,
-                        part_size=part_size)
+                        part_size=part_size,
+                        metadata=metadata
+                        )
                     LOGGER.debug(f'copyObj: {copyObj}')
                     #etagDest = copyObj[0]
                     etagDest = copyObj.etag

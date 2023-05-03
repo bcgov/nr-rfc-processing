@@ -11,7 +11,8 @@ LOGGER = logging.getLogger()
 
 
 def setup_logging():
-    logging.config.fileConfig('logging.config')
+    log_config_path = os.path.join(os.path.dirname(__file__), 'logging.config')
+    logging.config.fileConfig(log_config_path)
     global LOGGER
     LOGGER = logging.getLogger(__name__)
 

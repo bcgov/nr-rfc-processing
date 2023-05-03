@@ -2,71 +2,44 @@
 
 describes getting a local development env up and running.
 
-## WSL
+# Install WSL
 
 All development moving forward will be completed on a linux based env.
 [Install WSL](https://learn.microsoft.com/en-us/windows/wsl/install) if not
 already installed.
 
-## Miniconda
 
-Run the following, then walk through the questions posed by the miniconda
-installer
+# Install Deps Using Mamba
 
-```
-curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda_install.sh
-bash miniconda_install.sh
-```
+More detailed docs on mamba exist [further down](#mamba---details), this is
+focused on just getting a local dev env built and running
 
-Then edit .bashrc adding the path to miniconda
-```
-export PATH=$PATH:~/miniconda3/bin
-```
+## Create environment
 
-## Create the development conda env
+Create mamba env from the environment.yaml definition.  This step only needs
+to be run when either setting up a new computer, or if the dependency
+declarations have changed.
 
-the following may take a while... ~10 mins, however after the env is created it
-can be re-used.
+### Create mamba env
 
-```
-# initiallize the conda env
-conda init bash
-conda env create --prefix ldev --file environment.yaml
-```
+`micromamba create -n ldev --file environment.yaml`
 
-## Activate the environment
+### Install other dependencies
 
-```
-conda activate ./ldev
-```
-
-## Install the remaining dependencies
-
-Not sure why these were not included in the conda environment.yaml??  However
-this is what hatfield did to get the env built.  In a nutshell after the conda
-env has been created and activated run pip on top of to install the final
-list of dependencies.
+These are other misc dependencies that are not installable through conda
+like tools
 
 ```
 pip install -r requirements.txt
+
+# dev deps install
+pip install -r requirements-dev.txt
+
+# local hatfieldcmr package
 pip install -e .
 ```
 
-## Install dev dependencies (optional)
-
-If you just need to run the code, you can skip these steps, however if you are
-doing further development you should install these deps.
-
-```
-pip install -r requirements-dev.txt
-```
-
-## Update conda
-
-After modifying the environment.yaml, update conda env
-`conda env update --file environment.yaml --prune`
-
-## Environment Variables
+# Define Required Environment Variables
 
 The script currently looks for an environments.yaml file for the username and
 passwords for communicating with the various data providers.
@@ -82,7 +55,7 @@ SENTINELSAT_USER: YvonneC
 SENTINELSAT_PASS: sc0resLots0fGoals
 ```
 
-## Running the daily pipeline script:
+# Running the daily pipeline script:
 
 * activate conda env path:
     `conda activate ./ldev`
@@ -100,9 +73,12 @@ SENTINELSAT_PASS: sc0resLots0fGoals
 See the re-architect.md doc for bullets to dissect up the tasks that are part
 of the daily update into smaller chunks.
 
-## run the archive / s3 backup / save operation
+# Run the Archive / S3 backup / Save Operation
 
-### set the following env vars:
+### Define Object Store Environment Variables:
+
+The following env vars must be defined for the s3 archive operation to communicate
+with object storage:
     * OBJ_STORE_BUCKET
     * OBJ_STORE_SECRET
     * OBJ_STORE_USER
@@ -114,37 +90,57 @@ of the daily update into smaller chunks.
 run the archive script (assume the dependencies have been installed):
 `python snowpack_archive\runS3Backup.py`
 
-# Mamba
+# Mamba - Extra Info Details
 
-Builds of the env in GHA were taking 2+ hours... then cancelled.  Pivot to
-explicit lock files and mamba build to save time.
+Builds of the env in GHA were taking 2+ hours... then cancelled.  Mostly due to
+slowness of conda, and that was rebuilding the env in GHA vs creating a lock
+file and installing from lock.  The process out lined below does the build /
+package conflict resolution using micromamba.  This speeds up the time required
+to generate an env by several factors.
 
-all examples assume an env is to be created called `ldev`
+For local development the mm process creates an env called `ldev`
+The gha creates an env called `snowpack_env`
 
-## create lock file
+All subsequent examples are for local development and use the env name `ldev`
 
-`micromamba env export -n ldev -e > explicit.lock`
-
-## build env using micromamba
+## Build env using micromamba - fresh install
 Build from environment.yaml
 `micromamba create -n ldev --file environment.yaml`
 
 Install other deps to conda env
 ```
 pip install -r requirements.txt
+
+# dev deps install
+pip install -r requirements-dev.txt
+
+# local hatfieldcmr package
 pip install -e .
 ```
 
+## Create Environment Lock File
 
-Build from lock file
+The lock file persists the outcome of the package resolution that would have
+taken place in the previous step.  Creating an env from the lock file is
+significantly faster as it just installs packages vs calculating version
+compatibility of packages and sub packages.
+
+`micromamba env export -n ldev -e > explicit.lock`
+
+## Create Environment from the Lock file
+
 `micromamba create -n ldev -f explicit.lock -y`
 
-## activate
+## Activate and micromamba environment
 
 `micromamba activate ldev`
 
-## upgrade a package and any dependencies
-`mm install click=8.1.2 -n ldev2 -c conda-forge`
+## Upgrade a package and any dependencies
 
-## regenerate a env file... doesn't always create a valid one
-`mm env export -n ldev2 > env2.yaml`
+After this step has been completed and verified that it creates a stable env
+that supports the snowpack processing code, then go back and [regenerate the
+lock file](#create-environment-from-the-lock-file)
+
+`mm install click=8.1.2 -n ldev -c conda-forge`
+
+

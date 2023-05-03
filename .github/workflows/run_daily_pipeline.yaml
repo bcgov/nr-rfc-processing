@@ -65,7 +65,6 @@ jobs:
         echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
         echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
 
-
         # calculate current date:
         export TZ=America/Vancouver
         date_less_5_daze=$(date -d '-5 days' '+%Y.%m.%d')

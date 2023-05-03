@@ -34,7 +34,7 @@ import minio
 import scandir
 
 from archive2ObjectStore import constants as constants
-import VerifyETag
+import NRUtil.NRObjStoreUtil
 
 LOGGER = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ LOGGER = logging.getLogger(__name__)
 class ArchiveSnowData(object):
     """High level functionality for archiving snowpack data."""
 
-    def __init__(self, backup_threshold:int = None, delete:bool=True):
+    def __init__(self, backup_threshold: int = None, delete: bool = True):
         """_summary_
 
         :param backup_threshold: This parameter determines how old a directory
@@ -63,24 +63,39 @@ class ArchiveSnowData(object):
             constants.DAYS_BACK = backup_threshold
         self.delete = delete
         omitDirs = self.getOmitDirs()
-        self.dirIterator = DirectoryList(constants.SRC_ROOT_DIR,
-                                         omitDirectoryList=omitDirs)
+        self.dirIterator = DirectoryList(
+            constants.SRC_ROOT_DIR, omitDirectoryList=omitDirs
+        )
 
     def archiveDirs(self):
         """initiates the actual backup of the directories defined in
         constants.SRC_ROOT_DIR, where any exception are defined in
         the environment variable ROOTDIRECTORIES_OMIT
         """
-        objStore = ObjectStore()
+        # sync = NRUtil.NRObjStoreUtil.ObjectStoreDirectorySync()
+        pathUtil = NRUtil.NRObjStoreUtil.ObjectStoragePathLib()
         for currentDirectory in self.dirIterator:
             LOGGER.debug(f"currentdir: {currentDirectory}")
-            if self.isReadyForArchive(currentDirectory,
-                                      daysBack=constants.DAYS_BACK):
+            # does the directory date match the date restrictions
+            if self.isReadyForArchive(currentDirectory, daysBack=constants.DAYS_BACK):
                 LOGGER.debug(f"directory for archive: {currentDirectory}")
-                objStore.copy(currentDirectory, delete=self.delete)
+                dest_path = pathUtil.get_obj_store_path(
+                    src_path=currentDirectory,
+                    ostore_path=constants.OBJ_STORE_ROOT_DIR,
+                    src_root_dir=constants.SRC_ROOT_DIR,
+                    prepend_bucket=False,
+                )
+                LOGGER.info(
+                    f"syncing: {currentDirectory} to the ostore dir: {dest_path}"
+                )
+                sync = NRUtil.NRObjStoreUtil.ObjectStoreDirectorySync(
+                    src_dir=currentDirectory, dest_dir=dest_path
+                )
+                sync.update_ostore_dir(public=True)
                 if self.delete:
                     LOGGER.info(f"removing the original directory: {currentDirectory}")
                     self.deleteDir(currentDirectory)
+
 
     def deleteDir(self, inDir):
         """Deletes empty directoires.
@@ -95,7 +110,9 @@ class ArchiveSnowData(object):
             LOGGER.info(f"removing the directory: {inDir}")
             os.rmdir(inDir)
         else:
-            LOGGER.info(f"cannot remove the directory as its not empty: {inDir}")  # noqa: E501
+            LOGGER.info(
+                f"cannot remove the directory as its not empty: {inDir}"
+            )  # noqa: E501
 
     def getOmitDirs(self):
         """Retrieves the list of directories to omit.
@@ -109,24 +126,25 @@ class ArchiveSnowData(object):
         :rtype: list
         """
         omitDirList = []
-        if (hasattr(constants, 'ROOTDIRECTORIES_OMIT')) and \
-                constants.ROOTDIRECTORIES_OMIT:
-            dirStringList = constants.ROOTDIRECTORIES_OMIT.split(',')
+        if (
+            hasattr(constants, "ROOTDIRECTORIES_OMIT")
+        ) and constants.ROOTDIRECTORIES_OMIT:
+            dirStringList = constants.ROOTDIRECTORIES_OMIT.split(",")
             LOGGER.debug(f"dirStringList: {dirStringList}")
             for omitDir in dirStringList:
                 omitDirFullPath = os.path.join(constants.SRC_ROOT_DIR, omitDir)
-                omitDirFullPath = os.path.normcase(
-                    os.path.normpath(omitDirFullPath))
+                omitDirFullPath = os.path.normcase(os.path.normpath(omitDirFullPath))
                 if os.path.exists(omitDirFullPath):
                     omitDirList.append(omitDirFullPath)
                     LOGGER.info(f"adding {omitDirFullPath} to omit list")
                 else:
-                    LOGGER.warning(f"the omit directory: {omitDirFullPath} " +
-                                   "could not be found")
+                    LOGGER.warning(
+                        f"the omit directory: {omitDirFullPath} " + "could not be found"
+                    )
         LOGGER.debug(f"omitDirList: {omitDirList}")
         return omitDirList
 
-    def isReadyForArchive(self, inPath:str, daysBack:int=20):
+    def isReadyForArchive(self, inPath: str, daysBack: int = 20):
         """Should the input directory be archived.
 
         River forecast snowpack data has directories with the string
@@ -147,6 +165,8 @@ class ArchiveSnowData(object):
         """
         if daysBack > 0:
             daysBack = 0 - daysBack
+        # expecting a directory with a directory date string in its path,
+        # extracts the first date string found and returns a datetime object
         current_directory_date = self.getDirectoryDate(inPath)
         daysBack = datetime.timedelta(days=daysBack)
         currentDate = datetime.datetime.now()
@@ -179,7 +199,7 @@ class ArchiveSnowData(object):
             dirPart = pathObj.parts[iterCnt]
             if dateRegex.match(dirPart):
                 LOGGER.debug(f"date part of directory: {dirPart}")
-                dateObj = datetime.datetime.strptime(dirPart, '%Y.%m.%d')
+                dateObj = datetime.datetime.strptime(dirPart, "%Y.%m.%d")
                 break
             iterCnt -= 1
         return dateObj
@@ -230,11 +250,13 @@ class DirectoryList(object):
                 dirs = []
                 for iterdir in tmpDirs:
                     fullpath = os.path.join(rootdir, iterdir)
-                    if not self.isDirInOmitList(fullpath) and \
-                            self.inputDirRegex.match(iterdir):
+                    if not self.isDirInOmitList(fullpath) and self.inputDirRegex.match(
+                        iterdir
+                    ):
                         dirs.append(fullpath)
-                        LOGGER.debug('datedir being added to iterator: ' +
-                                     f'{fullpath}')
+                        LOGGER.debug(
+                            "datedir being added to iterator: " + f"{fullpath}"
+                        )
                 if dirs:
                     break
             self.dirList = dirs
@@ -242,7 +264,6 @@ class DirectoryList(object):
             return dirs
         except StopIteration:
             self.dirWalkingComplete = True
-
 
     def isDirInOmitList(self, inDir):
         """Should input directory be omitted.
@@ -285,248 +306,3 @@ class DirectoryList(object):
                 if x != y:
                     areEqual = False
         return areEqual
-
-
-class ObjectStore(object):
-    '''
-    methods to support easy copying of data from filesystem to object
-    store.
-
-    Gets the object store connection information from environment variables:
-        * OBJ_STORE_HOST
-        * OBJ_STORE_USER
-        * OBJ_STORE_SECRET
-
-    Gets the directory to copy to from:
-        OBJ_STORE_ROOT_DIR
-
-    Gets the source dir that needs to be copied from:
-        SRC_ROOT_DIR
-
-    So given the following hypothetical values:
-       SRC_ROOT_DIR = C:\Lafleur\WinningNumbers
-       OBJ_STORE_ROOT_DIR = lafleursData\Winnings
-
-    the script will copy the contents of C:\Lafleur\WinningNumbers into the
-    directory lafleursData\Winnings in the object store
-    '''
-
-    def __init__(self):
-        """contructor, sets up object store client, and inits obj store obj.
-        """
-        self.minIoClient = minio.Minio(os.environ['OBJ_STORE_HOST'],
-                                       os.environ['OBJ_STORE_USER'],
-                                       os.environ['OBJ_STORE_SECRET'])
-
-        self.objIndex = {}
-        self.curDir = None
-        self.copyDateDirCnt = 0
-
-    def getObjStorePath(self, srcPath, prependBucket=True,
-                        includeLeadingSlash=False):
-        """ Gets the source file path, calculates the destination path for
-        use when referring to the destination location using the minio api.
-
-        :param srcPath: the source path referring to the file that is to be
-            copied to object storage
-        :type srcPath: str
-        :param prependBucket: default is true, identifies if the name of the
-            bucket should be the leading part of the destination path
-        :type prependBucket: bool
-        :param includeLeadingSlash: if the path should include a leading path
-            delimiter character.  Example if true /guyLafleur/somedir
-            would be the path, if set to false it would be guyLafleur/somedir
-        :type includeLeadingSlash: bool
-        """
-        relativePath = self.removeSrcRootDir(srcPath)
-        if prependBucket:
-            objStoreAbsPath = os.path.join(
-                constants.OBJ_STORE_BUCKET,
-                constants.OBJ_STORE_ROOT_DIR,
-                relativePath)
-        else:
-            objStoreAbsPath = os.path.join(
-                constants.OBJ_STORE_ROOT_DIR,
-                relativePath)
-        if os.path.isdir(srcPath):
-            if objStoreAbsPath[-1] != os.path.sep:
-                objStoreAbsPath = objStoreAbsPath + os.path.sep
-        if includeLeadingSlash:
-            if objStoreAbsPath[0] != os.path.sep:
-                objStoreAbsPath = os.path.sep + objStoreAbsPath
-        # object storage always uses posix / unix path delimiters
-        if sys.platform == 'win32':
-            objStoreAbsPath = objStoreAbsPath.replace(os.path.sep,
-                                                      posixpath.sep)
-        LOGGER.debug(f"object store absolute path: {objStoreAbsPath}")
-        return objStoreAbsPath
-
-    def copy(self, srcDir, delete=True):
-        """Copies the contents of a source directory recursively to object
-        storage.
-
-        :param srcDir: name of the source directory to be copied
-        :type srcDir: str
-        """
-        objStorePath = self.getObjStorePath(srcDir, prependBucket=False)
-        LOGGER.debug(f'objStorePath: {objStorePath}')
-        LOGGER.info(f'copying: {srcDir}...')
-        self.copyDirectoryRecurive(srcDir, delete=delete)
-        LOGGER.info(f"copied the path: {srcDir}, to object storage")
-        # if self.copyDateDirCnt > 17:
-        #     LOGGER.debug("stopping here")
-        #     sys.exit()
-        self.copyDateDirCnt += 1
-
-    def removeSrcRootDir(self, inPath):
-        """
-        a utility method that will recieve a path, and remove a leading portion
-        of that path.  For example if the input path was
-        /habs/guy/lafleur/points
-
-        and the source root directory defined in the environment variable
-        SRC_ROOT_DIR was /habs/guy
-
-        The output path would be lafleur/points
-
-        :param inPath: the input path that is to have the root directory
-            removed
-        :type inPath: str
-        :raises ValueError: raise if the the inPath is found to not be a
-            subdirectory of the SRC_ROOT_DIR (env var)
-        :return: modified src directory with the root potion removed
-        :rtype: str
-        """
-        LOGGER.debug(f"inPath: {inPath}")
-        rootPathObj = pathlib.PurePath(constants.SRC_ROOT_DIR)
-        inPathObj = pathlib.PurePath(inPath)
-        if rootPathObj not in inPathObj.parents:
-            msg = f'expecting the root path {constants.SRC_ROOT_DIR} to ' + \
-                  f'be part of the input path {inPath}'
-            LOGGER.error(msg)
-            raise ValueError(msg)
-
-        newPath = os.path.join(*inPathObj.parts[len(rootPathObj.parts):])
-        LOGGER.debug(f"newpath: {newPath}")
-        return newPath
-
-    def copyDirectoryRecurive(self, srcDir, delete=True):
-        """Recursive copy of directory contents to object store.
-
-        Iterates over all the files and directoris in the 'srcDir' parameter,
-        when the iteration finds a directory it calls itself with that
-        directory
-
-        If the iteration finds a file, it copies the file to object store then
-        compares the object stores md5 with the md5 of the version on file, if
-        they match then the src file is deleted.  If a mismatch is found then
-        the ValueError is raised.
-
-        :param srcDir: input directory that is to be copied
-        :type srcDir: str
-        :raises ValueError: if the file has been copied by the md5's do not
-            align between source and destination this error will be raised.
-        """
-        part_size = 15728640
-        for local_file in glob.glob(srcDir + '/**'):
-            LOGGER.debug(f"local_file: {local_file}")
-            objStorePath = self.getObjStorePath(local_file,
-                                                prependBucket=False)
-            LOGGER.debug(f"objStorePath: {objStorePath}")
-            if not os.path.isfile(local_file):
-                self.copyDirectoryRecurive(local_file, delete=delete)
-            else:
-                if not self.objExists(objStorePath):
-                    LOGGER.debug(f"uploading: {local_file} to {objStorePath}")
-                    copyObj = self.minIoClient.fput_object(
-                        constants.OBJ_STORE_BUCKET,
-                        objStorePath,
-                        local_file,
-                        part_size=part_size)
-                    LOGGER.debug(f'copyObj: {copyObj}')
-                    #etagDest = copyObj[0]
-                    etagDest = copyObj.etag
-                else:
-                    etagDest = self.objIndex[objStorePath]
-                if delete:
-                    md5Src = \
-                        hashlib.md5(open(local_file, 'rb').read()).hexdigest()
-                    LOGGER.debug(f"etagDest: {etagDest}")
-                    if etagDest == md5Src:
-                        # delete the source
-                        LOGGER.info("md5's of source / dest match deleting the " +
-                                    f"src: {srcDir}")
-                        os.remove(local_file)
-                    elif (len(etagDest.split('-')) == 2) and \
-                            self.checkMultipartEtag(local_file, etagDest):
-                        # etag format suggests the file was uploaded as a multipart
-                        # which impacts how the etags are calculated
-                        LOGGER.info("md5's of source / dest match as multipart " +
-                                    f"deleting the src: {srcDir}")
-                        os.remove(local_file)
-                    else:
-                        # if the md5 doesn't match either file isn't valid on the
-                        # s3 side in which case we won't delete the source and we
-                        # will throw and error in the log.
-                        #    OR
-                        # the etag doesn't match because the file was uploaded as a
-                        # multipart object
-
-                        msg = f'source: {local_file} and {objStorePath} both ' + \
-                            'exists, but md5s don\'t align'
-                        LOGGER.error(msg)
-
-    def checkMultipartEtag(self, localFile, etagFromDest):
-        """checks to see if the etag from S3 can be validated locally
-
-        :param localFile: path to the local file
-        :type localFile: str
-        :param etagFromDest: the etag that was returned from s3
-        :type etagFromDest: str
-        :return: a boolean that tells us if the etag can be validated
-        :rtype: bool
-        """
-        verifyEtag = VerifyETag.CalcETags()
-        return verifyEtag.etagIsValid(localFile, etagFromDest)
-
-    def objExists(self, inFile):
-        """Identifies if the path 'inFile' exists in object storage
-
-        :param inFile: path to who's existence in object storage is to be
-            tested
-        :type inFile: str
-        :return: boolean indicating if the file exists or not
-        :rtype: bool
-        """
-        objDoesExist = False
-        self.refreshObjList(inFile)
-        if inFile in self.objIndex:
-            objDoesExist = True
-        return objDoesExist
-
-    def refreshObjList(self, inFile):
-        """
-        Going to be iterating of a lot of files, don't want to make api call
-        for individual file, instead want to grab them in directory bundles as
-        the script works on a directory by directory level.  Also don't want to
-        keep all the directories in memory as each directory is processed at a
-        time
-
-        This method keeps track of what the current directory is, and when it
-        changes it refreshes the contents of that direcotry.
-
-        :param inFile: [description]
-        :type inFile: [type]
-
-        """
-        inDir = os.path.dirname(inFile)
-        if self.curDir != inDir:
-            self.curDir = inDir
-            LOGGER.debug("refreshing the directory contents cache")
-            self.objIndex = {}
-            objects = self.minIoClient.list_objects(
-                os.environ['OBJ_STORE_BUCKET'], recursive=True, prefix=inDir)
-            for obj in objects:
-                LOGGER.debug(f"{obj.object_name}")
-                objName = obj.object_name
-                self.objIndex[objName] = obj.etag

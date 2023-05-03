@@ -91,7 +91,7 @@
             "request": "launch",
             "program": "snowpack_archive/runS3Backup.py",
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
             "args" : ["--days_back", "0", "--delete", "False"]
         },
     ]

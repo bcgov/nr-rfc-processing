@@ -11,7 +11,7 @@ TYPS = click.Choice(['watersheds', 'basins'], case_sensitive=False)
 DAYS = click.Choice(['1', '5', '8'])
 
 # Resolution
-RES = {'modis':(500,500), 'viirs':(375,375)}
+RES = {'modis':(500,500), 'viirs': (375,375)}
 MODIS_EPSG4326_RES = 0.008259714517502726
 VIIRS_EPSG4326_RES= 0.006659501656959246
 
@@ -20,6 +20,7 @@ BBOX = [-140.977, 46.559, -112.3242, 63.134]
 
 # MODIS PRODUCT
 MODIS_PRODUCT = 'MOD10A1.61' # 'MOD10A1.6', good up to feb 15 2023
+VIIRS_PRODUCT = 'VNP10A1F.1'
 
 TOP = os.environ['SNOWPACK_DATA']
 LOG = os.path.join(TOP, 'log')
@@ -69,6 +70,12 @@ VIIRS_OFFSET = 1
 if ('VIIRS_OFFSET' in os.environ ) and os.environ['VIIRS_OFFSET']:
     VIIRS_OFFSET=int(os.environ['VIIRS_OFFSET'])
 
-MODIS_OFFSET = 3
+MODIS_OFFSET = 5
 if ('MODIS_OFFSET' in os.environ) and os.environ['MODIS_OFFSET']:
     MODIS_OFFSET=int(os.environ['MODIS_OFFSET'])
+
+
+EARTHDATA_USER = os.getenv("EARTHDATA_USER")
+EARTHDATA_PASS = os.getenv("EARTHDATA_PASS")
+SENTINELSAT_USER = os.getenv("SENTINELSAT_USER")
+SENTINELSAT_PASS = os.getenv("SENTINELSAT_PASS")

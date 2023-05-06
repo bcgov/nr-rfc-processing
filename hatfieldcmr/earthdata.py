@@ -36,14 +36,14 @@ class CMRClient():
                  storage_client: AbstractStorageClientWrapper,
                  earthdata_user='',
                  earthdata_pass=''):
-        self._storage_client = storage_client
         self.earthdata_user = earthdata_user or os.getenv('EARTHDATA_USER')
+        self._storage_client = storage_client
         self.earthdata_pass = earthdata_pass or os.getenv('EARTHDATA_PASS')
 
     def query(self,
               start_date: str,
               end_date: str,
-              product: str,
+              product,
               provider: str = 'LPDAAC_ECS',
               bbox: List = []) -> List[Dict]:
         """
@@ -57,7 +57,7 @@ class CMRClient():
             Start date yyyy-mm-dd
         end_date: string
             End date yyyy-mm-dd
-        product: string
+        product: download_granules.download_config.SatDownloadConfig
             Product name
         provider: string
             Provider (default is 'LPDAAC_ECS')
@@ -68,9 +68,11 @@ class CMRClient():
         ----------
         List[Dict]
             List of granules
+
         """
         q = GranuleQuery()
-        prod, ver = product['products'][0].split('.')
+        prod, ver = product.get_product_version()[0]
+        #prod, ver = product['products'][0].split('.')
         q.short_name(prod).version(ver)
         q.temporal(f"{start_date}T00:00:00Z", f"{end_date}T23:59:59Z")
         if (len(bbox) >= 4):
@@ -78,8 +80,10 @@ class CMRClient():
         _granules = q.get_all()
 
         # filter dates
-        if 'day_offset' in product.keys():
-            day_offset = products[product]['day_offset']
+        #if 'day_offset' in product.keys():
+        if product.day_offset:
+            #day_offset = products[product]['day_offset']
+            day_offset = product.day_offset
         else:
             day_offset = 0
         granules = []

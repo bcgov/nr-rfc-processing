@@ -219,7 +219,7 @@ def get_datespan(date: str, days: int) -> List[str]:
 def clean_intermediate(date):
     residual_files = glob(os.path.join(const.INTERMEDIATE_TIF_MODIS, date,
                                        "*.tif"))
-    if len(residual_files) != 0:
+    if residual_files:
         logger.info("Cleaning up residual files...")
         for f in residual_files:
             logger.debug(f"delete: {f}")
@@ -254,9 +254,11 @@ def process_modis(startdate, days):
             os.makedirs(intTif)
             logger.debug(f"created folder: {intTif}")
         # modis_granules = glob(os.path.join(pth, date,'*.hdf'))
+        # gets the granules from what exists locally after the download step
         modis_granules = snow_path.get_modis_granules(date)
         # why delete these files?  why not pick up where left off?
-        clean_intermediate(date)
+        # commenting out, no need to delete
+        #clean_intermediate(date)
 
         logger.info(f"REPROJ GRANULES: {date}")
         reproj_args = []
@@ -268,6 +270,8 @@ def process_modis(startdate, days):
             except Exception as e:
                 logger.error(f"Could not append {gran} : {e}")
                 continue
+
+        # TODO:
         distribute(reproject_modis, reproj_args)
 
         logger.info(f"CREATING MOSAICS: {date}")

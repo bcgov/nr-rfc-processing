@@ -79,3 +79,7 @@ EARTHDATA_USER = os.getenv("EARTHDATA_USER")
 EARTHDATA_PASS = os.getenv("EARTHDATA_PASS")
 SENTINELSAT_USER = os.getenv("SENTINELSAT_USER")
 SENTINELSAT_PASS = os.getenv("SENTINELSAT_PASS")
+
+# this is the directory that all the data in TOP will get copied
+# to
+OBJ_STORE_TOP = 'snowpack_archive'

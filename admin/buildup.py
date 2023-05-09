@@ -44,10 +44,8 @@ def build_dir_structure():
     ]
 
     for d in dirs:
-        try:
+        if not os.path.exists(d):
             os.makedirs(d)
-        except Exception as e:
-            logger.debug(e)
 
 def build_shapefiles(typ, dataset):
     gdf = gpd.read_file(dataset)
@@ -66,18 +64,20 @@ def build_shapefiles(typ, dataset):
             tmp = gdf[gdf[col] == name]
             name = name.translate({ord("("): None, ord(")"):None})
             name = "_".join(name.replace('.','').split(" "))
-            # shouldn't rely on exceptions here
-            try:
+
+            out_dir = os.path.join(base, name)
+            if not os.path.exists(out_dir):
                 os.makedirs(os.path.join(base, name))
-            except Exception as e:
-                pass
+
             pths = ['shape', os.path.join('shape', crs.replace(':', '')), 'modis', 'viirs']
             for pth in pths:
-                try:
-                    os.makedirs(os.path.join(base, name, pth))
-                except:
-                    continue
-            tmp.to_file(os.path.join(base, name, 'shape', crs.replace(':', ''), f'{name}.shp'))
+                tmp_path = os.path.join(base, name, pth)
+                if not os.path.exists(tmp_path):
+                    os.makedirs()
+
+            output_file_name = os.path.join(base, name, 'shape', crs.replace(':', ''), f'{name}.shp')
+            if not os.path.exists(output_file_name):
+                tmp.to_file()
 
 def buildall():
     logger.info('Building up directory structure')

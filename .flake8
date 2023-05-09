@@ -1,3 +1,4 @@
 [flake8]
 per-file-ignores =
     snowpack_archive\archive2ObjectStore\archiveSnowpackData.py:W605,D107,D102,D401,D105
+max-line-length = 88

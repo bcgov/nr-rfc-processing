@@ -10,7 +10,12 @@ import admin.constants as const
 
 #from download_granules import download_granules
 #from download_granules.download_granules import download_granules
-import download_granules.download_granules
+import download_granules.download_granules # eventually replace
+import download_granules.download_config as dl_config
+import download_granules.download_granules_ostore_integration as dl_grans_ostore
+
+
+
 from process import modis, viirs, sentinel2
 from analysis import analysis
 from admin import buildkml, plotter
@@ -25,6 +30,8 @@ log_config_path = os.path.join(os.path.dirname(__file__), 'config', 'logging.con
 logging.config.fileConfig(log_config_path)
 
 LOGGER = logging.getLogger(__name__)
+
+
 
 @click.command()
 def build():
@@ -58,13 +65,35 @@ def clean(target):
 @click.option('--days', required=False, default='5', type=const.DAYS, help='Select 1, 5 or 8 day composite for MODIS')
 @click.option('--sat', type=const.SATS, required=True, help='Which satellite source to process [ modis | viirs ]')
 def download(envpth: str, sat: str, date: str, days: int = 5):
+    down_load(envpth=envpth, sat=sat, date=date, days=days)
+
+def down_load(envpth: str, sat: str, date: str, days: int = 5):
+    # modis has the following options 1, 5, 8.  The class does the verification
+    # that a valid value has been passed
+
+     # viirs only has the 1 day option
+    configs = {
+        'modis': dl_config.SatDownloadConfig(
+            name='daily', products=[const.MODIS_PRODUCT], date_span=int(days),
+            date_str=date
+        ),
+        'viirs': dl_config.SatDownloadConfig(
+            name='daily', products=[const.VIIRS_PRODUCT], date_span=1,
+            date_str=date
+        )
+    }
+
     if check_date(date):
         print(f'download {sat}')
         if sat == 'viirs':
             days = 1
-        download_granules.download_granules.download_granules(envpth, date, sat, int(days))
+        #download_granules.download_granules.download_granules(envpth, date, sat, int(days))
+        dwnldr = dl_grans_ostore.GranuleDownloader(configs[sat])
+        dwnldr.download_granules()
     else:
         print('ERROR: Date format YYYY.MM.DD')
+
+
 
 @click.command()
 @click.option('--date', required=True, type=str, help='Date in format YYYY.MM.DD')
@@ -180,9 +209,12 @@ def dailypipeline(envpth: str, date: str, sat: str, days: int, db_handler: DBHan
     if check_date(date):
         if sat == 'viirs':
             days = const.VIIRS_OFFSET #1
+        # TODO: should call the download function instead of download_granules directly here
         #print(type())
         #LOGGER.debug(f'download granules: {download_granules} - {download_granules.download_granules}')
-        download_granules.download_granules.download_granules(envpth, date, sat, int(days))
+        #def download(envpth: str, sat: str, date: str, days: int = 5):
+        down_load(envpth=envpth, sat=sat, date=date, days=int(days))
+        #download_granules.download_granules.download_granules(envpth, date, sat, int(days))
         if sat == 'modis':
             modis.process_modis(date, int(days))
         elif sat == 'viirs':

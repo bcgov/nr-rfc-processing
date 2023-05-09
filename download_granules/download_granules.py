@@ -12,6 +12,7 @@ import admin.constants as const
 logger = logging.getLogger(__name__)
 logger.debug("logger name: {__name__}")
 
+# bundle these parameters into a download config
 def download_granules(envpath: str, date: str, sat: str, days: int = 5):
     """Download MODIS/VIIRS granules for a given day
 
@@ -41,7 +42,7 @@ def download_granules(envpath: str, date: str, sat: str, days: int = 5):
     elif sat == 'viirs':
         product = {
                     'name': 'daily',
-                    'products': ['VNP10A1F.1'],
+                    'products': [const.VIIRS_PRODUCT],
                     'date_span': int(days)-1
                 }
     else:
@@ -70,3 +71,15 @@ def download_granules(envpath: str, date: str, sat: str, days: int = 5):
             p.map(ed_client.download_granule, granules)
     except KeyboardInterrupt:
         logger.error('keyboard interupt... Exiting download pool')
+
+# def download_granule(ed_client, granules, ostore_sync):
+#     """_summary_
+
+#     :param ed_client: _description_
+#     :type ed_client: _type_
+#     :param granules: _description_
+#     :type granules: _type_
+#     :param ostore_sync: object storage sync
+#     :type ostore_sync: _type_
+#     """
+

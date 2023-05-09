@@ -12,7 +12,8 @@ import admin.constants as const
 #from download_granules.download_granules import download_granules
 import download_granules.download_granules # eventually replace
 import download_granules.download_config as dl_config
-import download_granules.download_granules_ostore_integration as dl_grans
+import download_granules.download_granules_ostore_integration as dl_grans_ostore
+
 
 
 from process import modis, viirs, sentinel2

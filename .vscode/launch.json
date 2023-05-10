@@ -29,7 +29,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["download", "--sat", "modis", "--envpth=env.yaml", "--date", "2023.03.21"]
+            "args" : ["download", "--sat", "modis", "--envpth=env.yaml", "--date", "2023.03.23"]
         },
         {
             "name": "process modis",
@@ -38,7 +38,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["process", "--sat", "modis", "--date", "2023.03.21"]
+            "args" : ["process", "--sat", "modis", "--date", "2023.03.23"]
         },
         {
             "name": "plot modis",

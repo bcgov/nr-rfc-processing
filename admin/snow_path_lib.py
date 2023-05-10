@@ -3,9 +3,12 @@
 import os.path
 import admin.constants as const
 import glob
+import re
 
 
 import logging
+
+LOGGER = logging.getLogger(__name__)
 
 class SnowPathLib:
 
@@ -64,8 +67,60 @@ class SnowPathLib:
         return int_viirs_tifs
 
     def get_modis_granules(self, date):
+        """reads all the files in the directory defined for the modis data,
+        runs a filter on the returned files looking for files that are similar to
+        the following:
+
+        * MOD10A1.A2023076.h10v03.061.2023078031536.hdf
+        * MOD10A1.A2023076.h20v01.061.2023078032625.hdf
+        * MOD10A1.A2023076.h23v02.061.2023078031918.hdf
+        etc...
+
+        Following is an example of a file that could be in the directory but should
+        not be returned in the list:
+
+        * modis_composite_2023.03.21_2023.03.20_2023.03.19_2023.03.18_2023.03.17.tif
+
+        :param date: _description_
+        :type date: _type_
+        :return: _description_
+        :rtype: _type_
+        """
         mod_path = self.get_modis_MOD10A1V6()
-        modis_granules = glob.glob(os.path.join(mod_path, date,'*.hdf'))
+        files_in_granule_directory = glob.glob(os.path.join(mod_path, date,'*.hdf'))
+        modis_granules = self.filter_for_modis_granules(files_in_granule_directory, suffix='hdf')
+        return modis_granules
+
+    def filter_for_modis_granules(self, file_list, suffix='hdf'):
+        """
+        recievesd a list of files and filters out files that have the following name
+        pattern:
+
+        * MOD10A1.A2023076.h10v03.061.2023078031536.hdf
+        * MOD10A1.A2023076.h20v01.061.2023078032625.hdf
+        * MOD10A1.A2023076.h23v02.061.2023078031918.hdf
+        etc...
+
+        Following is an example of a file that could be in the directory but should
+        not be returned in the list:
+
+        * modis_composite_2023.03.21_2023.03.20_2023.03.19_2023.03.18_2023.03.17.tif
+
+
+        :param file_list: _description_
+        :type file_list: _type_
+        """
+        if suffix[0] == '.':
+            suffix = suffix.replace('.', '')
+        granule_regex_pattern = '^(MOD10A1\.)A\d{7}\.h\d{2}v\d{2}\.\d{3}\.\d{13}.*\.' + suffix
+        granule_pattern = re.compile(granule_regex_pattern)
+        modis_granules = []
+        for granule in file_list:
+            granule_file_only = os.path.basename(granule)
+            if granule_pattern.match(granule_file_only):
+                modis_granules.append(granule)
+            else:
+                LOGGER.warning(f"omitting the following file from list: {granule}")
         return modis_granules
 
     def get_output_modis_path(self, date:str):

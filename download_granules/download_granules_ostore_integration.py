@@ -145,6 +145,7 @@ class CMRClient:
         self.session = None
 
         self.chunk_size = 256 * 1024
+        self.max_retries = 5
 
     def query(
         self,

@@ -215,13 +215,14 @@ def plot_mosaics(sat: str, date: str):
             d_cp = orig.data.copy()
             orig.rio.to_raster(tmp_daily_pth, recalc_transform=True)
         color_ramp(tmp_daily_pth)
+
         # implement gdal cutting to remove most nodata in plot
-        gdal_pth = os.path.join(os.path.split(tmp_daily_pth)[0], 'out_d.tif')
+        tmp_gdal_clipped = os.path.join(os.path.split(tmp_daily_pth)[0], 'tmp_gdal_clipped.tif')
         os.system(f'gdal_translate -q -expand rgb -of GTiff \
-                    {tmp_daily_pth} {gdal_pth}')
+                    {tmp_daily_pth} {tmp_gdal_clipped}')
         os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
                     {shp_pth} \
-                    -crop_to_cutline {gdal_pth} \
+                    -crop_to_cutline {tmp_gdal_clipped} \
                 {tmp_daily_pth}')
         with rio.open(tmp_daily_pth, 'r') as src:
             im1 = ax[0].imshow(src.read().transpose(1,2,0), cmap=plt.cm.RdYlBu,
@@ -242,13 +243,13 @@ def plot_mosaics(sat: str, date: str):
             norm10yr.data = norm_math(d_cp, norm10yr.data)
             norm10yr = norm10yr.rio.clip([geom], drop=True, all_touched=True)
             norm10yr.rio.to_raster(norm10yr_pth, recalc_transform=True)
-        gdal_pth = os.path.join(os.path.split(tmp_daily_pth)[0], 'out_.tif')
+        #gdal_pth = os.path.join(os.path.split(tmp_daily_pth)[0], 'out_.tif')
         # Cut to prov boundary
         os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
                     {shp_pth} \
                     -crop_to_cutline {norm10yr_pth} \
-                {gdal_pth}')
-        with rio.open(gdal_pth) as src:
+                {tmp_gdal_clipped}')
+        with rio.open(tmp_gdal_clipped) as src:
             d = src.read(1)
             msk = src.read(2)
             d[(msk == False)] = np.nan
@@ -272,8 +273,8 @@ def plot_mosaics(sat: str, date: str):
         os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
                     {shp_pth} \
                     -crop_to_cutline {norm20yr_pth} \
-                {gdal_pth}')
-        with rio.open(gdal_pth) as src:
+                {tmp_gdal_clipped}')
+        with rio.open(tmp_gdal_clipped) as src:
             d = src.read(1)
             msk = src.read(2)
             d[(msk == False)] = np.nan

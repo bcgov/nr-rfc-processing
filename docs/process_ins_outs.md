@@ -95,6 +95,7 @@ example of watersheds output... also creates similar pattern for basins
 ### Generate - Mosaic
 
 #### input:
+the 10yr and 20yr tifs are pulled from object storage if they don't exist locally
 
 * `data/intermediate_tif/modis/2023.03.23/modis_composite_2023.03.23_2023.03.22_2023.03.21_2023.03.20_2023.03.19.tif`
 * `data/norm/modis/daily/10yr/03.21.tif`

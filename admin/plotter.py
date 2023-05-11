@@ -208,22 +208,22 @@ def plot_mosaics(sat: str, date: str):
         # Plot user generated mosaic and clip to prov boundary
         ax[0].set_title(f'{date}')
         ax[0].axis('off')
-        daily_pth = os.path.join(const.INTERMEDIATE_TIF, 'plot', 'merged_daily.tif')
+        tmp_daily_pth = os.path.join(const.INTERMEDIATE_TIF, 'plot', 'tmp_merged_daily.tif')
         with rioxr.open_rasterio(orig) as orig:
             fill_val = orig._FillValue
             orig = orig.rio.reproject('EPSG:3153', resolution=const.RES[sat])
             d_cp = orig.data.copy()
-            orig.rio.to_raster(daily_pth, recalc_transform=True)
-        color_ramp(daily_pth)
+            orig.rio.to_raster(tmp_daily_pth, recalc_transform=True)
+        color_ramp(tmp_daily_pth)
         # implement gdal cutting to remove most nodata in plot
-        gdal_pth = os.path.join(os.path.split(daily_pth)[0], 'out_d.tif')
+        gdal_pth = os.path.join(os.path.split(tmp_daily_pth)[0], 'out_d.tif')
         os.system(f'gdal_translate -q -expand rgb -of GTiff \
-                    {daily_pth} {gdal_pth}')
+                    {tmp_daily_pth} {gdal_pth}')
         os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
                     {shp_pth} \
                     -crop_to_cutline {gdal_pth} \
-                {daily_pth}')
-        with rio.open(daily_pth, 'r') as src:
+                {tmp_daily_pth}')
+        with rio.open(tmp_daily_pth, 'r') as src:
             im1 = ax[0].imshow(src.read().transpose(1,2,0), cmap=plt.cm.RdYlBu,
                                 vmin=0, vmax=100, clim=[0,100], interpolation='none')
             rasterio.plot.show((src.read()), transform=src.transform, ax=ax[0], cmap=plt.cm.RdYlBu,
@@ -242,7 +242,7 @@ def plot_mosaics(sat: str, date: str):
             norm10yr.data = norm_math(d_cp, norm10yr.data)
             norm10yr = norm10yr.rio.clip([geom], drop=True, all_touched=True)
             norm10yr.rio.to_raster(norm10yr_pth, recalc_transform=True)
-        gdal_pth = os.path.join(os.path.split(daily_pth)[0], 'out_.tif')
+        gdal_pth = os.path.join(os.path.split(tmp_daily_pth)[0], 'out_.tif')
         # Cut to prov boundary
         os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
                     {shp_pth} \

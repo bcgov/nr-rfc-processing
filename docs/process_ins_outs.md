@@ -3,6 +3,9 @@
 ---------------------------------------------------------
 
 ## PROCESS DATA FLOW:
+Need to identify what data is used by downstream processes so that
+can organize the process to only pull intermediate data if its required
+to create the final end products.
 
 ### Reproject step:
 

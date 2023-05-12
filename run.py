@@ -71,24 +71,27 @@ def down_load(envpth: str, sat: str, date: str, days: int = 5):
     # modis has the following options 1, 5, 8.  The class does the verification
     # that a valid value has been passed
 
-     # viirs only has the 1 day option
-    configs = {
-        'modis': dl_config.SatDownloadConfig(
-            name='daily', products=[const.MODIS_PRODUCT], date_span=int(days),
-            date_str=date
-        ),
-        'viirs': dl_config.SatDownloadConfig(
-            name='daily', products=[const.VIIRS_PRODUCT], date_span=1,
-            date_str=date
-        )
-    }
+    # viirs only has the 1 day option
+
+    # configs = {
+    #     'modis': dl_config.SatDownloadConfig(
+    #         name='daily', products=[const.MODIS_PRODUCT], date_span=int(days),
+    #         date_str=date
+    #     ),
+    #     'viirs': dl_config.SatDownloadConfig(
+    #         name='daily', products=[const.VIIRS_PRODUCT],
+    #         date_str=date
+    #     )
+    # }
+    config = dl_config.SatDownloadConfig(name='daily', sat=sat, date_str=date, date_span=days)
 
     if check_date(date):
         print(f'download {sat}')
         if sat == 'viirs':
             days = 1
         #download_granules.download_granules.download_granules(envpth, date, sat, int(days))
-        dwnldr = dl_grans_ostore.GranuleDownloader(configs[sat])
+        #dwnldr = dl_grans_ostore.GranuleDownloader(configs[sat])
+        dwnldr = dl_grans_ostore.GranuleDownloader(config)
         dwnldr.download_granules()
     else:
         print('ERROR: Date format YYYY.MM.DD')

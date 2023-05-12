@@ -4,6 +4,8 @@ import os.path
 import admin.constants as const
 import glob
 import re
+import download_granules.download_granules_ostore_integration as dl_grans
+import download_granules.download_config as dl_config
 
 
 import logging
@@ -31,8 +33,6 @@ class SnowPathLib:
         product, version = const.MODIS_PRODUCT.split('.')
         return product, version
 
-
-
     def get_modis_MOD10A1V6(self):
         # TODO: path should be derived from const.DEFAULT_PRODUCT
         product, version = self.get_modis_product_version()
@@ -42,7 +42,7 @@ class SnowPathLib:
         pth = os.path.join(const.MODIS_TERRA, modis_dir)
         return pth
 
-    def get_modis_int_tif(self, date):
+    def get_modis_int_tif_dir(self, date):
         int_tif_dir = os.path.join(const.INTERMEDIATE_TIF_MODIS, date)
         return int_tif_dir
 
@@ -131,13 +131,13 @@ class SnowPathLib:
         )
         return out_pth
 
-    def get_modis_mosaic_composite(self, date):
-        modis_dir = os.path.join(const.INTERMEDIATE_TIF_MODIS, date)
-        modis_glob_pattern = os.path.join(modis_dir, "modis_composite*.tif")
-        mosaic = glob.glob(modis_glob_pattern)
-        # should only be one file, so grabbing the first one
-        first_entry = mosaic[0]
-        return first_entry
+    # def get_modis_mosaic_composite(self, date):
+    #     modis_dir = os.path.join(const.INTERMEDIATE_TIF_MODIS, date)
+    #     modis_glob_pattern = os.path.join(modis_dir, "modis_composite*.tif")
+    #     mosaic = glob.glob(modis_glob_pattern)
+    #     # should only be one file, so grabbing the first one
+    #     first_entry = mosaic[0]
+    #     return first_entry
 
     def file_name_no_suffix(self, input_path):
         """expects a path that looks like this:
@@ -154,3 +154,57 @@ class SnowPathLib:
         path_base_no_suffix = os.path.splitext(path_base)[0]
         return path_base_no_suffix
 
+    def get_modis_reprojected_tif(self, input_source_path: str, date_str: str, projection):
+        pth_file_noext = self.file_name_no_suffix(input_source_path)
+        output_file_name = f'{pth_file_noext}_{projection.replace(":", "")}.tif'
+        int_tif_dir = self.get_modis_int_tif_dir(date_str)
+        intermediate_tif = os.path.join(
+            int_tif_dir,
+            output_file_name)
+        return intermediate_tif
+
+    def get_modis_composite_mosaic_file_name(self, start_date, date_list: list[str]):
+        base = self.get_modis_int_tif_dir(start_date)
+        file_name = f'modis_composite_{"_".join(date_list)}.tif'
+        out_pth = os.path.join(base, file_name)
+        return out_pth
+
+    def get_modis_intermediate_tifs(self, date):
+        """reads the source directory where the granules should be located
+        and returns a list of file names for the corresponding file paths
+        after they have been projected to EPSG:4326.
+
+        :param date: _description_
+        :type date: _type_
+        :return: _description_
+        :rtype: _type_
+        """
+        int_tifs = []
+        comp_dir = self.get_modis_int_tif_dir(date)
+        grans = self.get_modis_granules(date)
+        modis_granules_src_files = self.get_modis_granules(date)
+        modis_granules_src_files_filtered = self.filter_for_modis_granules(modis_granules_src_files)
+        for granule_path in modis_granules_src_files_filtered:
+            int_tif = self.get_modis_reprojected_tif(granule_path, date, 'EPSG:4326')
+            int_tifs.append(int_tif)
+        return int_tifs
+
+
+    def get_granules(self, date, days, sat):
+                # get the granules
+        modis_dl_config = modis_dl_config.SatDownloadConfig(
+            date_span=len(dates),
+            name='daily',
+            sat='modis',
+            date_str=date
+        )
+        start_date = modis_dl_config.get_start_date()
+        end_date = modis_dl_config.get_end_date()
+
+        cmr_client = dl_grans.CMRClientOStore()
+        grans = cmr_client(
+            start_date=start_date,
+            end_date=end_date)
+
+        #dl_config
+        #dl_grans.

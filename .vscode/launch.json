@@ -29,7 +29,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["download", "--sat", "modis", "--envpth=env.yaml", "--date", "2023.03.23"]
+            "args" : ["download", "--sat", "modis", "--envpth=env.yaml", "--date", "2023.03.24"]
         },
         {
             "name": "process modis",
@@ -38,7 +38,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["process", "--sat", "modis", "--date", "2023.03.23"]
+            "args" : ["process", "--sat", "modis", "--date", "2023.03.24"]
         },
         {
             "name": "plot modis",
@@ -47,7 +47,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["plot", "--sat", "modis", "--date", "2023.03.21"]
+            "args" : ["plot", "--sat", "modis", "--date", "2023.03.24"]
         },
         {
             "name": "download viirs",

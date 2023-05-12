@@ -63,7 +63,7 @@ def process_normals(norm: object, orig: object, geom: object, output_pth: str, s
     norm_clipped = norm.rio.reproject('EPSG:3153', resolution=const.RES[sat])
     norm_clipped.rio.to_raster(output_pth)
 
-def process_by_watershed_or_basin(sat: str, typ: str, startdate: str):
+def process_by_watershed_or_basin(sat: str, typ: str, startdate: str, date_list=None):
     """
     Cut the mosaic to watershed/basin shapefile and output a clipped tiff
 
@@ -75,6 +75,8 @@ def process_by_watershed_or_basin(sat: str, typ: str, startdate: str):
         Indicate 'watersheds' or 'basins'
     startdate : str
         The target date to focus on and output directory
+    date_list:
+        the list of dates to be processes - only required for modis.
     """
     if typ == 'watersheds':
         base = const.WATERSHEDS
@@ -84,7 +86,10 @@ def process_by_watershed_or_basin(sat: str, typ: str, startdate: str):
     # Gather respective data files and prepare path bases
     if sat == 'modis':
         # mosaic example: './data/intermediate_tif/modis/2023.03.23/modis_composite_2023.03.23_2023.03.22_2023.03.21_2023.03.20_2023.03.19.tif'
-        mosaic = snow_paths.get_modis_mosaic_composite(startdate)
+        # mosaic = snow_paths.get_modis_mosaic_composite(startdate)
+        mosaic = snow_paths.get_modis_composite_mosaic_file_name(
+            start_date=startdate,
+            date_list=date_list)
         norm10yr_base = os.path.join(const.MODIS_DAILY_10YR)
         norm20yr_base = os.path.join(const.MODIS_DAILY_20YR)
     elif sat == 'viirs':

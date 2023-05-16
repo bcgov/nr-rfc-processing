@@ -5,6 +5,8 @@
     "version": "0.2.0",
     "configurations": [
 
+
+
         {
             "name": "Python: Current File",
             "type": "python",
@@ -20,7 +22,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["daily-pipeline", "--envpth=env.yaml", "--date", "2023.03.21"]
+            "args" : ["daily-pipeline", "--envpth=env.yaml", "--date", "2023.05.03"]
         },
         {
             "name": "download modis",
@@ -29,7 +31,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["download", "--sat", "modis", "--envpth=env.yaml", "--date", "2023.03.21"]
+            "args" : ["download", "--sat", "modis", "--envpth=env.yaml", "--date", "2023.05.03"]
         },
         {
             "name": "process modis",
@@ -38,7 +40,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["process", "--sat", "modis", "--date", "2023.03.21"]
+            "args" : ["process", "--sat", "modis", "--date", "2023.05.03"]
         },
         {
             "name": "plot modis",
@@ -47,7 +49,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["plot", "--sat", "modis", "--date", "2023.03.21"]
+            "args" : ["plot", "--sat", "modis", "--date", "2023.05.03"]
         },
         {
             "name": "download viirs",

@@ -20,73 +20,14 @@ import multiprocessing
 
 import cmr
 
-# from dateutil.parser import parse as dateparser
 import dateutil.parser
 import requests
 
 import admin.constants as const
 
-# from hatfieldcmr import CMRClient
-from hatfieldcmr.ingest import LocalStorageWrapper
-
 import NRUtil.NRObjStoreUtil
 
 LOGGER = logging.getLogger(__name__)
-
-def get_unpicklable(instance, exception=None, string='', first_only=True):
-    """
-    Recursively go through all attributes of instance and return a list of whatever
-    can't be pickled.
-
-    Set first_only to only print the first problematic element in a list, tuple or
-    dict (otherwise there could be lots of duplication).
-    """
-    problems = []
-    if isinstance(instance, tuple) or isinstance(instance, list):
-        for k, v in enumerate(instance):
-            try:
-                pickle.dumps(v)
-            except BaseException as e:
-                problems.extend(get_unpicklable(v, e, string + f'[{k}]'))
-                if first_only:
-                    break
-    elif isinstance(instance, dict):
-        for k in instance:
-            try:
-                pickle.dumps(k)
-            except BaseException as e:
-                problems.extend(get_unpicklable(
-                    k, e, string + f'[key type={type(k).__name__}]'
-                ))
-                if first_only:
-                    break
-        for v in instance.values():
-            try:
-                pickle.dumps(v)
-            except BaseException as e:
-                problems.extend(get_unpicklable(
-                    v, e, string + f'[val type={type(v).__name__}]'
-                ))
-                if first_only:
-                    break
-    else:
-        for k, v in instance.__dict__.items():
-            try:
-                pickle.dumps(v)
-            except BaseException as e:
-                problems.extend(get_unpicklable(v, e, string + '.' + k))
-
-    # if we get here, it means pickling instance caused an exception (string is not
-    # empty), yet no member was a problem (problems is empty), thus instance itself
-    # is the problem.
-    if string != '' and not problems:
-        problems.append(
-            string + f" (Type '{type(instance).__name__}' caused: {exception})"
-        )
-
-    return problems
-
-
 
 class GranuleDownloader:
     def __init__(self, sat_config):
@@ -96,46 +37,42 @@ class GranuleDownloader:
         # TODO: once complete and tested this will be renamed to download_granules
 
         """ """
-        date = self.sat_config.date_str.split(".")
-        end_date = datetime.datetime(int(date[0]), int(date[1]), int(date[2]))
-        # ed_client = CMRClient(
-        #     earthdata_user=const.EARTHDATA_USER,
-        #     earthdata_pass=const.EARTHDATA_PASS,
-        # )
+        #end_date = datetime.datetime(int(date[0]), int(date[1]), int(date[2]))
+        #start_date = end_date - datetime.timedelta(self.sat_config.date_span)
+
+        #end_date = self.sat_config.get_end_date()
+        #start_date = self.sat_config.get_start_date()
         ed_client = CMRClientOStore(
             earthdata_user=const.EARTHDATA_USER,
             earthdata_pass=const.EARTHDATA_PASS,
         )
 
-        start_date = end_date - datetime.timedelta(self.sat_config.date_span)
         granules = ed_client.query(
-            str(start_date.date()),
-            str(end_date.date()),
+            #str(start_date.date()),
+            #str(end_date.date()),
             self.sat_config,
             bbox=[*const.BBOX],
         )
         msg = (
-            f"queried product {self.sat_config.products}, got {len(granules)} "
+            f"queried product {self.sat_config.product}, got {len(granules)} "
             + "granules, downloading"
         )
         LOGGER.info(msg)
 
         # TODO: debug - runs sync vs async to help debug
-        # for gran in granules:
-        #     ed_client.download_granule(gran)
+        for gran in granules:
+            ed_client.download_granule(gran)
         # LOGGER.debug("all granules downloaded...")
 
         # Adding the object storage upload renders the download_granule unpickleable
         # The operation doesn't have any serious cpu processing, but is mostly i/o,
         # converting to ThreadPool should provide the similar benefits
-        try:
-            # with multiprocessing.Pool(4) as p:
-            with multiprocessing.pool.ThreadPool(6) as p:
-
-                p.map(ed_client.download_granule, granules)
-
-        except KeyboardInterrupt:
-            LOGGER.error('keyboard interupt... Exiting download pool')
+        # try:
+        #     # with multiprocessing.Pool(4) as p:
+        #     with multiprocessing.pool.ThreadPool(6) as p:
+        #         p.map(ed_client.download_granule, granules)
+        # except KeyboardInterrupt:
+        #     LOGGER.error('keyboard interupt... Exiting download pool')
 
 class CMRClient:
     def __init__(self, earthdata_user="", earthdata_pass=""):
@@ -149,10 +86,7 @@ class CMRClient:
 
     def query(
         self,
-        start_date: str,
-        end_date: str,
         dl_config,
-        provider: str = "LPDAAC_ECS",
         bbox: list = [],
     ) -> list[dict]:
         # TODO: add type for dl_config
@@ -169,8 +103,6 @@ class CMRClient:
             End date yyyy-mm-dd
         product: download_granules.download_config.SatDownloadConfig
             Product name
-        provider: string
-            Provider (default is 'LPDAAC_ECS')
         bbox: List[float]
             Bounding box [lower_left_lon,
                           lower_left_lat,
@@ -183,10 +115,17 @@ class CMRClient:
             List of granules
 
         """
+        LOGGER.info("querying for granules...")
         q = cmr.GranuleQuery()
-        prod, ver = dl_config.get_product_version()[0]
+
+        end_date = dl_config.get_end_date()
+        end_date_str = end_date.strftime('%Y-%m-%d')
+        start_date = dl_config.get_start_date()
+        start_date_str = start_date.strftime('%Y-%m-%d')
+
+        prod, ver = dl_config.get_product_version()
         q.short_name(prod).version(ver)
-        q.temporal(f"{start_date}T00:00:00Z", f"{end_date}T23:59:59Z")
+        q.temporal(f"{start_date_str}T00:00:00Z", f"{end_date_str}T23:59:59Z")
         if len(bbox) >= 4:
             q.bounding_box(*bbox[:4])
         _granules = q.get_all()
@@ -199,18 +138,27 @@ class CMRClient:
         granules = []
         for gran in _granules:
             # CMR uses day 1 of window - correct this to be middle of window
+            d1 = dateutil.parser.parse(gran["time_start"].split("T")[0])
+            d2 = d1 + datetime.timedelta(days=day_offset)
             date = (
                 dateutil.parser.parse(gran["time_start"].split("T")[0])
                 + datetime.timedelta(days=day_offset)
             ).date()
-            if (
-                dateutil.parser.parse(start_date).date()
-                <= date
-                <= dateutil.parser.parse(end_date).date()
-            ):
+
+            # if (
+            #     dateutil.parser.parse(start_date_str).date()
+            #     <= date
+            #     <= dateutil.parser.parse(end_date_str).date()
+            # ):
+            start_date_date = start_date.date()
+            end_date_date = end_date.date()
+
+            if ( start_date_date <= date and date <= end_date_date):
                 granules.append(gran)
+            else:
+                LOGGER.debug(f"date that fails: {date}")
         LOGGER.info(
-            "%s granules found within %s - %s" % (len(granules), start_date, end_date)
+            "%s granules found within %s - %s" % (len(granules), start_date, end_date_str)
         )
         return granules
 
@@ -399,6 +347,7 @@ class CMRClientOStore(CMRClient):
         else:
             # the path is not in the cache so we will add it to the cache and then
             # query again.
+            LOGGER.debug(f"polling ostore for existance of {ostore_file_path}")
             ostore_dir, ostore_file = os.path.split(ostore_file_path)
             ostore_file_list = self.get_ostore_file_list(ostore_directory=ostore_dir)
 

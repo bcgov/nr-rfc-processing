@@ -71,8 +71,8 @@ class CMRClient():
 
         """
         q = GranuleQuery()
-        prod, ver = product.get_product_version()[0]
-        #prod, ver = product['products'][0].split('.')
+        #prod, ver = product.get_product_version()[0]
+        prod, ver = product['products'][0].split('.')
         q.short_name(prod).version(ver)
         q.temporal(f"{start_date}T00:00:00Z", f"{end_date}T23:59:59Z")
         if (len(bbox) >= 4):

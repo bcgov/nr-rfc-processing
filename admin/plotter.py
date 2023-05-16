@@ -160,142 +160,150 @@ def plot_mosaics(sat: str, date: str):
     date : str
         Target date in format YYYY.MM.DD
     """
-    shp_pth = os.path.join(const.AOI, 'provincial_boundary',
-                    'FLNR10747_AOI_BC_boundary_20210106_AnS.shp')
-    shapefile = gpd.read_file(shp_pth)
-    for _, row in shapefile.iterrows(): # Grab geometry
-        geom = row.geometry
-    fig, ax = plt.subplots(1,3, figsize=(25,5))
-    fig.suptitle(f'{sat.upper()} - {date}')
-    date_split = date.split('.')
-    d_year = date_split[0]
-    d_month = date_split[1]
-    d_day = date_split[2]
-
-    # Gather satellite respective data and prepare path bases
-    if sat == 'modis':
-        orig = glob(os.path.join(const.INTERMEDIATE_TIF_MODIS, date, '*modis_composite*.tif'))[0]
-        base10yr = const.MODIS_DAILY_10YR
-        base20yr = const.MODIS_DAILY_20YR
-    elif sat == 'viirs':
-        orig = glob(os.path.join(const.OUTPUT_TIF_VIIRS, d_year, f'{date}.tif'))[0]
-        base10yr = const.VIIRS_DAILY_10YR
-        base20yr = const.VIIRS_DAILY_20YR
-    else: # @click should not let this else ever be reached
-        return
-
-    # pull any 10 year data required
-    norm10yr_tif = os.path.join(base10yr, f'{date_split[1]}.{date_split[2]}.tif')
-    ostore.get_10yr_tif(sat=sat, month=d_month, day=d_day, out_path=norm10yr_tif)
-    logger.debug(f"norm10yr_tif: {norm10yr_tif}")
-    norm10yr_glob = glob(norm10yr_tif[2:])
-    norm10yr = norm10yr_glob.pop()
-
-    norm20yr_tif = os.path.join(base20yr, f'{date_split[1]}.{date_split[2]}.tif')
-    ostore.get_20yr_tif(sat=sat, month=d_month, day=d_day, out_path=norm20yr_tif)
-    norm20yr_glob = glob(norm20yr_tif)
-    norm20yr = norm20yr_glob.pop()
-
-    #norm20yr = glob(os.path.join(base20yr, f'{date_split[1]}.{date_split[2]}.tif'))[0]
-
-    # Plot user generated mosaic and clip to prov boundary
-    ax[0].set_title(f'{date}')
-    ax[0].axis('off')
-    daily_pth = os.path.join(const.INTERMEDIATE_TIF, 'plot', 'merged_daily.tif')
-    with rioxr.open_rasterio(orig) as orig:
-        fill_val = orig._FillValue
-        orig = orig.rio.reproject('EPSG:3153', resolution=const.RES[sat])
-        d_cp = orig.data.copy()
-        orig.rio.to_raster(daily_pth, recalc_transform=True)
-    color_ramp(daily_pth)
-    # implement gdal cutting to remove most nodata in plot
-    gdal_pth = os.path.join(os.path.split(daily_pth)[0], 'out_d.tif')
-    os.system(f'gdal_translate -q -expand rgb -of GTiff \
-                {daily_pth} {gdal_pth}')
-    os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
-                {shp_pth} \
-                -crop_to_cutline {gdal_pth} \
-               {daily_pth}')
-    with rio.open(daily_pth, 'r') as src:
-        im1 = ax[0].imshow(src.read().transpose(1,2,0), cmap=plt.cm.RdYlBu,
-                            vmin=0, vmax=100, clim=[0,100], interpolation='none')
-        rasterio.plot.show((src.read()), transform=src.transform, ax=ax[0], cmap=plt.cm.RdYlBu,
-                            vmin=0, vmax=100, clim=[0,100], interpolation='none')
-        fig.colorbar(im1, ax=ax[0])
-
-    # Alter user generated data to prepare for norm math
-    d_cp[(d_cp > 100)&(d_cp != fill_val)] = 0
-
-    # Plot % change to 10 year norm
-    ax[1].set_title('% Difference to 10 Year Normal')
-    ax[1].axis('off')
-    norm10yr_pth = os.path.join(const.INTERMEDIATE_TIF, 'plot', '10yr.tif')
-    with rioxr.open_rasterio(norm10yr) as norm10yr:
-        norm10yr = norm10yr.rio.reproject('EPSG:3153', resolution=const.RES[sat])
-        norm10yr.data = norm_math(d_cp, norm10yr.data)
-        norm10yr = norm10yr.rio.clip([geom], drop=True, all_touched=True)
-        norm10yr.rio.to_raster(norm10yr_pth, recalc_transform=True)
-    gdal_pth = os.path.join(os.path.split(daily_pth)[0], 'out_.tif')
-    # Cut to prov boundary
-    os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
-                {shp_pth} \
-                -crop_to_cutline {norm10yr_pth} \
-               {gdal_pth}')
-    with rio.open(gdal_pth) as src:
-        d = src.read(1)
-        msk = src.read(2)
-        d[(msk == False)] = np.nan
-        im2 = ax[1].imshow(d, cmap=plt.cm.RdYlBu,
-                            vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
-        fig.colorbar(im2, ax=ax[1])
-        rasterio.plot.show((d), ax=ax[1], cmap=plt.cm.RdYlBu,
-                            vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
-
-    #  Plot % change to 20 year norm
-    ax[2].set_title('% Difference to 20 Year Normal')
-    ax[2].axis('off')
-    norm20yr_pth = os.path.join(const.INTERMEDIATE_TIF, 'plot', '20yr.tif')
-    with rioxr.open_rasterio(norm20yr) as norm20yr:
-        norm20yr = norm20yr.rio.reproject('EPSG:3153', resolution=const.RES[sat])
-        norm20yr.data = norm_math(d_cp, norm20yr.data)
-        norm20yr = norm20yr.rio.clip([geom], drop=True, all_touched=True)
-        norm20yr.rio.to_raster(norm20yr_pth, recalc_transform=True)
-    gdal_pth = os.path.join(os.path.split(daily_pth)[0], 'out_.tif')
-    # Clip to provincial boundary
-    os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
-                {shp_pth} \
-                -crop_to_cutline {norm20yr_pth} \
-               {gdal_pth}')
-    with rio.open(gdal_pth) as src:
-        d = src.read(1)
-        msk = src.read(2)
-        d[(msk == False)] = np.nan
-        im3 = ax[2].imshow(d, cmap=plt.cm.RdYlBu,
-                            vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
-        fig.colorbar(im3, ax=ax[2])
-        rasterio.plot.show((d), ax=ax[2], cmap=plt.cm.RdYlBu,
-                            vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
-
-    # Add legend for nodata
-    legend_elements = [Patch(facecolor='black', edgecolor='k',
-                            label='NoData')]
-    fig.legend(handles=legend_elements, loc='lower center')
-    # Make sure output path is accessible and
-    # replace with most up to date version
     out_pth = os.path.join(const.PLOT, sat, 'mosaic', date, f'{date}.png')
     out_dir = os.path.dirname(out_pth)
-    if not os.path.exists(out_dir):
-        logger.debug(f"creating the directory: {out_dir}")
-        os.makedirs(out_dir)
-    if os.path.exists(out_pth):
-        logger.debug(f"deleting the file: {out_pth}")
-        os.remove(out_pth)
-    try:
-        logger.debug(f"creating the file: {out_pth}")
-        plt.savefig(out_pth)
-        plt.close()
-    except Exception as e:
-        logger.debug(e)
+    ostore_exists = ostore.mosaic_plot_exists(date, sat)
+    if not ostore_exists:
+        if not os.path.exists(out_pth):
+
+            shp_pth = os.path.join(
+                const.AOI,
+                'provincial_boundary',
+                'FLNR10747_AOI_BC_boundary_20210106_AnS.shp')
+            shapefile = gpd.read_file(shp_pth)
+            for _, row in shapefile.iterrows(): # Grab geometry
+                geom = row.geometry
+            fig, ax = plt.subplots(1,3, figsize=(25,5))
+            fig.suptitle(f'{sat.upper()} - {date}')
+            date_split = date.split('.')
+            d_year = date_split[0]
+            d_month = date_split[1]
+            d_day = date_split[2]
+
+            # Gather satellite respective data and prepare path bases
+            if sat == 'modis':
+                orig = glob(os.path.join(const.INTERMEDIATE_TIF_MODIS, date, '*modis_composite*.tif'))[0]
+                base10yr_dir = const.MODIS_DAILY_10YR
+                base20yr_dir = const.MODIS_DAILY_20YR
+            elif sat == 'viirs':
+                orig = glob(os.path.join(const.OUTPUT_TIF_VIIRS, d_year, f'{date}.tif'))[0]
+                base10yr_dir = const.VIIRS_DAILY_10YR
+                base20yr_dir = const.VIIRS_DAILY_20YR
+            else: # @click should not let this else ever be reached
+                return
+
+            # pull 10 year data
+            norm10yr = os.path.join(base10yr_dir, f'{date_split[1]}.{date_split[2]}.tif')
+            ostore.get_10yr_tif(sat=sat, month=d_month, day=d_day, out_path=norm10yr)
+            logger.debug(f"norm10yr: {norm10yr}")
+
+            # pull 20 year data
+            norm20yr = os.path.join(base20yr_dir, f'{date_split[1]}.{date_split[2]}.tif')
+            ostore.get_20yr_tif(sat=sat, month=d_month, day=d_day, out_path=norm20yr)
+            logger.debug(f"norm20yr: {norm10yr}")
+
+            # Plot user generated mosaic and clip to prov boundary
+            ax[0].set_title(f'{date}')
+            ax[0].axis('off')
+            tmp_daily_pth = os.path.join(const.INTERMEDIATE_TIF, 'plot', 'tmp_merged_daily.tif')
+            with rioxr.open_rasterio(orig) as orig:
+                fill_val = orig._FillValue
+                orig = orig.rio.reproject('EPSG:3153', resolution=const.RES[sat])
+                d_cp = orig.data.copy()
+                orig.rio.to_raster(tmp_daily_pth, recalc_transform=True)
+            color_ramp(tmp_daily_pth)
+
+            # implement gdal cutting to remove most nodata in plot
+            tmp_gdal_clipped = os.path.join(os.path.split(tmp_daily_pth)[0], 'tmp_gdal_clipped.tif')
+            os.system(f'gdal_translate -q -expand rgb -of GTiff \
+                        {tmp_daily_pth} {tmp_gdal_clipped}')
+            os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
+                        {shp_pth} \
+                        -crop_to_cutline {tmp_gdal_clipped} \
+                    {tmp_daily_pth}')
+            with rio.open(tmp_daily_pth, 'r') as src:
+                im1 = ax[0].imshow(src.read().transpose(1,2,0), cmap=plt.cm.RdYlBu,
+                                    vmin=0, vmax=100, clim=[0,100], interpolation='none')
+                rasterio.plot.show((src.read()), transform=src.transform, ax=ax[0], cmap=plt.cm.RdYlBu,
+                                    vmin=0, vmax=100, clim=[0,100], interpolation='none')
+                fig.colorbar(im1, ax=ax[0])
+
+            # Alter user generated data to prepare for norm math
+            d_cp[(d_cp > 100)&(d_cp != fill_val)] = 0
+
+            # Plot % change to 10 year norm
+            ax[1].set_title('% Difference to 10 Year Normal')
+            ax[1].axis('off')
+            norm10yr_pth = os.path.join(const.INTERMEDIATE_TIF, 'plot', '10yr.tif')
+            with rioxr.open_rasterio(norm10yr) as norm10yr:
+                norm10yr = norm10yr.rio.reproject('EPSG:3153', resolution=const.RES[sat])
+                norm10yr.data = norm_math(d_cp, norm10yr.data)
+                norm10yr = norm10yr.rio.clip([geom], drop=True, all_touched=True)
+                norm10yr.rio.to_raster(norm10yr_pth, recalc_transform=True)
+
+            # Cut to prov boundary
+            os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
+                        {shp_pth} \
+                        -crop_to_cutline {norm10yr_pth} \
+                    {tmp_gdal_clipped}')
+            with rio.open(tmp_gdal_clipped) as src:
+                d = src.read(1)
+                msk = src.read(2)
+                d[(msk == False)] = np.nan
+                im2 = ax[1].imshow(d, cmap=plt.cm.RdYlBu,
+                                    vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
+                fig.colorbar(im2, ax=ax[1])
+                rasterio.plot.show((d), ax=ax[1], cmap=plt.cm.RdYlBu,
+                                    vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
+
+            #  Plot % change to 20 year norm
+            ax[2].set_title('% Difference to 20 Year Normal')
+            ax[2].axis('off')
+            norm20yr_pth = os.path.join(const.INTERMEDIATE_TIF, 'plot', '20yr.tif')
+            with rioxr.open_rasterio(norm20yr) as norm20yr:
+                norm20yr = norm20yr.rio.reproject('EPSG:3153', resolution=const.RES[sat])
+                norm20yr.data = norm_math(d_cp, norm20yr.data)
+                norm20yr = norm20yr.rio.clip([geom], drop=True, all_touched=True)
+                norm20yr.rio.to_raster(norm20yr_pth, recalc_transform=True)
+            # gdal_pth = os.path.join(os.path.split(daily_pth)[0], 'out_.tif')
+            # Clip to provincial boundary
+            os.system(f'gdalwarp -overwrite -q --config GDALWARP_IGNORE_BAD_CUTLINE YES -dstalpha -cutline \
+                        {shp_pth} \
+                        -crop_to_cutline {norm20yr_pth} \
+                    {tmp_gdal_clipped}')
+            with rio.open(tmp_gdal_clipped) as src:
+                d = src.read(1)
+                msk = src.read(2)
+                d[(msk == False)] = np.nan
+                im3 = ax[2].imshow(d, cmap=plt.cm.RdYlBu,
+                                    vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
+                fig.colorbar(im3, ax=ax[2])
+                rasterio.plot.show((d), ax=ax[2], cmap=plt.cm.RdYlBu,
+                                    vmin=-100, vmax=100, clim=[-100,100], interpolation='none')
+
+            # Add legend for nodata
+            legend_elements = [Patch(facecolor='black', edgecolor='k',
+                                    label='NoData')]
+            fig.legend(handles=legend_elements, loc='lower center')
+            # Make sure output path is accessible and
+            # replace with most up to date version
+            if not os.path.exists(out_dir):
+                logger.debug(f"creating the directory: {out_dir}")
+                os.makedirs(out_dir)
+            if os.path.exists(out_pth):
+                logger.debug(f"deleting the file: {out_pth}")
+                os.remove(out_pth)
+            try:
+                logger.debug(f"creating the file: {out_pth}")
+                plt.savefig(out_pth)
+                plt.close()
+            except Exception as e:
+                logger.debug(e)
+
+        # finally push up to object storage
+        # ostore_path, local_path, bucket_name=None, public=False)ostore_path, local_path, bucket_name=None, public=False)
+        # out_pth
+        ostore.push_daily_mosaic_plot(local_path=out_pth, sat=sat, date=date)
 
 
 def plot_handler(date: str, sat: str):
@@ -314,4 +322,3 @@ def plot_handler(date: str, sat: str):
     basins = glob(os.path.join(const.TOP, 'basins', '*'))
     plot_sheds(basins, 'basins', sat, date)
     plot_mosaics(sat, date)
-

@@ -96,5 +96,15 @@
             "justMyCode": false,
             "args" : ["--days_back", "0", "--delete", "False"]
         },
+        {
+            "name": "get missing data",
+            "type": "python",
+            "request": "launch",
+            "program": "get_available_data.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args" : ["test", "test"]
+        },
+
     ]
 }

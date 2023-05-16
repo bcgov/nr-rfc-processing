@@ -1,2 +1,2 @@
-python-cmr==0.4.1
+python-cmr==0.7.0
 nr-objstore-util==0.10.0

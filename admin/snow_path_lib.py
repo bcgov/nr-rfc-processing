@@ -6,7 +6,7 @@ import glob
 import re
 import download_granules.download_granules_ostore_integration as dl_grans
 import download_granules.download_config as dl_config
-
+import osgeo.ogr
 
 import logging
 
@@ -131,13 +131,20 @@ class SnowPathLib:
         )
         return out_pth
 
-    # def get_modis_mosaic_composite(self, date):
-    #     modis_dir = os.path.join(const.INTERMEDIATE_TIF_MODIS, date)
-    #     modis_glob_pattern = os.path.join(modis_dir, "modis_composite*.tif")
-    #     mosaic = glob.glob(modis_glob_pattern)
-    #     # should only be one file, so grabbing the first one
-    #     first_entry = mosaic[0]
-    #     return first_entry
+    def get_mosaic_dir(self, date, sat):
+        """ returns the directory where the mosaic'd versions of the tif are located
+        """
+        if sat == 'modis':
+            rootdir = const.MODIS_NORM
+        else:
+            rootdir = const.VIIRS_NORM
+        mosaic_dir = os.path.join(rootdir, date)
+        return mosaic_dir
+
+    def get_mosaic_file(self, date, sat):
+        mosaic_dir = self.get_mosaic_dir(date=date, sat=sat)
+        mosaic_file = os.path.join(mosaic_dir, f"{date}.tif")
+        return mosaic_file
 
     def file_name_no_suffix(self, input_path):
         """expects a path that looks like this:
@@ -154,7 +161,7 @@ class SnowPathLib:
         path_base_no_suffix = os.path.splitext(path_base)[0]
         return path_base_no_suffix
 
-    def get_modis_reprojected_tif(self, input_source_path: str, date_str: str, projection):
+    def get_modis_reprojected_tif(self, input_source_path: str, date_str: str, projection='EPSG:4326'):
         pth_file_noext = self.file_name_no_suffix(input_source_path)
         output_file_name = f'{pth_file_noext}_{projection.replace(":", "")}.tif'
         int_tif_dir = self.get_modis_int_tif_dir(date_str)
@@ -189,10 +196,14 @@ class SnowPathLib:
             int_tifs.append(int_tif)
         return int_tifs
 
-
     def get_granules(self, date, days, sat):
+        # TODO: This needs to become the source of data queries
+        # set it up with caching of data to speed up
+        # wrap with different paths.
+        # eliminate all glob calls, and use the data that
+        # comes direct from the sat query.
                 # get the granules
-        modis_dl_config = modis_dl_config.SatDownloadConfig(
+        modis_dl_config = dl_config.SatDownloadConfig(
             date_span=len(dates),
             name='daily',
             sat='modis',
@@ -202,9 +213,93 @@ class SnowPathLib:
         end_date = modis_dl_config.get_end_date()
 
         cmr_client = dl_grans.CMRClientOStore()
-        grans = cmr_client(
-            start_date=start_date,
-            end_date=end_date)
+        grans = cmr_client.query(
+            dl_config = modis_dl_config
+        )
+        LOGGER.debug("got grans")
 
         #dl_config
         #dl_grans.
+
+    def get_aoi_shp(self, wat_or_bas):
+        if wat_or_bas.lower() == 'watersheds':
+            # TODO: search for Export_Output_SBIMap.shp and replace with this method call
+            aoi = os.path.join(const.AOI, 'watersheds', 'Export_Output_SBIMap.shp')
+        elif wat_or_bas.lower() == 'basins':
+            aoi = os.path.join(const.AOI, 'basins','CLEVER_BASINS.shp')
+        else:
+            msg = (
+                f'invalid parameter sent for "wat_or_bas".  value sent: {wat_or_bas}' +
+                'valid values: watersheds|basins' )
+            raise ValueError(msg)
+        return aoi
+
+    def get_watershed_basin_list(self, wat_bas):
+        """returns a list of either the watershed names or the basin names depending
+        on the value of the parameter `wat_bas`
+
+        :param wat_bas: whether to retrieve watershed names or basin names
+        :type wat_bas: str
+        :return: a list of either watershed names or basin names
+        :rtype: list[str]
+        """
+        if wat_bas == 'watersheds':
+            column = 'basinName'
+        elif wat_bas == 'basins':
+            column = 'WSDG_NAME'
+
+        watershed_names = []
+        shp_file_path = self.get_aoi_shp(wat_bas)
+        shapefile = osgeo.ogr.Open(shp_file_path)
+        layer = shapefile.GetLayer()
+        for feature in layer:
+            # Get the attributes of the feature
+            basinName = feature.GetField(column)
+            basinName = basinName.translate({ord("("): None, ord(")"):None})
+            basinName = "_".join(basinName.replace('.','').split(" "))
+            watershed_names.append(basinName)
+        # required to close the file
+        del shapefile
+        watershed_names = list(set(watershed_names))
+        return watershed_names
+
+    def get_watershed_or_basin_path(self, start_date, watershed_basin, watershed_name, sat, projection):
+        """combines the args sent to the method to calculate the output path.
+
+        :param start_date: The start date in the patterh YYY.MM.DD
+        :type start_date: str
+        :param watershed_basin: either 'watershed' or 'basin' indicating what the type
+                                is
+        :type watershed_basin: str
+        :param watershed_name: name of the watershed or basin
+        :type watershed_name: str
+        :param sat: type of satellite the path is being generated for (modis|viirs)
+        :type sat: str
+        :param projection: Name of the projection EPSG:4326 or EPSG:3153
+        :type projection: _type_
+        """
+        # data/watersheds/Stikine/modis/2023.03.23/Stikine_modis_2023.03.23_EPSG4326.tif
+
+        if watershed_basin == 'watersheds':
+            top_dir = const.WATERSHEDS
+        elif watershed_basin == 'basins':
+            top_dir = const.BASINS
+        # TODO: assert that watershed_basin in const.TYPS
+        projection_str = projection.replace(":", '')
+        file_name = f'{watershed_name}_{sat}_{start_date}_{projection_str}.tif'
+        full_path = os.path.join(
+            top_dir,
+            watershed_name,
+            sat,
+            start_date,
+            file_name)
+        return full_path
+
+
+    # def get_modis_mosaic_composite(self, date):
+    #     modis_dir = os.path.join(const.INTERMEDIATE_TIF_MODIS, date)
+    #     modis_glob_pattern = os.path.join(modis_dir, "modis_composite*.tif")
+    #     mosaic = glob.glob(modis_glob_pattern)
+    #     # should only be one file, so grabbing the first one
+    #     first_entry = mosaic[0]
+    #     return first_entry

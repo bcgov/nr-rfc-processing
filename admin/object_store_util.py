@@ -13,6 +13,7 @@ class OStore:
         self.ostore = NRUtil.NRObjStoreUtil.ObjectStoreUtil()
         self.historical_norms_path = "norm/{sat}/daily/{period}/{month}.{day}.tif"
         self.snow_path = admin.snow_path_lib.SnowPathLib()
+        self.cache = {}
 
     def get_10yr_tif(self, sat, month, day, out_path):
         if not os.path.exists(out_path):
@@ -105,3 +106,44 @@ class OStore:
         # self.snow_path.
         # self.get_mod
         pass
+
+    def get_ostore_path(self, local_path):
+        ostr_lib = NRUtil.NRObjStoreUtil.ObjectStoragePathLib()
+        ostore_path = ostr_lib.get_obj_store_path(
+            src_path=local_path,
+            ostore_path=admin.constants.OBJ_STORE_TOP,
+            src_root_dir=admin.constants.TOP,
+            prepend_bucket=False
+        )
+        return ostore_path
+
+    def get_file(self, local_path):
+        ostore_path = self.get_ostore_path(local_path)
+        self.ostore.get_object(
+            file_path=ostore_path,
+            local_path=local_path
+        )
+
+    def ostore_file_exists(self, local_path):
+        exists = False
+        orig_dir = os.path.dirname(local_path)
+        ostore_path = self.get_ostore_path(local_path=local_path)
+        if orig_dir not in self.cache:
+            ostr_dir = os.path.dirname(ostore_path)
+            ostr_files = self.ostore.list_objects(
+                objstore_dir=ostr_dir, recursive=True, return_file_names_only=True
+            )
+            self.cache[ostr_dir] = ostr_files
+        if ostore_path in self.cache[ostr_dir]:
+            # file is in ostore so pull it
+            exists = True
+        return exists
+
+    def get_file_if_exists(self, local_file):
+        LOGGER.debug(f"local file: {local_file}")
+        if not os.path.exists(local_file):
+            if self.ostore_file_exists(local_path=local_file):
+                # file is in ostore so pull it
+                LOGGER.debug(f"pulling {local_file} from ostore")
+                self.get_file(local_file)
+

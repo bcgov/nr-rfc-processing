@@ -322,4 +322,3 @@ def plot_handler(date: str, sat: str):
     basins = glob(os.path.join(const.TOP, 'basins', '*'))
     plot_sheds(basins, 'basins', sat, date)
     plot_mosaics(sat, date)
-

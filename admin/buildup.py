@@ -4,10 +4,14 @@ import logging
 import geopandas as gpd
 
 import admin.constants as const
+import admin.snow_path_lib
 
 logger = logging.getLogger(__name__)
+snow_path = admin.snow_path_lib.SnowPathLib()
 
 def build_dir_structure():
+    # TODO: These should get built up as they are required as oppose to in a specific
+    #       step
     dirs= [
         const.TOP,
         const.LOG,
@@ -48,6 +52,8 @@ def build_dir_structure():
             os.makedirs(d)
 
 def build_shapefiles(typ, dataset):
+    # TODO: replace this with the snow_path functions for reading the dataset
+    #       get_basin_list and get_watershed_list
     gdf = gpd.read_file(dataset)
     for crs in ['EPSG:4326', 'EPSG:3153']:
         gdf = gdf.to_crs(crs)
@@ -95,5 +101,10 @@ def buildall():
     #build_shapefiles('watersheds', os.path.join(watersheds_dir, 'Export_Output_SBIMap.shp'))
 
     logger.info('Building supporting files')
-    build_shapefiles('basins', os.path.join(const.AOI, 'basins','CLEVER_BASINS.shp'))
-    build_shapefiles('watersheds', os.path.join(const.AOI, 'watersheds','Export_Output_SBIMap.shp'))
+    basin_aoi = snow_path.get_aoi_shp('basins')
+    watershed_aoi = snow_path.get_aoi_shp('watersheds')
+    build_shapefiles('basins', basin_aoi)
+    build_shapefiles('watersheds', watershed_aoi)
+
+    #build_shapefiles('basins', os.path.join(const.AOI, 'basins','CLEVER_BASINS.shp'))
+    #build_shapefiles('watersheds', os.path.join(const.AOI, 'watersheds','Export_Output_SBIMap.shp'))

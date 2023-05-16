@@ -107,6 +107,9 @@ def process_by_watershed_or_basin(sat: str, typ: str, startdate: str, date_list=
     # base=basins root/basins
     # wrap this up into a script centralized pathlib
     # gets the shape files list in each basin
+    # TODO: should have a single way of iterating over watershed / basins, not one time
+    #       get those values from the shape file, and the next using a glob pattern
+    #       single source will also identify missing / problematic data
     sheds = glob(os.path.join(base, '**', 'shape', 'EPSG4326', '*.shp'))
     for shed in sheds:
         # shed = TOP/basins/<basin name>/shape/EPSG4326/<basin name>.shp
@@ -120,10 +123,9 @@ def process_by_watershed_or_basin(sat: str, typ: str, startdate: str, date_list=
         logger.debug(f"watershed path: {pth}")
         if not os.path.exists(pth):
             os.makedirs(pth)
-        # else:
-            # wtf IS THIS????
-            # for f in glob(os.path.join(pth, '*tif')):
-            #     os.remove(f)
+
+        # TODO: Why create temporary shape files to clip with.. Why not use a selection
+        #       from the original shapefile?
 
         gdf = gpd.read_file(shed) # shapefile to cut to
         gdf = gdf.to_crs('EPSG:4326')

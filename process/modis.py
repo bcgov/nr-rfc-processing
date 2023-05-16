@@ -9,9 +9,10 @@ import admin.constants as const
 
 from process.support import process_by_watershed_or_basin
 from admin.color_ramp import color_ramp
+import admin.object_store_util
 
 # from osgeo import gdal
-from multiprocessing import Pool
+import multiprocessing
 from glob import glob
 from rasterio.warp import calculate_default_transform, reproject, Resampling
 from rasterio.merge import merge
@@ -21,6 +22,8 @@ import admin.snow_path_lib
 
 LOGGER = logging.getLogger(__name__)
 snow_path = admin.snow_path_lib.SnowPathLib()
+ostore_util = admin.object_store_util.OStore()
+
 
 # Suppress warning for GCP/RPC - inquiry does not affect workflow
 warnings.filterwarnings("ignore", category=rio.errors.NotGeoreferencedWarning)
@@ -51,9 +54,8 @@ def reproject_modis(date: str, name: str, pth: str, dst_crs: str):
 
     pth_file_noext = snow_path.file_name_no_suffix(pth)
     intermediate_tif = snow_path.get_modis_reprojected_tif(
-        input_source_path=pth,
-        date_str=date,
-        projection=dst_crs)
+        input_source_path=pth, date_str=date, projection=dst_crs
+    )
     LOGGER.debug(f"intermediate_tif: {intermediate_tif}")
     LOGGER.debug(f"pth: {pth}")
     if not os.path.exists(intermediate_tif):
@@ -93,7 +95,9 @@ def reproject_modis(date: str, name: str, pth: str, dst_crs: str):
                 # -------------------------------------
 
 
-def create_modis_mosaic(input_granule_directory: str, output_mosaic_tif: str, tifs_to_mosaic):
+def create_modis_mosaic(
+    input_granule_directory: str, output_mosaic_tif: str, tifs_to_mosaic
+):
     """
     Create a mosaic of all downloaded and reprojected tiffs
 
@@ -105,14 +109,14 @@ def create_modis_mosaic(input_granule_directory: str, output_mosaic_tif: str, ti
     """
     # example path: './data/intermediate_tif/modis/2023.03.21'
     LOGGER.debug(f"pth: {input_granule_directory}")
-    date = os.path.basename(input_granule_directory) # Get date var from path
+    date = os.path.basename(input_granule_directory)  # Get date var from path
     # TODO: Evalute if this is working correctly...
     #       the tifs_to_mosaic includes values like:
     #           './data/intermediate_tif/modis/2023.03.21/MOD10A1.A2023080.h12v02.061.2023082034547_EPSG4326.tif'
     #       but also includes the following tif
     #           './data/intermediate_tif/modis/2023.03.21/modis_composite_2023.03.21_2023.03.20_2023.03.19_2023.03.18_2023.03.17.tif'
     #
-    #output_mosaic_tif = snow_path.get_output_modis_path(date)
+    # output_mosaic_tif = snow_path.get_output_modis_path(date)
     if not os.path.exists(output_mosaic_tif):
         LOGGER.debug(f"example of single file to mosaic: {tifs_to_mosaic[0]}")
         if tifs_to_mosaic:
@@ -124,9 +128,7 @@ def create_modis_mosaic(input_granule_directory: str, output_mosaic_tif: str, ti
                 src_files_to_mosaic.append(src)
             # Merge all granule tiffs into one
             mosaic, out_trans = merge(
-                src_files_to_mosaic,
-                bounds=[*const.BBOX],
-                res=const.MODIS_EPSG4326_RES
+                src_files_to_mosaic, bounds=[*const.BBOX], res=const.MODIS_EPSG4326_RES
             )
             out_meta = src.meta.copy()
             out_meta.update(
@@ -160,7 +162,7 @@ def create_modis_mosaic(input_granule_directory: str, output_mosaic_tif: str, ti
                 f.close()
 
 
-def composite_mosaics(startdate: str, dates: list, out_pth:str):
+def composite_mosaics(startdate: str, dates: list, out_pth: str):
     """
     Create a composite GTiff of the mosaics of a given range
     provided in the list of dates
@@ -180,7 +182,7 @@ def composite_mosaics(startdate: str, dates: list, out_pth:str):
         LOGGER.debug(f"out_pth: {out_pth}")
         mosaics = []
         for date in dates:
-            #tif_by_date = os.path.join(const.OUTPUT_TIF_MODIS, startdate.split(".")[0],
+            # tif_by_date = os.path.join(const.OUTPUT_TIF_MODIS, startdate.split(".")[0],
             #                f"{date}.tif")
             tif_by_date = snow_path.get_output_modis_path(date=date)
             mosaics.append(tif_by_date)
@@ -199,9 +201,10 @@ def composite_mosaics(startdate: str, dates: list, out_pth:str):
             with rio.open(out_pth, "w", **meta) as dst:
                 dst.write(data, indexes=1)
 
+
 def distribute(func, args):
     # Multiprocessing support to manage Pool scope
-    with Pool(6) as p:
+    with multiprocessing.Pool(6) as p:
         p.starmap(func, args)
 
 
@@ -222,8 +225,7 @@ def get_datespan(date: str, days: int) -> List[str]:
         mosaic
     """
     datelist = date.split(".")
-    pydate = datetime.date(int(datelist[0]), int(datelist[1]),
-                           int(datelist[2]))
+    pydate = datetime.date(int(datelist[0]), int(datelist[1]), int(datelist[2]))
     fmt_date = lambda x: x.strftime("%Y.%m.%d")
     date_query = [date]
     for d in range(1, days):
@@ -232,8 +234,7 @@ def get_datespan(date: str, days: int) -> List[str]:
 
 
 def clean_intermediate(date):
-    residual_files = glob(os.path.join(const.INTERMEDIATE_TIF_MODIS, date,
-                                       "*.tif"))
+    residual_files = glob(os.path.join(const.INTERMEDIATE_TIF_MODIS, date, "*.tif"))
     if residual_files:
         LOGGER.info("Cleaning up residual files...")
         for f in residual_files:
@@ -256,10 +257,25 @@ def process_modis(startdate, days):
         before clipping to watersheds/basins. days = 5 or days = 8 only.
     """
     LOGGER.info("MODIS Process Started")
-    #bc_albers = "EPSG:3153"
+    # bc_albers = "EPSG:3153"
     dst_crs = "EPSG:4326"
 
     dates = get_datespan(startdate, days)
+
+    # pull the date composite output if it exists
+    pull_date_composite(datestr_list=dates, start_date=startdate)
+
+    # pull watershed and basin processed data if exists
+    pull_watershed_basin_data(
+        start_date=startdate,
+        sat='modis',
+        wat_basin='watersheds',
+        process_async=True)
+    pull_watershed_basin_data(
+        start_date=startdate,
+        sat='modis',
+        wat_basin='basins',
+        process_async=True)
 
     # this function recieves a start date and a days arg.
     # the days tell it how many days back to process.
@@ -285,7 +301,7 @@ def process_modis(startdate, days):
         modis_granules = snow_path.get_modis_granules(date)
         # why delete these files?  why not pick up where left off?
         # commenting out, no need to delete
-        #clean_intermediate(date)
+        # clean_intermediate(date)
 
         LOGGER.info(f"REPROJ GRANULES: {date}")
         reproj_args = []
@@ -298,23 +314,16 @@ def process_modis(startdate, days):
                 LOGGER.error(f"Could not append {gran} : {e}")
                 continue
 
-        # reproject creates the projected granule files in intermediate tifs dir...
-        # example:
-        # /data/intermediate_tif/modis/2023.03.23/MOD10A1.A2023082.h12v02.061.2023084034450_EPSG4326.tif
+        # if the data already exists in ostore then pull it from there
+        pull_modis_data(reproj_args)
 
-        # debugging - run the reproject synchronously
-        # pull from ostore if the data exists
+        LOGGER.debug("doing reprojections to EPSG:4326")
 
-        pull_modis_reproj(reproj_args)
-
-        # LOGGER.debug("doing reprojections to EPSG:4326")
-        # this is going to create the EPSG:4326 intermediate tifs
-        for args in reproj_args:
-            reproject_modis(*args)
-
-        # TODO: uncomment once things are working, taking out the async calls until
-        #       figure out what's going on.
-        #distribute(reproject_modis, reproj_args)
+        # DEBUGGING... does same as distribute call but in sync.  useful for debugging
+        #              Comment out for prod
+        # for args in reproj_args:
+        #     reproject_modis(*args)
+        distribute(reproject_modis, reproj_args)
 
         LOGGER.info(f"CREATING MOSAICS: {date}")
         # os.path.join(const.INTERMEDIATE_TIF_MODIS,date)
@@ -330,11 +339,10 @@ def process_modis(startdate, days):
     # creates:
     # './data/intermediate_tif/modis/2023.03.23/modis_composite_2023.03.23_2023.03.22_2023.03.21_2023.03.20_2023.03.19.tif'
     composite_mosaic_path = snow_path.get_modis_composite_mosaic_file_name(
-        start_date=startdate,
-        date_list=dates
+        start_date=startdate, date_list=dates
     )
     composite_mosaics(startdate, dates, composite_mosaic_path)
-    color_ramp(composite_mosaic_path) # just adds the color ramp to the output file
+    color_ramp(composite_mosaic_path)  # just adds the color ramp to the output file
 
     # creates the watershed/basin clipped versions of the composite mosaic
     # in both EPSG4326 and EPSG3153
@@ -345,33 +353,120 @@ def process_modis(startdate, days):
         process_by_watershed_or_basin("modis", task, startdate, dates)
 
 
-# def data_exists_ostore(start_date, dates):
-#     pass
+def pull_modis_epsg4326(local_file_list, process_async=False):
+    """checks to see if the output files associated with the reproject step exist in
+    object storage and if so then pulls those files from object storage vs. reprocessing
+    them.
+
+    :param local_file_list: list of the original source files that were downloaded from
+        snow and ice data center.
+
+        example path: './data/modis-terra/MOD10A1.061/2023.03.24/MOD10A1.A2023083.h09v03.061.2023085030249.hdf'
+    :type local_file_list: list of files that should be created by the process/reproject
+        step.
+    :param process_async: indicates whether to process as syncronous or async process
+    :type process_async: boolean
+    """
+    ostore_dir_file_cache = {}  # a dictionary to cache list queries
+    arg_list = []
+
+    for local_file in local_file_list:
+        orig_dir, original_file = os.path.split(local_file)
+        date_str = os.path.basename(orig_dir)
+        modis_reproj_file = snow_path.get_modis_reprojected_tif(
+            input_source_path=local_file, date_str=date_str
+        )
+        arg_list.append(modis_reproj_file)
+    if process_async:
+        LOGGER.debug("args")
+        with multiprocessing.pool.ThreadPool(6) as p:
+            p.map(ostore_util.get_file_if_exists, arg_list)
+
+    else:
+        for arg in arg_list:
+            ostore_util.get_file_if_exists(arg)
 
 
-def pull_modis_reproj(reproj_args):
-    LOGGER.debug(f"reproj_args: {reproj_args}")
-    # needs to pull down individual watershed / basin data from
-    #  data/watersheds/Stikine/modis/2023.03.23/*
-    #
-    # composite:
-    # data/intermediate_tif/modis/2023.03.23/modis_composite_2023.03.23_2023.03.22_2023.03.21_2023.03.20_2023.03.19.tif
-    #
+        # if not os.path.exists(modis_reproj_file):
+        #     if ostore_util.ostore_file_exists(local_path=modis_reproj_file):
+        #         # file is in ostore so pull it
+        #         LOGGER.debug(f"pulling {local_file} from ostore")
+        #         ostore_util.get_file(local_file)
 
 
-    # reproj args
-    # tuple:
-    #   datestr
-    #   hdf file name
-    #   local path to hdf file name
-    #   projection string (EPSG:4326)
-    # the output file from that will be:
-    #snow_path.get_modis_reprojected_tif()
-    # pull the intermediate tif
+def pull_mosaics(datestr_list, process_async=True):
+    """gets list of date strings, calculates the path that coresponsds with the mosaics
+    for those dates, checks to see if they exist locally, and if they do not then looks
+    to object storage bucket to get them.
 
-    # sync approach... eventually replace with async
-    #for reproj_arg in reproj_args:
+    :param datestr_list: _description_
+    :type datestr_list: _type_
+    """
+    # data/norm/mosaics/modis/2023/2023.03.22.tif
+    arg_list = []
+
+    for date in datestr_list:
+        mosaic_dir = snow_path.get_mosaic_dir(sat="modis", date=date)
+        mosaic_file = snow_path.get_mosaic_file(sat="modis", date=date)
+        # TODO get the object store path, test to see if file is in object store, if
+        # yes then pull it
+        arg_list.append(mosaic_file)
+    if process_async:
+        with multiprocessing.pool.ThreadPool(6) as p:
+            p.map(ostore_util.get_file_if_exists, arg_list)
+    else:
+        for arg in arg_list:
+            ostore_util.get_file_if_exists(arg)
 
 
-    #intermediate_tif_local = snow_path.get_modis_reprojected_tif()
-    pass
+def pull_date_composite(datestr_list, start_date: str):
+    """gets a list of date strings in the format YYYY.MM.DD, calculates the
+    corresponding output file, tests to see if it already exists, if it does not then
+    check to see if it exists in object storage.  If it does then it gets pulled down
+    to the local path.
+
+    :param datestr_list: _description_
+    :type datestr_list: _type_
+    """
+    composite_mosaic_path = snow_path.get_modis_composite_mosaic_file_name(
+        start_date=start_date, date_list=datestr_list
+    )
+    if not os.path.exists(composite_mosaic_path):
+        if ostore_util.ostore_file_exists(composite_mosaic_path):
+            ostore_util.get_file(composite_mosaic_path)
+
+
+def pull_watershed_basin_data(start_date, sat, wat_basin, process_async=False):
+    # data/watersheds/Stikine/modis/2023.03.23/Stikine_modis_2023.03.23_EPSG4326.tif
+    # data/watersheds/Northwest/modis/2023.03.23/Northwest_modis_2023.03.23_EPSG4326.tif'
+    # TODO: find references to the string EPSG:4326 and EPSG:3153 and replace with a
+    #       reference to a constant from constants.
+    arg_list = []
+    wat_basin_names = snow_path.get_watershed_basin_list(wat_bas=wat_basin)
+    for wat_basin_name in wat_basin_names:
+        for projection in ['EPSG:4326', 'EPSG:3153']:
+            local_path = snow_path.get_watershed_or_basin_path(
+                start_date=start_date,
+                sat=sat,
+                watershed_basin=wat_basin,
+                watershed_name=wat_basin_name,
+                projection=projection
+            )
+            arg_list.append(local_path)
+    if process_async:
+        with multiprocessing.pool.ThreadPool(6) as p:
+            p.map(ostore_util.get_file_if_exists, arg_list)
+    else:
+        for arg in arg_list:
+            ostore_util.get_file_if_exists(arg)
+
+def pull_modis_data(reproj_args):
+    # pulling the files that generated by the reprojection step
+    local_files = [arg[2] for arg in reproj_args]
+    pull_modis_epsg4326(local_files, process_async=True)
+
+    # pulling the mosaics of all the granules
+    dates = list(set([arg[0] for arg in reproj_args]))
+    pull_mosaics(dates, process_async=False)
+
+

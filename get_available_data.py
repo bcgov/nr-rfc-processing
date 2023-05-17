@@ -153,6 +153,7 @@ def get_days_to_process(sat: str):
         # over a lot of stuff until it completes
         LOGGER.debug(f"sat: {sat}")
         ostr_dir = da.get_latest_wat_bas_plot_dir(sat=sat, wat_basin=wat_basin)
+        LOGGER.debug(f"ostore_dir: {ostr_dir}")
         latest_date = da.get_latest_dir_date(ostore_dir=ostr_dir)
         latest_date_str = latest_date.strftime("%Y.%m.%d")
         dates = da.get_dates_2_process(sat=sat, start_date_str=latest_date_str)

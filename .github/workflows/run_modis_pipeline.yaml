@@ -70,9 +70,9 @@ jobs:
 
   populate_matrix:
     needs: populate_matrix
-      runs-on: ubuntu-latest
-      strategy:
-        matrix: ${{fromJson(needs.populate_matrix.outputs.matrix)}}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.populate_matrix.outputs.matrix)}}
     steps:
     - name: Install Dependencies (pip)
       id: install_deps_pip

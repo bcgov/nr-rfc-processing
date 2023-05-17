@@ -1,5 +1,4 @@
-{
-  "include": [
+ [
     {
       "date": "2021.01.01",
       "sat": "modis"
@@ -9,4 +8,3 @@
       "sat": "craptel"
     }
   ]
-}

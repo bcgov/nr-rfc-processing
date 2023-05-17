@@ -68,7 +68,7 @@ jobs:
         days_json=$(python get_available_data.py get-days-to-process --sat viirs)
         echo "::set-output name=matrix::$days_json"
 
-  populate_matrix:
+  execute_matrix:
     needs: populate_matrix
     runs-on: ubuntu-latest
     strategy:

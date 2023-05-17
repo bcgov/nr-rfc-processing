@@ -2,8 +2,8 @@ name: Modis Pipeline
 
 on:
   # push action for debugging purposes, comment up when working
-  # push:
-  #   branches: ["main", "feat/35-gha-for-processing"]
+  push:
+    branches: ["feat/44-update-based-on-avail-data"]
   # 2pm utc = 6am pst.. gha uses utc for timezone so action needs to be
   # described as utc time.
   schedule:

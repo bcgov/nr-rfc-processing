@@ -66,7 +66,7 @@ jobs:
 
         # ---------- get dates to run ----------
         #days_json=$(python get_available_data.py get-days-to-process --sat viirs)
-        days_json=$(cat test_data.json)
+        days_json=$(cat test_data.json | jq -r 'tostring')
         #echo json is $days_json
         #echo "::set-output name=matrix::$days_json"
         echo "matrix=$days_json" >> $GITHUB_OUTPUT

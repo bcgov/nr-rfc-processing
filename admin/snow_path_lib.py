@@ -203,14 +203,23 @@ class SnowPathLib:
         # eliminate all glob calls, and use the data that
         # comes direct from the sat query.
                 # get the granules
-        modis_dl_config = dl_config.SatDownloadConfig(
-            date_span=len(dates),
-            name='daily',
-            sat='modis',
-            date_str=date
-        )
-        start_date = modis_dl_config.get_start_date()
-        end_date = modis_dl_config.get_end_date()
+        if sat == 'modis':
+            dl_sat_config = dl_config.SatDownloadConfig(
+                date_span=len(dates),
+                name='daily',
+                sat='modis',
+                date_str=date
+            )
+        elif sat == 'viirs':
+            dl_sat_config = dl_config.SatDownloadConfig(
+                date_span=len(dates),
+                name='daily',
+                sat='viirs',
+                date_str=date
+            )
+
+        start_date = dl_sat_config.get_start_date()
+        end_date = dl_sat_config.get_end_date()
 
         earthdata_user=const.EARTHDATA_USER,
         earthdata_pass=const.EARTHDATA_PASS,
@@ -220,7 +229,7 @@ class SnowPathLib:
             earthdata_pass=earthdata_pass
             )
         grans = cmr_client.query(
-            dl_config = modis_dl_config
+            dl_config = dl_sat_config
         )
         LOGGER.debug("got grans")
 

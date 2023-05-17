@@ -67,8 +67,12 @@ class DataAvailability:
         pass
         LOGGER.debug("pass")
 
-    def get_granules(self, sat: str, start_date_str: str):
-        """once its known when the last date for data was calculated then
+    def get_dates_2_process(self, sat: str, start_date_str: str):
+        """Looks at the current date, makes queries to the National Snow and Ice Data
+        Centre for that date moving forward until there is a date that doesn't have
+        any data associated with it.
+
+        returns a list of dates
 
         :param sat: _description_
         :type sat: str
@@ -105,26 +109,27 @@ if __name__ == '__main__':
 
     sat = 'modis'
     wat_basin = 'watersheds'
+    da = DataAvailability()
+
 
     # this is a first kick at running based on availability.  Doesn't go into depth
     # on the files that are available to verify that the run for the sat/watershed
     # completed.
     # that said running the latest day provides some overlap and the script should skip
     # over a lot of stuff until it completes
-    da = DataAvailability()
-    ostr_dir = da.get_latest_wat_bas_plot_dir(sat=sat, wat_basin=wat_basin)
-    latest_date = da.get_latest_dir_date(ostore_dir=ostr_dir)
-    latest_date_str = latest_date.strftime('%Y.%m.%d')
-    dates = da.get_granules(sat=sat, start_date_str=latest_date_str)
-    LOGGER.debug(f"dates to process for modis: {dates}")
+    # da = DataAvailability()
+    # ostr_dir = da.get_latest_wat_bas_plot_dir(sat=sat, wat_basin=wat_basin)
+    # latest_date = da.get_latest_dir_date(ostore_dir=ostr_dir)
+    # latest_date_str = latest_date.strftime('%Y.%m.%d')
+    # dates = da.get_dates_2_process(sat=sat, start_date_str=latest_date_str)
+    # LOGGER.debug(f"dates to process for modis: {dates}")
 
     # now try viirs
     sat = 'viirs'
     wat_basin = 'watersheds'
-    ostr_dir = da.get_latest_wat_bas_plot_dir(sat=sat, wat_basin=wat_basin)
-    latest_date = da.get_latest_dir_date(ostore_dir=ostr_dir)
-    latest_date_str = latest_date.strftime('%Y.%m.%d')
-    dates = da.get_granules(sat=sat, start_date_str=latest_date_str)
+    latest_date_str = '2023.05.10'
+    # latest_date = da.get_latest_dir_date(ostore_dir=ostr_dir)
+    # latest_date_str = latest_date.strftime('%Y.%m.%d')
+
+    dates = da.get_dates_2_process(sat=sat, start_date_str=latest_date_str)
     LOGGER.debug(f"dates to process for viirs: {dates}")
-
-

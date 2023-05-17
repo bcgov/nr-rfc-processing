@@ -67,6 +67,27 @@ class ArchiveSnowData(object):
             constants.SRC_ROOT_DIR, omitDirectoryList=omitDirs
         )
 
+    def is_dir_candidate_backup(self, in_dir):
+        """identifies if the directory should be backed up or not.  Looks at the exclusion
+        list identified in the constants directory, and if the directory is in that list
+        then it should be skipped, and thus the method will return false.
+
+        :param in_dir: input directory to be tested
+        :type in_dir: _type_
+        """
+        should_backup = True
+        omit_dir_list = constants.ROOTDIRECTORIES_OMIT.split(',')
+        indir_norm = os.path.normpath(in_dir)
+        # does the in_dir start the same way that in_dir does?
+        for omit_dir in omit_dir_list:
+            omit_dir_norm = os.path.normpath(omit_dir)
+            if indir_norm.startswith(omit_dir_norm):
+                should_backup = False
+                break
+        return should_backup
+
+
+
     def archiveDirs(self):
         """initiates the actual backup of the directories defined in
         constants.SRC_ROOT_DIR, where any exception are defined in
@@ -77,7 +98,9 @@ class ArchiveSnowData(object):
         for currentDirectory in self.dirIterator:
             LOGGER.debug(f"currentdir: {currentDirectory}")
             # does the directory date match the date restrictions
-            if self.isReadyForArchive(currentDirectory, daysBack=constants.DAYS_BACK):
+            if ( self.isReadyForArchive(currentDirectory, days_back_int=constants.DAYS_BACK) and
+                self.is_dir_candidate_backup(currentDirectory)):
+            # does the directory date match the date restrictions:
                 LOGGER.debug(f"directory for archive: {currentDirectory}")
                 dest_path = pathUtil.get_obj_store_path(
                     src_path=currentDirectory,
@@ -93,8 +116,9 @@ class ArchiveSnowData(object):
                 )
                 sync.update_ostore_dir(public=True)
                 if self.delete:
-                    LOGGER.info(f"removing the original directory: {currentDirectory}")
-                    self.deleteDir(currentDirectory)
+                    #LOGGER.info(f"removing the original directory: {currentDirectory}")
+                    #self.deleteDir(currentDirectory)
+                    pass
 
 
     def deleteDir(self, inDir):
@@ -106,9 +130,10 @@ class ArchiveSnowData(object):
         :type inDir: str
         """
         contents = os.listdir(inDir)
+
         if not contents:
-            LOGGER.info(f"removing the directory: {inDir}")
-            os.rmdir(inDir)
+            LOGGER.info(f"removing the directory: {inDir} ... disabled!")
+            #os.rmdir(inDir)
         else:
             LOGGER.info(
                 f"cannot remove the directory as its not empty: {inDir}"
@@ -144,7 +169,7 @@ class ArchiveSnowData(object):
         LOGGER.debug(f"omitDirList: {omitDirList}")
         return omitDirList
 
-    def isReadyForArchive(self, inPath: str, daysBack: int = 20):
+    def isReadyForArchive(self, inPath: str, days_back_int: int = 20):
         """Should the input directory be archived.
 
         River forecast snowpack data has directories with the string
@@ -163,19 +188,21 @@ class ArchiveSnowData(object):
             date threhold (default is 15 days)
         :rtype: boolean
         """
-        if daysBack > 0:
-            daysBack = 0 - daysBack
+        if days_back_int > 0:
+            days_back_int = 0 - days_back_int
         # expecting a directory with a directory date string in its path,
         # extracts the first date string found and returns a datetime object
         current_directory_date = self.getDirectoryDate(inPath)
-        daysBack = datetime.timedelta(days=daysBack)
+        daysBack = datetime.timedelta(days=days_back_int)
         currentDate = datetime.datetime.now()
         Threshold = currentDate + daysBack
         isOlderThanThreshold = False
         if current_directory_date < Threshold:
-            # date of directory is older than 2 weeks
+            # date of directory is older than the threshold for backing up.
             isOlderThanThreshold = True
-        return isOlderThanThreshold
+        # swap the boolean as if the file / directory is older than the threshold then
+        # it should not be backed up.
+        return not isOlderThanThreshold
 
     def getDirectoryDate(self, inPath):
         """Get directory as a date.

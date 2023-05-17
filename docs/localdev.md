@@ -88,7 +88,7 @@ with object storage:
     * ROOTDIRECTORIES_OMIT(optional) - defaults to None
 
 run the archive script (assume the dependencies have been installed):
-`python snowpack_archive\runS3Backup.py`
+`python snowpack_archive/runS3Backup.py`
 
 # Mamba - Extra Info Details
 

@@ -1,4 +1,4 @@
-name: Snowpack Daily Pipeline
+name: Modis Pipeline
 
 on:
   # push action for debugging purposes, comment up when working

@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  populate_matrix:
+  populate-matrix:
     defaults:
       run:
         shell: bash
@@ -53,7 +53,7 @@ jobs:
     #     pip install -e .
 
     - name: Identify Dates To Run
-      id: identify_dates_to_run
+      id: identify-dates-to-run
       shell: bash
       run: |
         # ---------- setup / invoke conda env ----------
@@ -72,10 +72,10 @@ jobs:
         echo "matrix=$days_json" >> $GITHUB_OUTPUT
 
   execute_matrix:
-    needs: populate_matrix
+    needs: populate-matrix
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{fromJson(needs.populate_matrix.outputs.matrix)}}
+      matrix: ${{fromJson(needs.populate-matrix.outputs.matrix)}}
     steps:
     - name: Install Dependencies (pip)
       id: install_deps_pip

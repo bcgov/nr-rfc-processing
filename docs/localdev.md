@@ -144,3 +144,8 @@ lock file](#create-environment-from-the-lock-file)
 `mm install click=8.1.2 -n ldev -c conda-forge`
 
 
+## Delete environment
+
+Sometimes its easier to start from scratch
+
+`mm env remove -n ldev`

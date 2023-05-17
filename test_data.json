@@ -1,20 +1,5 @@
 {
-  "include": [
-    {
-      "project": "foo",
-      "config": "Debug",
-      "sat": "foo",
-      "dates": [
-        "Debug"
-      ]
-    },
-    {
-      "project": "bar",
-      "config": "Release",
-      "sat": "bar",
-      "dates": [
-        "Release"
-      ]
-    }
-  ]
+  "date": ["2021.01.01", "2021.01.02"],
+  "sat": "modis"
 }
+

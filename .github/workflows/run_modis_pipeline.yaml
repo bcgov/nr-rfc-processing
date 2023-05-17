@@ -147,37 +147,37 @@ jobs:
 
 
 
-    - name: Run Daily Pipeline
-      id: daily_pipeline
-      shell: bash
-      run: |
-        # setup / invoke conda env
-        eval "$(micromamba shell hook --shell=bash)"
-        micromamba activate snowpack_env
+    # - name: Run Daily Pipeline
+    #   id: daily_pipeline
+    #   shell: bash
+    #   run: |
+    #     # setup / invoke conda env
+    #     eval "$(micromamba shell hook --shell=bash)"
+    #     micromamba activate snowpack_env
 
-        # populate the secret file
-        echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
-        echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
+    #     # populate the secret file
+    #     echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
+    #     echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
 
-        # calculate current date:
-        export TZ=America/Vancouver
-        date_less_5_daze=$(date -d '-5 days' '+%Y.%m.%d')
+    #     # calculate current date:
+    #     export TZ=America/Vancouver
+    #     date_less_5_daze=$(date -d '-5 days' '+%Y.%m.%d')
 
-        # debug the pipeline - static date
-        # python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.03.14
+    #     # debug the pipeline - static date
+    #     # python run.py download --sat modis --envpth=$SNOWPACK_ENVS_PTH --date 2023.03.14
 
-        # debug pipeline - just download (smaller / faster) good to test
-        python run.py download --envpth=$SNOWPACK_ENVS_PTH --date $date_less_5_daze --sat modis
+    #     # debug pipeline - just download (smaller / faster) good to test
+    #     python run.py download --envpth=$SNOWPACK_ENVS_PTH --date $date_less_5_daze --sat modis
 
-        # prod pipeline - runs the daily pipeline with the calculated delay
-        python run.py daily-pipeline --envpth=$SNOWPACK_ENVS_PTH --date $date_less_5_daze
+    #     # prod pipeline - runs the daily pipeline with the calculated delay
+    #     python run.py daily-pipeline --envpth=$SNOWPACK_ENVS_PTH --date $date_less_5_daze
 
-    - name: Run S3 Archive
-      id: run_s3_archive
-      run: |
-        # start micromamba env - try running archive with same env as other
-        # code
-        eval "$(micromamba shell hook --shell=bash)"
-        micromamba activate snowpack_env
+    # - name: Run S3 Archive
+    #   id: run_s3_archive
+    #   run: |
+    #     # start micromamba env - try running archive with same env as other
+    #     # code
+    #     eval "$(micromamba shell hook --shell=bash)"
+    #     micromamba activate snowpack_env
 
-        python3 snowpack_archive/runS3Backup.py --days_back 0 --delete False
+    #     python3 snowpack_archive/runS3Backup.py --days_back 0 --delete False

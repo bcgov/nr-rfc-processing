@@ -181,5 +181,5 @@ cli.add_command(get_days_to_process)
 
 if __name__ == "__main__":
     # config root logger for debug for dev
-    config_logging()
+    #config_logging()
     cli()

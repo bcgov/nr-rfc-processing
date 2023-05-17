@@ -63,6 +63,7 @@ class DataAvailability:
         ostore_dirs = self.ostore.ostore.list_objects(
             objstore_dir=ostore_dir, recursive=False, return_file_names_only=True
         )
+        LOGGER.debug("")
 
         for ostore_dir in ostore_dirs:
             date_str = os.path.basename(ostore_dir)
@@ -152,6 +153,7 @@ def get_days_to_process(sat: str):
         # over a lot of stuff until it completes
         LOGGER.debug(f"sat: {sat}")
         ostr_dir = da.get_latest_wat_bas_plot_dir(sat=sat, wat_basin=wat_basin)
+        LOGGER.debug(f"ostore_dir: {ostr_dir}")
         latest_date = da.get_latest_dir_date(ostore_dir=ostr_dir)
         latest_date_str = latest_date.strftime("%Y.%m.%d")
         dates = da.get_dates_2_process(sat=sat, start_date_str=latest_date_str)

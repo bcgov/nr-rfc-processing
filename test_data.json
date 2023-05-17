@@ -2,11 +2,15 @@
   "include": [
     {
       "sat": "foo",
-      "dates": ["Debug"]
+      "dates": [
+        "Debug"
+      ]
     },
     {
       "sat": "bar",
-      "dates": ["Release"]
+      "dates": [
+        "Release"
+      ]
     }
   ]
 }

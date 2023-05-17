@@ -67,7 +67,7 @@ jobs:
         # ---------- get dates to run ----------
         #days_json=$(python get_available_data.py get-days-to-process --sat viirs)
         days_json=$(cat test_data.json)
-        echo json is $days_json
+        #echo json is $days_json
         #echo "::set-output name=matrix::$days_json"
         echo "matrix=$days_json" >> $GITHUB_OUTPUT
 
@@ -81,8 +81,8 @@ jobs:
       id: install_deps_pip
       shell: bash
       run: |
-        echo ${{ matrix.sat }}
-        echo ${{ matrix.dates }}
+        echo "${{ matrix.sat }}"
+        echo "${{ matrix.dates }}"
 
 
   # retrieve_images:

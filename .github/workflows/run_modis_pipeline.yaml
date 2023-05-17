@@ -27,7 +27,7 @@ jobs:
       EARTHDATA_PASS: ${{ secrets.EARTHDATA_PASS }}
       SNOWPACK_ENVS_PTH: ./env.yaml
     outputs:
-      matrix: ${{ steps.identify_dates_to_run.outputs.matrix }}
+      matrix: ${{ steps.identify-dates-to-run.outputs.matrix }}
 
     steps:
     - uses: actions/checkout@v3

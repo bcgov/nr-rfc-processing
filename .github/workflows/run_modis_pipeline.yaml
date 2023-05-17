@@ -58,12 +58,12 @@ jobs:
       shell: bash
       run: |
         # ---------- setup / invoke conda env ----------
-        eval "$(micromamba shell hook --shell=bash)"
-        micromamba activate snowpack_env
+        # eval "$(micromamba shell hook --shell=bash)"
+        # micromamba activate snowpack_env
 
         # ---------- populate the secret file ----------
-        echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
-        echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
+        # echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
+        # echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
 
         # ---------- get dates to run ----------
         days_json=$(python get_available_data.py get-days-to-process --sat viirs | jq -r 'tostring')

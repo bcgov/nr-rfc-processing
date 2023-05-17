@@ -158,9 +158,11 @@ def get_days_to_process(sat: str):
         LOGGER.debug(f"dates to process for {sat}: {dates}")
 
         date_strs = [d.strftime("%Y.%m.%d") for d in dates]
-        struct = {"sat": sat, "dates": date_strs}
-        return_data.append(struct)
-    json_struct = json.dumps(return_data, indent=2)
+        for date_str in date_strs:
+            struct = {"sat": sat, "date": date_str}
+            return_data.append(struct)
+    out_struct = {"include": return_data}
+    json_struct = json.dumps(out_struct, indent=2)
     sys.stdout.write(json_struct)
 
 
@@ -170,7 +172,6 @@ def cli():
 
 
 cli.add_command(get_days_to_process)
-
 
 if __name__ == "__main__":
     # config root logger for debug for dev

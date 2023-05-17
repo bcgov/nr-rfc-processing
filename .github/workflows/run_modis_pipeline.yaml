@@ -34,39 +34,40 @@ jobs:
       id: checkout
       with:
        fetch-depth: 0
-    # - name: Install micromamba (conda) environment from explicit.lock
-    #   uses: mamba-org/provision-with-micromamba@main
-    #   with:
-    #     cache-env: false
-    #     environment-file: explicit.lock
-    #     environment-name: snowpack_env
-    # - name: Install Dependencies (pip)
-    #   id: install_deps_pip
-    #   shell: bash
-    #   run: |
-    #     eval "$(micromamba shell hook --shell=bash)"
-    #     # micromamba shell init --shell=bash --prefix=~/micromamba
-    #     micromamba activate snowpack_env
-    #     micromamba env list
-    #     pip install --upgrade pip
-    #     pip install -r requirements.txt
-    #     pip install -e .
+
+    - name: Install micromamba (conda) environment from explicit.lock
+      uses: mamba-org/provision-with-micromamba@main
+      with:
+        cache-env: false
+        environment-file: explicit.lock
+        environment-name: snowpack_env
+
+    - name: Install Dependencies (pip)
+      id: install_deps_pip
+      shell: bash
+      run: |
+        eval "$(micromamba shell hook --shell=bash)"
+        micromamba activate snowpack_env
+        micromamba env list
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -e .
 
     - name: Identify Dates To Run
       id: identify-dates-to-run
       shell: bash
       run: |
         # ---------- setup / invoke conda env ----------
-        # eval "$(micromamba shell hook --shell=bash)"
-        # micromamba activate snowpack_env
+        eval "$(micromamba shell hook --shell=bash)"
+        micromamba activate snowpack_env
 
         # ---------- populate the secret file ----------
-        # echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
-        # echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
+        echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
+        echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
 
         # ---------- get dates to run ----------
-        #days_json=$(python get_available_data.py get-days-to-process --sat viirs)
-        days_json=$(cat test_data.json | jq -r 'tostring')
+        days_json=$(python get_available_data.py get-days-to-process --sat viirs)
+        #days_json=$(cat test_data.json | jq -r 'tostring')
         #echo json is $days_json
         #echo "::set-output name=matrix::$days_json"
         echo "matrix=$days_json" >> $GITHUB_OUTPUT

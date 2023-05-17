@@ -72,7 +72,7 @@ jobs:
         echo "matrix=$days_json" >> $GITHUB_OUTPUT
 
   execute_matrix:
-    needs: populate-matrix
+    needs: [ populate-matrix ]
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJson(needs.populate-matrix.outputs.matrix) }}

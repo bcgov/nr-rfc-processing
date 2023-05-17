@@ -1,14 +1,20 @@
- [
+{
+  "include": [
     {
+      "project": "foo",
+      "config": "Debug",
       "sat": "foo",
       "dates": [
         "Debug"
       ]
     },
     {
+      "project": "bar",
+      "config": "Release",
       "sat": "bar",
       "dates": [
         "Release"
       ]
     }
   ]
+}

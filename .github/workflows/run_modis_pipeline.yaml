@@ -82,7 +82,7 @@ jobs:
       shell: bash
       run: |
         echo "${{ matrix.sat }}"
-        echo "${{ matrix.dates }}"
+        echo "${{ matrix.dates[0] }}"
 
 
   # retrieve_images:

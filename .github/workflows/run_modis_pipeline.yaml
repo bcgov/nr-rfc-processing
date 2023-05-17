@@ -75,14 +75,17 @@ jobs:
     needs: [ populate-matrix ]
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{ fromJson(needs.populate-matrix.outputs.matrix) }}
+      #matrix: ${{ fromJson(needs.populate-matrix.outputs.matrix) }}
+      matrix:
+        date: [ "2021.01.01", "2021.01.02" ]
+        sat: [ "modis"]
     steps:
     - name: Install Dependencies (pip)
       id: install_deps_pip
       shell: bash
       run: |
         echo "${{ matrix.sat }}"
-        echo "${{ matrix.dates[0] }}"
+        echo "${{ matrix.date }}"
 
 
   # retrieve_images:

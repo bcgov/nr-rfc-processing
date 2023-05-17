@@ -69,7 +69,7 @@ jobs:
         days_json=$(cat test_data.json)
         echo json is $days_json
         #echo "::set-output name=matrix::$days_json"
-        echo "matrix=${days_json}" >> $GITHUB_OUTPUT
+        echo "matrix=$days_json" >> $GITHUB_OUTPUT
 
   execute_matrix:
     needs: populate_matrix

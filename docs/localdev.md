@@ -22,7 +22,7 @@ declarations have changed.
 
 ### Create mamba env
 
-`micromamba create -n ldev --file environment.yaml`
+`micromamba create -y -n ldev --file environment.yaml`
 
 ### Install other dependencies
 
@@ -105,7 +105,7 @@ All subsequent examples are for local development and use the env name `ldev`
 
 ## Build env using micromamba - fresh install
 Build from environment.yaml
-`micromamba create -n ldev --file environment.yaml`
+`micromamba create -y -n ldev --file environment.yaml`
 
 Install other deps to conda env
 ```
@@ -150,9 +150,17 @@ Sometimes its easier to start from scratch
 
 `mm env remove -n ldev`
 
+
+# Misc Notes
 # Docker
 
-running the dockerfile example:
-`docker run --rm -v /home/kjnether/rfc_proj/snowpack/data:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data" snow:snow plot --date 2023.05.01 --sat viirs0`
+log into the image:
+`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data" -it --entrypoint /bin/bash  snow:snow`
 
+run the download script
+`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  snow:snow python run.py download --date 2023.05.01 --sat viirs`
 
+`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  snow:snow python get_available_data.py `
+
+docker run -it --entrypoint /bin/bash ghcr.io/bcgov/
+docker run -it --entrypoint /bin/bash  snow:snow

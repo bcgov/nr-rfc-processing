@@ -111,7 +111,7 @@ jobs:
         IMAGE_TAG: ${{ needs.CalculateImageTags.outputs.imagetag }}
 
       with:
-        push: true # Will only build if this is not here
+        #push: true # Will only build if this is not here
         tags: |
           ghcr.io/${{ github.repository_owner }}/snow_analysis:latest
           ghcr.io/${{ github.repository_owner }}/snow_analysis:${{ env.IMAGE_TAG }}

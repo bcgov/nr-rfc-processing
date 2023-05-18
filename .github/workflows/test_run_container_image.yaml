@@ -54,6 +54,7 @@ jobs:
       id:  download_step
       run: |
         docker image ls
+        mkdir $GITHUB_WORKSPACE/data
         docker run --rm -v $GITHUB_WORKSPACE/data:/data \
             -e "OBJ_STORE_BUCKET=${{ secrets.OBJ_STORE_BUCKET }}" \
             -e "OBJ_STORE_SECRET=${{ secrets.OBJ_STORE_SECRET }}" \

@@ -33,7 +33,7 @@ jobs:
     name: calculateImageTag
     runs-on: ubuntu-22.04
     outputs:
-      imagetag: ${{ steps.CalculateImageTagstep.outputs.IMAGE_TAG}}
+      imagetag: ${{ steps.EchoTag.outputs.IMAGE_TAG}}
     steps:
     # - name: Calculate Image Tag
     #   id: CalculateImageTagstep
@@ -57,68 +57,69 @@ jobs:
       shell: bash
       run: |
         echo ${{ steps.tag_version.outputs.new_tag }}
+        echo "IMAGE_TAG=${{ steps.tag_version.outputs.new_tag }}" >> "$GITHUB_OUTPUT"
 
 
-  # TestGetImageTag:
-  # # test output of image tag, and verify its been calculated correctly
-  #   defaults:
-  #     run:
-  #       shell: bash
-  #   needs: CalculateImageTags
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #   - name: GET Image Tag
-  #     id: getImageTag
-  #     shell: bash
-  #     env:
-  #       IMAGE_TAG: ${{ needs.CalculateImageTags.outputs.imagetag }}
-  #     run: |
-  #       echo image tag is: $IMAGE_TAG
-  #       echo event number is: ${{ github.event.number }}
+  TestGetImageTag:
+  # test output of image tag, and verify its been calculated correctly
+    defaults:
+      run:
+        shell: bash
+    needs: CalculateImageTags
+    runs-on: ubuntu-22.04
+    steps:
+    - name: GET Image Tag
+      id: getImageTag
+      shell: bash
+      env:
+        IMAGE_TAG: ${{ needs.CalculateImageTags.outputs.imagetag }}
+      run: |
+        echo image tag is: $IMAGE_TAG
+        echo event number is: ${{ github.event.number }}
 
-  # BuildContainerImage:
-  #   defaults:
-  #     run:
-  #       shell: bash
-  #   needs: CalculateImageTags
-  #   name: 'Build Container Image'
-  #   runs-on: ubuntu-22.04
-  #   env:
-  #     DEBUG_DEPLOY: false
+  BuildContainerImage:
+    defaults:
+      run:
+        shell: bash
+    needs: CalculateImageTags
+    name: 'Build Container Image'
+    runs-on: ubuntu-22.04
+    env:
+      DEBUG_DEPLOY: false
 
-  #   steps:
-  #   # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-  #   - uses: actions/checkout@v3
-  #     id: checkout
-  #     # with:
-  #     #   fetch-depth: 0
-  #   - name: Verify tag
-  #     id: CalculateImageTagstep
-  #     shell: bash
-  #     env:
-  #       IMAGE_TAG: ${{ needs.CalculateImageTags.outputs.imagetag }}
-  #     run: |
-  #       echo image tag is $IMAGE_TAG ${{ env.IMAGE_TAG }}
-  #       echo event number is: ${{ github.event.number }}
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v3
+      id: checkout
+      # with:
+      #   fetch-depth: 0
+    - name: Verify tag
+      id: CalculateImageTagstep
+      shell: bash
+      env:
+        IMAGE_TAG: ${{ needs.CalculateImageTags.outputs.imagetag }}
+      run: |
+        echo image tag is $IMAGE_TAG ${{ env.IMAGE_TAG }}
+        echo event number is: ${{ github.event.number }}
 
-  #   - name: Log in to GitHub Docker Registry
-  #     uses: docker/login-action@v2
-  #     with:
-  #       registry: ghcr.io
-  #       username: ${{ github.repository_owner  }}
-  #       password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Log in to GitHub Docker Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner  }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-  #   - name: Build and Push Client Docker Image
-  #     uses: docker/build-push-action@v4
-  #     env:
-  #       IMAGE_TAG: ${{ needs.CalculateImageTags.outputs.imagetag }}
+    - name: Build and Push Client Docker Image
+      uses: docker/build-push-action@v4
+      env:
+        IMAGE_TAG: ${{ needs.CalculateImageTags.outputs.imagetag }}
 
-  #     with:
-  #       push: true # Will only build if this is not here
-  #       tags: |
-  #         ghcr.io/${{ github.repository_owner }}/snow_analysis:latest
-  #         ghcr.io/${{ github.repository_owner }}/snow_analysis:${{ env.IMAGE_TAG }}
-  #         ghcr.io/${{ github.repository_owner }}/snow_analysis:pr-${{ github.event.number }}
-  # # This workflow contains a single job called "build"
+      with:
+        push: true # Will only build if this is not here
+        tags: |
+          ghcr.io/${{ github.repository_owner }}/snow_analysis:latest
+          ghcr.io/${{ github.repository_owner }}/snow_analysis:${{ env.IMAGE_TAG }}
+          ghcr.io/${{ github.repository_owner }}/snow_analysis:pr-${{ github.event.number }}
+  # This workflow contains a single job called "build"
 
 

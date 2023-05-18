@@ -52,7 +52,9 @@ jobs:
 
     - name: Download Step
       id:  download_step
-      run: docker run --rm -v $GITHUB_WORKSPACE/data:/data \
+      run: |
+        docker image ls
+        docker run --rm -v $GITHUB_WORKSPACE/data:/data \
             -e "OBJ_STORE_BUCKET=${{ secrets.OBJ_STORE_BUCKET }}" \
             -e "OBJ_STORE_SECRET=${{ secrets.OBJ_STORE_SECRET }}" \
             -e "OBJ_STORE_USER=${{ secrets.OBJ_STORE_USER }}" \

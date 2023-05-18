@@ -149,3 +149,10 @@ lock file](#create-environment-from-the-lock-file)
 Sometimes its easier to start from scratch
 
 `mm env remove -n ldev`
+
+# Docker
+
+running the dockerfile example:
+`docker run --rm -v /home/kjnether/rfc_proj/snowpack/data:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data" snow:snow plot --date 2023.05.01 --sat viirs0`
+
+

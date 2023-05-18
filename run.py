@@ -60,7 +60,7 @@ def clean(target):
 
 
 @click.command()
-@click.option('--envpth', type=str, required=True, help='Path to environment file.')
+@click.option('--envpth', type=str, required=False, help='Path to environment file.')
 @click.option('--date', type=str, required=True, help='Date in format YYYY.MM.DD')
 @click.option('--days', required=False, default='5', type=const.DAYS, help='Select 1, 5 or 8 day composite for MODIS')
 @click.option('--sat', type=const.SATS, required=True, help='Which satellite source to process [ modis | viirs ]')
@@ -186,7 +186,7 @@ def plot(date: str, sat: str):
 
 @click.command()
 @click.option('--date', type=str, required=True, help='Date in format YYYY.MM.DD')
-@click.option('--envpth', type=str, required=True, help='Path to environment file.')
+@click.option('--envpth', type=str, required=False, help='Path to environment file.')
 @click.option('--days', required=False, default='5', type=const.DAYS, help='Select 5 or 8 day composite for MODIS')
 @click.option('--clean' ,required=False, default='false', type=click.Choice(['true', 'false']), help='Option to clean up intermediate files')
 def daily_pipeline(envpth: str, date: str, clean: str, days: int = 5):

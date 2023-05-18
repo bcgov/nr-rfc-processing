@@ -100,3 +100,10 @@ venv/
 */*.swp
 */*/*.swp
 */*/*/*.swp
+
+junk*
+data/
+modis-terra/
+cicd/
+
+.micromamba/

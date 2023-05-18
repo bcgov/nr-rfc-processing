@@ -2,7 +2,7 @@ name: rfc_processing
 channels:
   - conda-forge
   - anaconda
-  - defaults
+  # - defaults
 dependencies:
   - simplekml ==1.3.6
   - gdal ==3.6.3
@@ -29,4 +29,6 @@ dependencies:
   - simplekml ==1.3.6
   - python ==3.9.15
   - scandir ==1.10.0
-
+  - pip:
+     - nr-objstore-util==0.10.0
+     - python-cmr==0.7.0

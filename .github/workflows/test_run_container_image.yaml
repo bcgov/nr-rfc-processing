@@ -1,0 +1,75 @@
+name: Snowpack Daily Pipeline
+
+on:
+  # push action for debugging purposes, comment up when working
+  # push:
+  #   branches: ["feat/44-update-based-on-avail-data"]
+  # 2pm utc = 6am pst.. gha uses utc for timezone so action needs to be
+  # described as utc time.
+  # schedule:
+  #  - cron: '0 14 * * *'
+  workflow_dispatch:
+
+jobs:
+  retrieve_images:
+    defaults:
+      run:
+        shell: bash
+    name: 'Run the Snowpack historical norms comparison analysis'
+    runs-on: ubuntu-22.04
+    environment: PROD
+    env:
+      OBJ_STORE_BUCKET: ${{ secrets.OBJ_STORE_BUCKET }}
+      OBJ_STORE_SECRET: ${{ secrets.OBJ_STORE_SECRET }}
+      OBJ_STORE_USER: ${{ secrets.OBJ_STORE_USER }}
+      OBJ_STORE_HOST: ${{ secrets.OBJ_STORE_HOST }}
+      SNOWPACK_DATA: ./data
+      EARTHDATA_USER: ${{ secrets.EARTHDATA_USER }}
+      EARTHDATA_PASS: ${{ secrets.EARTHDATA_PASS }}
+
+    steps:
+    - uses: actions/checkout@v3
+      id: checkout
+      with:
+       fetch-depth: 0
+
+    # - name: Set up Docker
+    #   uses: docker/setup-docker@v2
+
+    - name: Log in to GHCR
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: setup data directory
+      id: setup_data_dir
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/data
+        chmod 777 $GITHUB_WORKSPACE/data
+
+    - name: Pull GHCR image
+      run: docker pull ghcr.io/${{ github.repository_owner }}/snow_analysis:latest
+
+    - name: Download Step
+      id:  download_step
+      run: |
+        docker image ls
+        docker run --rm -v $GITHUB_WORKSPACE/data:/data \
+            -e "OBJ_STORE_BUCKET=${{ secrets.OBJ_STORE_BUCKET }}" \
+            -e "OBJ_STORE_SECRET=${{ secrets.OBJ_STORE_SECRET }}" \
+            -e "OBJ_STORE_USER=${{ secrets.OBJ_STORE_USER }}" \
+            -e "OBJ_STORE_HOST=${{ secrets.OBJ_STORE_HOST }}" \
+            -e "EARTHDATA_USER=${{ secrets.EARTHDATA_USER }}" \
+            -e "EARTHDATA_PASS=${{ secrets.EARTHDATA_PASS }}" \
+            -e "NORM_ROOT=/data" \
+            -e "SNOWPACK_DATA=/data" \
+            ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
+            download --date 2023.05.01 --sat viirs
+
+
+
+
+
+

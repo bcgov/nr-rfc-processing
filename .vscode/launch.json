@@ -6,7 +6,6 @@
     "configurations": [
 
 
-
         {
             "name": "Python: Current File",
             "type": "python",
@@ -58,7 +57,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["download", "--sat", "viirs", "--envpth=env.yaml", "--date", "2023.03.23"]
+            "args" : ["download", "--sat", "viirs", "--envpth=env.yaml", "--date", "2023.05.11"]
         },
         {
             "name": "process viirs",
@@ -67,7 +66,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["process", "--sat", "viirs", "--date", "2023.03.23"]
+            "args" : ["process", "--sat", "viirs", "--date", "2023.05.11"]
         },
         {
             "name": "plot viirs",
@@ -94,7 +93,17 @@
             "program": "snowpack_archive/runS3Backup.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["--days_back", "0", "--delete", "False"]
+            "args" : ["--days_back", "20", "--delete", "False"]
         },
+        {
+            "name": "get missing data",
+            "type": "python",
+            "request": "launch",
+            "program": "get_available_data.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args" : ["test", "test"]
+        },
+
     ]
 }

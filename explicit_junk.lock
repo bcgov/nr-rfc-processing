@@ -1,0 +1,24 @@
+# This file may be used to create an environment using:
+# $ conda create --name <env> --file <this file>
+# platform: linux-64
+@EXPLICIT
+https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2#d7c89558ba9fa0495403155b64376d81
+https://conda.anaconda.org/conda-forge/linux-64/ca-certificates-2022.12.7-ha878542_0.conda#ff9f73d45c4a07d6f424495288a26080
+https://conda.anaconda.org/conda-forge/noarch/font-ttf-dejavu-sans-mono-2.37-hab24e00_0.tar.bz2#0c96522c6bdaed4b1566d11387caaf45
+https://conda.anaconda.org/conda-forge/noarch/font-ttf-inconsolata-3.000-h77eed37_0.tar.bz2#34893075a5c9e55cdafac56607368fc6
+https://conda.anaconda.org/conda-forge/noarch/font-ttf-source-code-pro-2.038-h77eed37_0.tar.bz2#4d59c254e01d9cde7957100457e2d5fb
+https://conda.anaconda.org/conda-forge/noarch/font-ttf-ubuntu-0.83-hab24e00_0.tar.bz2#19410c3df09dfb12d1206132a1d357c5
+https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.40-h41732ed_0.conda#7aca3059a1729aa76c597603f10b0dd3
+https://conda.anaconda.org/conda-forge/linux-64/libgfortran5-12.2.0-h337968e_19.tar.bz2#164b4b1acaedc47ee7e658ae6b308ca3
+https://conda.anaconda.org/conda-forge/linux-64/libstdcxx-ng-12.2.0-h46fd767_19.tar.bz2#1030b1f38c129f2634eae026f704fe60
+https://conda.anaconda.org/conda-forge/linux-64/mpi-1.0-mpich.tar.bz2#c1fcff3417b5a22bbc4cf6e8c23648cf
+https://conda.anaconda.org/conda-forge/noarch/poppler-data-0.4.12-hd8ed1ab_0.conda#d8d7293c5b37f39b2ac32940621c6592
+https://conda.anaconda.org/conda-forge/linux-64/python_abi-3.9-3_cp39.conda#0dd193187d54e585cac7eab942a8847e
+https://conda.anaconda.org/conda-forge/noarch/tzdata-2023c-h71feb2d_0.conda#939e3e74d8be4dac89ce83b20de2492a
+https://conda.anaconda.org/conda-forge/linux-64/libgomp-12.2.0-h65d4601_19.tar.bz2#cedcee7c064c01c403f962c9e8d3c373
+https://conda.anaconda.org/conda-forge/noarch/fonts-conda-forge-1-0.tar.bz2#f766549260d6815b0c52253f1fb1bb29
+https://conda.anaconda.org/conda-forge/linux-64/libgfortran-ng-12.2.0-h69a702a_19.tar.bz2#cd7a806282c16e1f2d39a7e80d3a3e0d
+https://conda.anaconda.org/conda-forge/linux-64/python-3.9.15-hba424b6_0_cpython.conda#7b9485fce17fac2dd4aca6117a9936c2
+https://conda.anaconda.org/conda-forge/noarch/pip-23.1.2-pyhd8ed1ab_0.conda#7288da0d36821349cf1126e8670292df
+https://conda.anaconda.org/conda-forge/noarch/pyopenssl-23.1.1-pyhd8ed1ab_0.conda#0b34aa3ab7e7ccb1765a03dd9ed29938
+https://conda.anaconda.org/conda-forge/linux-64/openssl-3.1.0-hd590300_2.conda#bf5eccefb2189cb3c9a1bf8051c6e588

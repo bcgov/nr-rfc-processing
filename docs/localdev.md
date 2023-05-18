@@ -88,7 +88,7 @@ with object storage:
     * ROOTDIRECTORIES_OMIT(optional) - defaults to None
 
 run the archive script (assume the dependencies have been installed):
-`python snowpack_archive\runS3Backup.py`
+`python snowpack_archive/runS3Backup.py`
 
 # Mamba - Extra Info Details
 
@@ -142,5 +142,17 @@ that supports the snowpack processing code, then go back and [regenerate the
 lock file](#create-environment-from-the-lock-file)
 
 `mm install click=8.1.2 -n ldev -c conda-forge`
+
+
+## Delete environment
+
+Sometimes its easier to start from scratch
+
+`mm env remove -n ldev`
+
+# Docker
+
+running the dockerfile example:
+`docker run --rm -v /home/kjnether/rfc_proj/snowpack/data:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data" snow:snow plot --date 2023.05.01 --sat viirs0`
 
 

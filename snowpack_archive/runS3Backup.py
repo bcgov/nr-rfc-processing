@@ -6,15 +6,17 @@ import os
 import sys
 import click
 
+
 # add a simple console logger
 LOGGER = logging.getLogger()
 
 
 def setup_logging():
-    log_config_path = os.path.join(os.path.dirname(__file__), 'logging.config')
+    log_config_path = os.path.join(os.path.dirname(__file__), "logging.config")
     logging.config.fileConfig(log_config_path)
     global LOGGER
     LOGGER = logging.getLogger(__name__)
+
 
 def boost_recursion_limit():
     # boosting the recursion limit
@@ -28,17 +30,17 @@ def boost_recursion_limit():
 @click.command()
 @click.option(
     "--days_back",
-    default=None,
+    default=archive2ObjectStore.constants.DAYS_BACK,
     type=int,
     help="Number of days old a dataset should be to trigger an archive.",
 )
 @click.option(
-    "--delete", default=True, type=bool, help="Whether to delete the original data"
+    "--delete", default=False, type=bool, help="Whether to delete the original data"
 )
-def run_archive(days_back, delete):
+def run_archive(days_back, delete=False):
     """Simple program that greets NAME for a total of COUNT times."""
-
-    LOGGER.debug(f"days back: {days_back}")
+    # days_back=archive2ObjectStore.constants.DAYS_BACK, delete=False
+    LOGGER.info(f"days back for archive date threshold: {days_back}")
     LOGGER.debug(f"delete orginal data: {delete}")
     archive = archive2ObjectStore.archiveSnowpackData.ArchiveSnowData(
         backup_threshold=days_back, delete=delete

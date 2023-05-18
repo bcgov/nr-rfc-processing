@@ -45,7 +45,9 @@ jobs:
 
     - name: setup data directory
       id: setup_data_dir
-      run: mkdir -p $GITHUB_WORKSPACE/data
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/data
+        chmod 777 $GITHUB_WORKSPACE/data
 
     - name: Pull GHCR image
       run: docker pull ghcr.io/${{ github.repository_owner }}/snow_analysis:latest

@@ -160,5 +160,7 @@ log into the image:
 run the download script
 `docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  snow:snow python run.py download --date 2023.05.01 --sat viirs`
 
+`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  snow:snow python get_available_data.py `
+
 docker run -it --entrypoint /bin/bash ghcr.io/bcgov/
 docker run -it --entrypoint /bin/bash  snow:snow

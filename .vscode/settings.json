@@ -28,5 +28,8 @@
     "terminal.integrated.scrollback": 5000,
     "python.testing.pytestArgs": [
         "tests"
-    ]
+    ],
+    // "python.terminal.launchArgs": [
+
+    // ]
 }

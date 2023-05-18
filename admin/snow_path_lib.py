@@ -196,30 +196,44 @@ class SnowPathLib:
             int_tifs.append(int_tif)
         return int_tifs
 
-    def get_granules(self, date, days, sat):
+    def get_granules(self, date, dates, sat):
         # TODO: This needs to become the source of data queries
         # set it up with caching of data to speed up
         # wrap with different paths.
         # eliminate all glob calls, and use the data that
         # comes direct from the sat query.
                 # get the granules
-        modis_dl_config = dl_config.SatDownloadConfig(
-            date_span=len(dates),
-            name='daily',
-            sat='modis',
-            date_str=date
-        )
-        start_date = modis_dl_config.get_start_date()
-        end_date = modis_dl_config.get_end_date()
+        if sat == 'modis':
+            dl_sat_config = dl_config.SatDownloadConfig(
+                date_span=len(dates),
+                name='daily',
+                sat='modis',
+                date_str=date
+            )
+        elif sat == 'viirs':
+            dl_sat_config = dl_config.SatDownloadConfig(
+                date_span=len(dates),
+                name='daily',
+                sat='viirs',
+                date_str=date
+            )
 
-        cmr_client = dl_grans.CMRClientOStore()
+        start_date = dl_sat_config.get_start_date()
+        end_date = dl_sat_config.get_end_date()
+
+        earthdata_user=const.EARTHDATA_USER,
+        earthdata_pass=const.EARTHDATA_PASS,
+
+        cmr_client = dl_grans.CMRClientOStore(
+            earthdata_user=earthdata_user,
+            earthdata_pass=earthdata_pass
+            )
         grans = cmr_client.query(
-            dl_config = modis_dl_config
+            dl_config = dl_sat_config
         )
         LOGGER.debug("got grans")
 
-        #dl_config
-        #dl_grans.
+        return grans
 
     def get_aoi_shp(self, wat_or_bas):
         if wat_or_bas.lower() == 'watersheds':
@@ -295,6 +309,12 @@ class SnowPathLib:
             file_name)
         return full_path
 
+    def get_plot_dir(self, sat, watershed_basin, date_str=None):
+        # TODO: Go through plot code and move path calculation to this and other methods
+        out_pth = os.path.join(const.PLOT, sat, watershed_basin)
+        if date_str:
+            out_pth = os.path.join(out_pth, date_str)
+        return out_pth
 
     # def get_modis_mosaic_composite(self, date):
     #     modis_dir = os.path.join(const.INTERMEDIATE_TIF_MODIS, date)

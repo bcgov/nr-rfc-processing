@@ -228,11 +228,19 @@ class SnowPathLib:
             earthdata_user=earthdata_user,
             earthdata_pass=earthdata_pass
             )
+        earthdata_user=const.EARTHDATA_USER,
+        earthdata_pass=const.EARTHDATA_PASS,
+
+        cmr_client = dl_grans.CMRClientOStore(
+            earthdata_user=earthdata_user,
+            earthdata_pass=earthdata_pass
+            )
         grans = cmr_client.query(
             dl_config = dl_sat_config
         )
         LOGGER.debug("got grans")
 
+        return grans
         return grans
 
     def get_aoi_shp(self, wat_or_bas):
@@ -309,6 +317,12 @@ class SnowPathLib:
             file_name)
         return full_path
 
+    def get_plot_dir(self, sat, watershed_basin, date_str=None):
+        # TODO: Go through plot code and move path calculation to this and other methods
+        out_pth = os.path.join(const.PLOT, sat, watershed_basin)
+        if date_str:
+            out_pth = os.path.join(out_pth, date_str)
+        return out_pth
     def get_plot_dir(self, sat, watershed_basin, date_str=None):
         # TODO: Go through plot code and move path calculation to this and other methods
         out_pth = os.path.join(const.PLOT, sat, watershed_basin)

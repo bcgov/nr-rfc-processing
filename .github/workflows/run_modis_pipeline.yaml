@@ -3,7 +3,7 @@ name: Snow pack historical norms comparison analysis
 on:
   # push action for debugging purposes, comment up when working
   push:
-    branches: ["feat/44-update-based-on-avail-data"]
+    branches: ["feat/feat/44-containerize-run"]
   # 2pm utc = 6am pst.. gha uses utc for timezone so action needs to be
   # described as utc time.
   # schedule:
@@ -43,6 +43,7 @@ jobs:
         # -----------------------------------------------
         # install gdal
         # -----------------------------------------------
+        sudo apt install binutils
         sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
         sudo apt-get update
         sudo apt-get install gdal-bin libgdal-dev

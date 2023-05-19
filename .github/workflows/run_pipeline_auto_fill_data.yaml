@@ -69,6 +69,7 @@ jobs:
         echo "matrix=$days_json" >> $GITHUB_OUTPUT
 
   execute_matrix:
+    environment: PROD
     env:
       OBJ_STORE_BUCKET: ${{ secrets.OBJ_STORE_BUCKET }}
       OBJ_STORE_SECRET: ${{ secrets.OBJ_STORE_SECRET }}
@@ -89,6 +90,12 @@ jobs:
     steps:
     - name: Pull GHCR image
       run: docker pull ghcr.io/${{ github.repository_owner }}/snow_analysis:latest
+
+    - name: setup data directory
+      id: setup_data_dir
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/data
+        chmod 777 $GITHUB_WORKSPACE/data
 
     - name: Build Core Data Directories
       id: build_core_dirs

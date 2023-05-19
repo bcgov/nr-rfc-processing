@@ -1,4 +1,4 @@
-name: Snowpack Daily Pipeline
+name: Snowpack Daily Pipeline - OLD - Cron / Mamba daily run (Disabled)
 
 on:
   # push action for debugging purposes, comment up when working
@@ -6,8 +6,8 @@ on:
   #   branches: ["main", "feat/35-gha-for-processing"]
   # 2pm utc = 6am pst.. gha uses utc for timezone so action needs to be
   # described as utc time.
-  schedule:
-   - cron: '0 14 * * *'
+  # schedule:
+  #  - cron: '0 14 * * *'
   workflow_dispatch:
 
 jobs:

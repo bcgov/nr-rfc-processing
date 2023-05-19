@@ -94,8 +94,7 @@ jobs:
             -e "NORM_ROOT=/data" \
             -e "SNOWPACK_DATA=/data" \
             ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
-            python run.py download --date ${{ matrix.date }} --sat echo "${{ matrix.sat }}
-
+            python run.py download --date ${{ matrix.date }} --sat ${{ matrix.sat }}
 
     - name: Download Data
       id: download_data
@@ -111,7 +110,7 @@ jobs:
             -e "NORM_ROOT=/data" \
             -e "SNOWPACK_DATA=/data" \
             ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
-            python run.py download --date ${{ matrix.date }} --sat echo "${{ matrix.sat }}
+            python run.py download --date ${{ matrix.date }} --sat ${{ matrix.sat }}
 
     - name: Process Data
       id: process_data
@@ -127,7 +126,7 @@ jobs:
             -e "NORM_ROOT=/data" \
             -e "SNOWPACK_DATA=/data" \
             ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
-            python run.py process --date ${{ matrix.date }} --sat echo "${{ matrix.sat }}
+            python run.py process --date ${{ matrix.date }} --sat ${{ matrix.sat }}
 
     - name: Generate Plots
       id: generate_plots
@@ -143,7 +142,7 @@ jobs:
             -e "NORM_ROOT=/data" \
             -e "SNOWPACK_DATA=/data" \
             ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
-            python run.py plot --date ${{ matrix.date }} --sat echo "${{ matrix.sat }}
+            python run.py plot --date ${{ matrix.date }} --sat ${{ matrix.sat }}
 
     - name: Archive Data
       id: archive_data
@@ -158,10 +157,6 @@ jobs:
             -e "SRC_ROOT_DIR=/data" \
             ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
             python snowpack_archive/runS3Backup.py
-
-
-
-
 
     # - name: Download Modis Imagery
     #   id: download_modis_DEBUG

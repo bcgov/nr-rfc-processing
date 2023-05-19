@@ -79,11 +79,13 @@ def build_shapefiles(typ, dataset):
             for pth in pths:
                 tmp_path = os.path.join(base, name, pth)
                 if not os.path.exists(tmp_path):
-                    os.makedirs()
+                    # making sure the path exists
+                    os.makedirs(tmp_path)
 
+            #tmp.to_file(os.path.join(base, name, 'shape', crs.replace(':', ''), f'{name}.shp'))
             output_file_name = os.path.join(base, name, 'shape', crs.replace(':', ''), f'{name}.shp')
             if not os.path.exists(output_file_name):
-                tmp.to_file()
+                tmp.to_file(os.path.join(base, name, 'shape', crs.replace(':', ''), f'{name}.shp'))
 
 def buildall():
     logger.info('Building up directory structure')

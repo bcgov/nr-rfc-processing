@@ -36,7 +36,7 @@ DIRECTORY_DATE_REGEX = '^[0-9]{4}\.{1}[0-9]{2}\.{1}[0-9]{2}$'  # noqa: W605
 #  identifies the root directories (sub dirs in SRC_ROOT_DIR) that should
 #  be ommitted (a comma delimited list) for example:
 #  ROOTDIRECTORIES_OMIT=dir1,dir2\\someotherdir,dir3
-ROOTDIRECTORIES_OMIT = os.getenv('ROOTDIRECTORIES_OMIT', 'data/kml,data/norm')
+ROOTDIRECTORIES_OMIT = os.getenv('ROOTDIRECTORIES_OMIT', 'kml,norm')
 
 # if a direcotory's naming (YYYY.mm-dd) is older
 # than this number of days it will be archived

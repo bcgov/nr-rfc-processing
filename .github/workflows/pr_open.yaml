@@ -89,6 +89,7 @@ jobs:
       id: checkout
       # with:
       #   fetch-depth: 0
+
     - name: Verify tag
       id: CalculateImageTagstep
       shell: bash

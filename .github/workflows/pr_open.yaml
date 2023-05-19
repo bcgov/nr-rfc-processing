@@ -1,4 +1,4 @@
-name: PR Open
+name: PR Open - Build new container image
 
 on:
   # used on push for testing / development

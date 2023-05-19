@@ -1,4 +1,4 @@
-name: Snow pack historical norms comparison analysis
+name: Snow pack Historical Norms Comparison Analysis - Auto Fill Data
 
 on:
   # push action for debugging purposes, comment up when working
@@ -69,6 +69,16 @@ jobs:
         echo "matrix=$days_json" >> $GITHUB_OUTPUT
 
   execute_matrix:
+    env:
+      OBJ_STORE_BUCKET: ${{ secrets.OBJ_STORE_BUCKET }}
+      OBJ_STORE_SECRET: ${{ secrets.OBJ_STORE_SECRET }}
+      OBJ_STORE_USER: ${{ secrets.OBJ_STORE_USER }}
+      OBJ_STORE_HOST: ${{ secrets.OBJ_STORE_HOST }}
+      SNOWPACK_DATA: ./data
+      EARTHDATA_USER: ${{ secrets.EARTHDATA_USER }}
+      EARTHDATA_PASS: ${{ secrets.EARTHDATA_PASS }}
+      SNOWPACK_ENVS_PTH: ./env.yaml
+
     needs: [ populate-matrix ]
     runs-on: ubuntu-latest
     strategy:

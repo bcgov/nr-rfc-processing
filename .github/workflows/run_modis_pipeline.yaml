@@ -2,8 +2,8 @@ name: Snow pack historical norms comparison analysis
 
 on:
   # push action for debugging purposes, comment up when working
-  push:
-    branches: ["feat/44-containerize-run"]
+  # push:
+  #   branches: ["feat/44-containerize-run"]
   # 2pm utc = 6am pst.. gha uses utc for timezone so action needs to be
   # described as utc time.
   # schedule:

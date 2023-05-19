@@ -171,5 +171,8 @@ backup data to object storage
 `docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SRC_ROOT_DIR=/data" -e "ROOTDIRECTORIES_OMIT=/data/kml,/data/norm"  snow:snow python snowpack_archive/runS3Backup.py`
 
 
-docker run -it --entrypoint /bin/bash ghcr.io/bcgov/
+docker run -it --entrypoint /bin/bash ghcr.io/bcgov/snow_analysis:latest
 docker run -it --entrypoint /bin/bash  snow:snow
+
+
+docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  ghcr.io/bcgov/snow_analysis:latest python run.py 

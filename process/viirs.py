@@ -212,9 +212,9 @@ def process_viirs(date: str):
         logger.info('Cleaning up residual files...')
         for f in residual_files:
             # TODO: uncomment once debugging complete, but WHY would they start with delete
-            logger.debug(f"deleting residual file: {f}")
+            #logger.debug(f"deleting residual file: {f}")
+            logger.debug(f"residual file exists! {f}")
             #os.remove(f)
-
 
     logger.info('BUILDING INITIAL TIFS FROM HDF5')
     proc_inputs = []

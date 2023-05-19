@@ -111,7 +111,7 @@ jobs:
             -e "NORM_ROOT=/data" \
             -e "SNOWPACK_DATA=/data" \
             ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
-            python run.py download --date ${{ matrix.date }} --sat ${{ matrix.sat }}
+            python run.py build
 
     - name: Download Data
       id: download_data
@@ -170,7 +170,7 @@ jobs:
             -e "OBJ_STORE_SECRET=${{ secrets.OBJ_STORE_SECRET }}" \
             -e "OBJ_STORE_USER=${{ secrets.OBJ_STORE_USER }}" \
             -e "OBJ_STORE_HOST=${{ secrets.OBJ_STORE_HOST }}" \
-            -e "ROOTDIRECTORIES_OMIT=/data" \
+            -e "ROOTDIRECTORIES_OMIT=/data/kml,/data/norm" \
             -e "SRC_ROOT_DIR=/data" \
             ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
             python snowpack_archive/runS3Backup.py

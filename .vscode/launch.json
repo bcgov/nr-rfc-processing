@@ -15,6 +15,15 @@
             "justMyCode": false
         },
         {
+            "name": "build",
+            "type": "python",
+            "request": "launch",
+            "program": "run.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args" : ["build"]
+        },
+        {
             "name": "dailypipeline",
             "type": "python",
             "request": "launch",

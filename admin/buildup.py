@@ -79,6 +79,7 @@ def build_shapefiles(typ, dataset):
             for pth in pths:
                 tmp_path = os.path.join(base, name, pth)
                 if not os.path.exists(tmp_path):
+                    # making sure the path exists
                     os.makedirs(tmp_path)
 
             #tmp.to_file(os.path.join(base, name, 'shape', crs.replace(':', ''), f'{name}.shp'))

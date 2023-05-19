@@ -6,8 +6,8 @@ on:
   #   branches: ["feat/44-containerize-run"]
   # 2pm utc = 6am pst.. gha uses utc for timezone so action needs to be
   # described as utc time.
-  # schedule:
-  #  - cron: '0 14 * * *'
+  schedule:
+   - cron: '0 14 * * *'
   workflow_dispatch:
 
 jobs:
@@ -62,7 +62,7 @@ jobs:
         echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
 
         # ---------- get dates to run ----------
-        days_json=$(python get_available_data.py get-days-to-process --sat viirs | jq -r 'tostring')
+        days_json=$(python get_available_data.py get-days-to-process | jq -r 'tostring')
         #days_json=$(cat test_data.json | jq -r 'tostring')
         echo json is $days_json
         #echo "::set-output name=matrix::$days_json"

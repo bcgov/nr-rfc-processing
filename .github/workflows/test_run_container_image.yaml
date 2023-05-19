@@ -23,7 +23,7 @@ jobs:
       OBJ_STORE_SECRET: ${{ secrets.OBJ_STORE_SECRET }}
       OBJ_STORE_USER: ${{ secrets.OBJ_STORE_USER }}
       OBJ_STORE_HOST: ${{ secrets.OBJ_STORE_HOST }}
-      SNOWPACK_DATA: ./data
+      SNOWPACK_DATA: /data
       EARTHDATA_USER: ${{ secrets.EARTHDATA_USER }}
       EARTHDATA_PASS: ${{ secrets.EARTHDATA_PASS }}
 

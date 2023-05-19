@@ -180,4 +180,4 @@ docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e
 
 
 debug the remote image
-`docker run --rm -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  ghcr.io/bcgov/snow_analysis:latest python --version`
+`docker run --rm -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  ghcr.io/bcgov/snow_analysis:latest python run.py download --date 2023.05.10 --sat viirs`

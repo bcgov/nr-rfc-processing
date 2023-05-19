@@ -101,7 +101,7 @@ jobs:
       id: build_core_dirs
       shell: bash
       run: |
-        docker run --rm -v $GITHUB_WORKSPACE/data:/data \
+        docker run -v $GITHUB_WORKSPACE/data:/data \
             -e "OBJ_STORE_BUCKET=${{ secrets.OBJ_STORE_BUCKET }}" \
             -e "OBJ_STORE_SECRET=${{ secrets.OBJ_STORE_SECRET }}" \
             -e "OBJ_STORE_USER=${{ secrets.OBJ_STORE_USER }}" \

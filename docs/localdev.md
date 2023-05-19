@@ -160,7 +160,16 @@ log into the image:
 run the download script
 `docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  snow:snow python run.py download --date 2023.05.01 --sat viirs`
 
-`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  snow:snow python get_available_data.py `
+process the data
+`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  snow:snow python run.py process --date 2023.05.01 --sat viirs`
+
+
+get the available dates for processing
+`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  snow:snow python get_available_data.py get-days-to-process --sat viirs`
+
+backup data to object storage
+`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SRC_ROOT_DIR=/data" -e "ROOTDIRECTORIES_OMIT=/data/kml,/data/norm"  snow:snow python snowpack_archive/runS3Backup.py`
+
 
 docker run -it --entrypoint /bin/bash ghcr.io/bcgov/
 docker run -it --entrypoint /bin/bash  snow:snow

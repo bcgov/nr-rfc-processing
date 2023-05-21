@@ -1,4 +1,4 @@
 scandir==1.10.0
 python-dotenv==1.0.0
-minio ==7.1.14
+minio ==7.1.15
 python-cmr==0.7.0

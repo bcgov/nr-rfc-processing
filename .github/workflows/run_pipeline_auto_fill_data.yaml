@@ -48,9 +48,9 @@ jobs:
       uses: mamba-org/setup-micromamba@v1
       with:
         # micromamba-version: '1.3.1'
-        # environment-name: snowpack_env
+        environment-name: snowpack_env
         environment-file: 'explicit.lock'
-        #init-shell: bash
+        init-shell: bash
         #log-level: debug
 
     - name: Install Dependencies (pip)

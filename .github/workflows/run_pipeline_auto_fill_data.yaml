@@ -16,6 +16,7 @@ jobs:
       run:
         shell: bash
     runs-on: ubuntu-20.04
+    continue-on-error: true
     environment: PROD
     env:
       OBJ_STORE_BUCKET: ${{ secrets.OBJ_STORE_BUCKET }}
@@ -92,7 +93,6 @@ jobs:
     needs: [ populate-matrix ]
     runs-on: ubuntu-latest
     strategy:
-      continue-on-error: true
       matrix: ${{ fromJson(needs.populate-matrix.outputs.matrix) }}
       # matrix:
       #   date: [ "2021.01.01", "2021.01.02" ]

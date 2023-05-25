@@ -55,7 +55,8 @@ jobs:
 
     - name: Install Dependencies (pip)
       id: install_deps_pip
-      shell: bash
+      shell: micromamba-shell {0}
+      #shell: bash
       run: |
         # eval "$(micromamba shell hook --shell=bash)"
         # micromamba activate snowpack_env

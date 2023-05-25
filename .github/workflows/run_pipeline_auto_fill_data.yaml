@@ -60,6 +60,7 @@ jobs:
       run: |
         # eval "$(micromamba shell hook --shell=bash)"
         # micromamba activate snowpack_env
+        $MAMBA_EXE activate snowpack_env
         pip install -r requirements.txt
 
     - name: Identify Dates To Run
@@ -68,6 +69,7 @@ jobs:
       run: |
         # eval "$(micromamba shell hook --shell=bash)"
         # micromamba activate snowpack_env
+        $MAMBA_EXE activate snowpack_env
 
         # ---------- populate the secret file ----------
         echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH

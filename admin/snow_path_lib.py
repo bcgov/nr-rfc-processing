@@ -236,11 +236,11 @@ class SnowPathLib:
             earthdata_pass=earthdata_pass
             )
         grans = cmr_client.query(
-            dl_config = dl_sat_config
+            dl_config=dl_sat_config,
+            bbox=[*const.BBOX]
         )
         LOGGER.debug("got grans")
 
-        return grans
         return grans
 
     def get_aoi_shp(self, wat_or_bas):

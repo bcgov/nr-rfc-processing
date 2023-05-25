@@ -58,7 +58,7 @@ jobs:
       shell: micromamba-shell {0}
       #shell: bash
       run: |
-        # eval "$(micromamba shell hook --shell=bash)"
+        eval "$($MAMBA_EXE shell hook --shell=bash)"
         # micromamba activate snowpack_env
         $MAMBA_EXE activate snowpack_env
         pip install -r requirements.txt
@@ -67,7 +67,7 @@ jobs:
       id: identify-dates-to-run
       shell: bash
       run: |
-        # eval "$(micromamba shell hook --shell=bash)"
+        eval "$(micromamba shell hook --shell=bash)"
         # micromamba activate snowpack_env
         $MAMBA_EXE activate snowpack_env
 

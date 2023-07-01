@@ -1,4 +1,4 @@
-FROM mambaorg/micromamba:1.4.3 as mamba
+FROM mambaorg/micromamba:1.4.6 as mamba
 WORKDIR /app
 COPY --chown=$MAMBA_USER:$MAMBA_USER explicit.lock /tmp/explicit.lock
 COPY --chown=$MAMBA_USER:$MAMBA_USER requirements.txt /tmp/requirements.txt

@@ -1,4 +1,4 @@
 pylint==2.8.2
 flake8==3.9.2
-black==21.5b1
+black==23.7.0
 flake8-docstrings==1.6.0

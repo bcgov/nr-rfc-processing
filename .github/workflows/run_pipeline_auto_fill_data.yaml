@@ -99,6 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJson(needs.populate-matrix.outputs.matrix) }}
+      max-parallel: 13
       # matrix:
       #   date: [ "2021.01.01", "2021.01.02" ]
       #   sat: [ "modis"]

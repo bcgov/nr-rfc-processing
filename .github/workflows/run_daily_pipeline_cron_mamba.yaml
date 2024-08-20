@@ -29,7 +29,7 @@ jobs:
       SNOWPACK_ENVS_PTH: ./env.yaml
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       id: checkout
       with:
        fetch-depth: 0

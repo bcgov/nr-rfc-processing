@@ -232,13 +232,13 @@ class SnowPathLib:
         start_date = dl_sat_config.get_start_date()
         end_date = dl_sat_config.get_end_date()
 
-        earthdata_user=const.EARTHDATA_USER,
-        earthdata_pass=const.EARTHDATA_PASS,
+        # earthdata_user=const.EARTHDATA_USER,
+        # earthdata_pass=const.EARTHDATA_PASS,
 
-        cmr_client = dl_grans.CMRClientOStore(
-            earthdata_user=earthdata_user,
-            earthdata_pass=earthdata_pass
-            )
+        # cmr_client = dl_grans.CMRClientOStore(
+        #     earthdata_user=earthdata_user,
+        #     earthdata_pass=earthdata_pass
+        #     )
         earthdata_user=const.EARTHDATA_USER,
         earthdata_pass=const.EARTHDATA_PASS,
 

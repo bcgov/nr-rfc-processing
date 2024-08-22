@@ -8,18 +8,22 @@ data needs to be generated, this script can be used to fill those holes.
 import datetime
 import json
 import logging
+import sys
+import run
+import os
+
+log_config_path = os.path.join(os.path.dirname(__file__), 'config', 'logging.config')
+logging.config.fileConfig(log_config_path)
 
 LOGGER = logging.getLogger(__name__)
 
-# the range of dates to run
-min_date = datetime.datetime(2024, 5, 18)
-max_date =  datetime.datetime(2024, 6, 10)
 
 class BulkRun():
 
-    def __init__(self, min_date, max_date):
+    def __init__(self, min_date, max_date, sat):
         self.min_date = min_date
         self.max_date = max_date
+        self.sat = sat
 
     def get_date_list(self):
         """
@@ -36,19 +40,31 @@ class BulkRun():
     def do_run(self):
         date_list = self.get_date_list()
         for date in date_list:
-            LOGGER.info(f"running date: {date}")
+            LOGGER.info(f"calling the running date: {date}")
             # do the run here
-            # run_date(date)
+            self.run_date(date)
 
     def run_date(self, date):
         """
         run the date
         """
         LOGGER.info(f"running date: {date}")
-        
+        datestr = date.strftime("%Y.%m.%d")
+        LOGGER.info(f'running download for date: {datestr}')
+        run.down_load(sat=self.sat, date=datestr)
+        LOGGER.info(f'running process for date: {datestr}')
+        run.pro_cess(sat=self.sat, date=datestr, days=5)
+        LOGGER.info(f'running plot for date: {datestr}')
+        run.p_lot(sat=self.sat, date=datestr)
 
 if __name__ == '__main__':
-    br = BulkRun(min_date, max_date)
+
+    # the range of dates to run
+    min_date = datetime.datetime(2024, 5, 18)
+    max_date =  datetime.datetime(2024, 6, 1)
+    sat = 'viirs'
+
+    br = BulkRun(min_date, max_date, sat)
     date_list = br.get_date_list()
     LOGGER.info(f"running dates: {date_list}")
-    print(json.dumps(date_list, default=str))
+    br.do_run()

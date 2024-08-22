@@ -155,9 +155,6 @@ a single date, unless you are trouble shooting issues with it.
 
 `python get_available_data.py`
 
-
-
-
 # Docker
 
 create the docker image

@@ -66,7 +66,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["download", "--sat", "viirs", "--envpth=env.yaml", "--date", "2023.05.23"]
+            "args" : ["download", "--sat", "viirs", "--envpth=env.yaml", "--date", "2024.06.18"]
         },
         {
             "name": "process viirs",
@@ -75,7 +75,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["process", "--sat", "viirs", "--date", "2023.05.23"]
+            "args" : ["process", "--sat", "viirs", "--date", "2024.06.18"]
         },
         {
             "name": "plot viirs",
@@ -84,7 +84,7 @@
             "program": "run.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["plot", "--sat", "viirs", "--date", "2023.05.23"]
+            "args" : ["plot", "--sat", "viirs", "--date", "2024.06.18"]
         },
         {
             "name": "analysis viirs",
@@ -105,13 +105,13 @@
             "args" : ["--days_back", "20", "--delete", "False"]
         },
         {
-            "name": "get missing data",
+            "name": "get missing data - viirs",
             "type": "python",
             "request": "launch",
             "program": "get_available_data.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args" : ["test", "test"]
+            "args" : ["--sat", "viirs"]
         },
 
     ]

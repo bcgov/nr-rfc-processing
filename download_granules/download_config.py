@@ -13,6 +13,29 @@ product_lut = {
     'viirs': const.VIIRS_PRODUCT
 }
 
+
+def set_product(sat: str, datestr: str) -> str:
+    """
+    over time different versions become available for the same product.  This results
+    in the query for the product being a combination of the product and the version
+    resulting in no granules.  This method is intended to allow the script to adapt
+    to what product to download depending on the date.
+
+    :param product: the name of the product to download, example VNP10A1F.001, VNP10A1F.002
+    :type product: str
+    """
+    product = product_lut[sat]
+    if sat == 'viirs':
+        cur_date = datetime.datetime.strptime(datestr, "%Y.%m.%d")
+        # and datestr != '2024.07.11' - can add logic if required to temporarily revert
+        # to V1 of the VNP product.  There is a data hole between the dates 2024.07.10
+        # and 2024.07.15
+        if cur_date > datetime.datetime(2024, 6, 15):
+            # setting to version 2 if after the date above
+            product = const.VIIRS_PRODUCT.split('.')[0] + '.2'
+    LOGGER.debug(f"set the satellite {sat} product to {product}")
+    return product
+
 class SatDownloadConfig:
     def __init__(self,
                  date_span: int,
@@ -23,7 +46,7 @@ class SatDownloadConfig:
                  day_offset=0):
         self.name = name
         # TODO: modify and make the product a singular value
-        self.product = product_lut[sat]
+        self.product = set_product(sat, date_str)
         self.day_offset = day_offset
         if sat == 'viirs':
             # force the date_span to 1 for viirs

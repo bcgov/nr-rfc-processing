@@ -21,12 +21,15 @@ def set_product(sat: str, datestr: str) -> str:
     resulting in no granules.  This method is intended to allow the script to adapt
     to what product to download depending on the date.
 
-    :param product: _description_
+    :param product: the name of the product to download, example VNP10A1F.001, VNP10A1F.002
     :type product: str
     """
     product = product_lut[sat]
     if sat == 'viirs':
         cur_date = datetime.datetime.strptime(datestr, "%Y.%m.%d")
+        # and datestr != '2024.07.11' - can add logic if required to temporarily revert
+        # to V1 of the VNP product.  There is a data hole between the dates 2024.07.10
+        # and 2024.07.15
         if cur_date > datetime.datetime(2024, 6, 15):
             # setting to version 2 if after the date above
             product = const.VIIRS_PRODUCT.split('.')[0] + '.2'

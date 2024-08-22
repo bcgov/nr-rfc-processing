@@ -108,6 +108,7 @@ class DataAvailability:
                 cur_date = cur_date + datetime.timedelta(days=1)
                 cur_date_str = cur_date.strftime("%Y.%m.%d")
             else:
+                LOGGER.debug(f'breaking on date: {cur_date_str}')
                 break
         LOGGER.debug(f"dates to process {dates} for sat: {sat}")
         return dates

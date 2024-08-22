@@ -7,6 +7,8 @@ from multiprocessing import Pool
 from hatfieldcmr.ingest import LocalStorageWrapper
 from hatfieldcmr import CMRClient
 
+from .download_config import set_product
+
 import admin.constants as const
 
 logger = logging.getLogger(__name__)
@@ -36,13 +38,13 @@ def download_granules(envpath: str, date: str, sat: str, days: int = 5):
         product = {
                 'name': 'daily',
                 #'products': ['MOD10A1.61'],
-                'products': [const.MODIS_PRODUCT],
+                'products': [set_product(sat='modis', date=date)],
                 'date_span': int(days)-1
             }
     elif sat == 'viirs':
         product = {
                     'name': 'daily',
-                    'products': [const.VIIRS_PRODUCT],
+                    'products': [set_product(sat='viirs', date=date)],
                     'date_span': int(days)-1
                 }
     else:

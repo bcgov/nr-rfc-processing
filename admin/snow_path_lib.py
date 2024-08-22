@@ -50,12 +50,23 @@ class SnowPathLib:
         int_tif_dir = os.path.join(const.INTERMEDIATE_TIF_VIIRS, date)
         return int_tif_dir
 
-    def get_viirs_VNP10A1F_001(self):
-        pth = os.path.join(const.MODIS_TERRA, 'VNP10A1F.001')
-        return pth
+    # def get_viirs_VNP10A1F_001(self):
+    #     pth = os.path.join(const.MODIS_TERRA, 'VNP10A1F.001')
+    #     return pth
 
-    def get_viirs_granules(self, date):
-        root_pth = self.get_viirs_VNP10A1F_001()
+    def get_viirs_product_path(self, date):
+        product = dl_config.set_product(sat='viirs', datestr=date)
+        # product is calcd to be something like: VNP10A1F.1
+        # we now need to pad the 0's to make it VNP10A1F.001
+        product, version = product.split('.')
+        version_zero_padded = version.rjust(3, '0')
+        root_pth = os.path.join(const.MODIS_TERRA, f'{product}.{version_zero_padded}')
+        LOGGER.debug(f"root_pth: {root_pth}")
+        return root_pth
+
+    def get_viirs_granules(self, date, product):
+        # root_pth = self.get_viirs_VNP10A1F_001()
+        root_pth = self.get_viirs_product_path(date)
         glob_pattern = os.path.join(root_pth, date,  '*.h5')
         viirs_granules = glob.glob(os.path.join(glob_pattern))
         return viirs_granules

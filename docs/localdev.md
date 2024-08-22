@@ -132,17 +132,17 @@ various data sets that get created by the scripts.
 
 ## Run download process
 
-All the examples demonstrate downloading the data for the date 2023.05.01
+All the examples demonstrate downloading the data for the date 2024.06.17
 
-`python run.py download --date 2023.05.01 --sat viirs`
+`python run.py download --date 2024.06.17 --sat viirs`
 
 # Run data processing
 
-`python run.py process --date 2023.05.01 --sat viirs`
+`python run.py process --date 2024.06.17 --sat viirs`
 
 # Run the plot creation
 
-`python run.py plot --date 2023.05.01 --sat viirs`
+`python run.py plot --date 2024.06.17 --sat viirs`
 
 # Archive the data from to object storage
 

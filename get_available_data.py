@@ -21,7 +21,7 @@ import admin.snow_path_lib
 LOGGER = logging.getLogger(__name__)
 
 # args that need to be sent
-sat = "modis"
+# sat = "modis"
 
 
 class DataAvailability:
@@ -108,6 +108,7 @@ class DataAvailability:
                 cur_date = cur_date + datetime.timedelta(days=1)
                 cur_date_str = cur_date.strftime("%Y.%m.%d")
             else:
+                LOGGER.debug(f'breaking on date: {cur_date_str}')
                 break
         LOGGER.debug(f"dates to process {dates} for sat: {sat}")
         return dates
@@ -137,6 +138,7 @@ def config_logging():
     help="Satellite to process, for days to run.  (modis|viirs).",
 )
 def get_days_to_process(sat: str):
+    LOGGER.debug(f"sat: {sat}")
     wat_basin = "watersheds"
     da = DataAvailability()
     return_data = []
@@ -172,14 +174,15 @@ def get_days_to_process(sat: str):
     sys.stdout.write(json_struct)
 
 
-@click.group()
-def cli():
-    pass
+# @click.group()
+# def cli():
+#     pass
 
 
-cli.add_command(get_days_to_process)
+# cli.add_command(get_days_to_process)
 
 if __name__ == "__main__":
     # config root logger for debug for dev
-    #config_logging()
-    cli()
+    config_logging()
+    # cli()
+    get_days_to_process()

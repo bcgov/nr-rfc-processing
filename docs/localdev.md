@@ -8,89 +8,35 @@ All development moving forward will be completed on a linux based env.
 [Install WSL](https://learn.microsoft.com/en-us/windows/wsl/install) if not
 already installed.
 
+# Configure Environment Variables
 
-# Install Deps Using Mamba
+The scripts retrieve the following secrets from the environment:
+* object store - username, password, host etc
+* sentinal data - username password
+* earth data - username password
 
-More detailed docs on mamba exist [further down](#mamba---details), this is
-focused on just getting a local dev env built and running
+Before you can run the scripts you must populate these environment variables:
+* OBJ_STORE_BUCKET
+* OBJ_STORE_SECRET
+* OBJ_STORE_USER
+* OBJ_STORE_HOST
+* SRC_ROOT_DIR (optional) - defaults to 'data'
+* OBJ_STORE_ROOT_DIR(optional) - defaults to 'snowpack_archive'
+* ROOTDIRECTORIES_OMIT(optional) - defaults to None, these are directories to not include
+    when syncing data to object storage.  They are sub directories in the SRC_ROOT_DIR.
+    see the github action run_pipeline_auto_fill_data.yaml for an example.
 
-## Create environment
+For quick access you can populate these parameters into a .env file.  The gitignore
+is already configured to ignore this file.  Then to populate the secrets from that
+file you can run:
 
-Create mamba env from the environment.yaml definition.  This step only needs
-to be run when either setting up a new computer, or if the dependency
-declarations have changed.
+`set -a; source .env; set +a`
 
-### Create mamba env
+# Configure / Install Dependencies using Micromamba
 
-`micromamba create -y -n ldev --file environment.yaml`
-
-### Install other dependencies
-
-These are other misc dependencies that are not installable through conda
-like tools
-
-```
-pip install -r requirements.txt
-
-# dev deps install
-pip install -r requirements-dev.txt
-
-# local hatfieldcmr package
-pip install -e .
-```
-
-# Define Required Environment Variables
-
-The script currently looks for an environments.yaml file for the username and
-passwords for communicating with the various data providers.
-
-Create a file called `env.yaml`
-
-yaml file has the following structure *example only*:
-
-```
-EARTHDATA_USER: GuyLafleur
-EARTHDATA_PASS: MontrealNumber10
-SENTINELSAT_USER: YvonneC
-SENTINELSAT_PASS: sc0resLots0fGoals
-```
-
-# Running the daily pipeline script:
-
-* activate conda env path:
-    `conda activate ./ldev`
-
-* run the daily update
-    ``` bash
-    export SNOWPACK_DATA=./data
-    mkdir -p $SNOWPACK_DATA
-    export SNOW_PIPELINE_DATE=$(python getDate.py)
-    export SNOWPACK_ENVS_PTH=./env.yaml
-    export NORM_ROOT=data
-    python run.py daily-pipeline --envpth=$SNOWPACK_ENVS_PTH --date $SNOW_PIPELINE_DATE
-    ```
-
-See the re-architect.md doc for bullets to dissect up the tasks that are part
-of the daily update into smaller chunks.
-
-# Run the Archive / S3 backup / Save Operation
-
-### Define Object Store Environment Variables:
-
-The following env vars must be defined for the s3 archive operation to communicate
-with object storage:
-    * OBJ_STORE_BUCKET
-    * OBJ_STORE_SECRET
-    * OBJ_STORE_USER
-    * OBJ_STORE_HOST
-    * SRC_ROOT_DIR (optional) - defaults to 'data'
-    * OBJ_STORE_ROOT_DIR(optional) - defaults to 'snowpack_archive'
-    * ROOTDIRECTORIES_OMIT(optional) - defaults to None
-
-run the archive script (assume the dependencies have been installed):
-`python snowpack_archive/runS3Backup.py`
-
-# Mamba - Extra Info Details
+This step is mostly for the situation where you want to add new features to the scripts.
+If you just want to run them locally, its likely a lot easier to build and run the images
+defined in the `Dockerfile`
 
 Builds of the env in GHA were taking 2+ hours... then cancelled.  Mostly due to
 slowness of conda, and that was rebuilding the env in GHA vs creating a lock
@@ -103,9 +49,20 @@ The gha creates an env called `snowpack_env`
 
 All subsequent examples are for local development and use the env name `ldev`
 
-## Build env using micromamba - fresh install
-Build from environment.yaml
-`micromamba create -y -n ldev --file environment.yaml`
+## Create Micromamba Environment, and install dependencies
+
+Create mamba env from the environment.yaml definition.  This step only needs
+to be run when either setting up a new computer, or if the dependency
+declarations have changed.  Once created you should be able to just activate the
+environment, and re-use.
+
+`micromamba create -y --prefix ./ldev --file environment.yaml`
+
+Having created an environment the next step is to activate it, before you add the
+additional dependencies.
+
+Activate the environment
+`micromamba activate ./ldev`
 
 Install other deps to conda env
 ```
@@ -118,6 +75,9 @@ pip install -r requirements-dev.txt
 pip install -e .
 ```
 
+At this stage you should be done, and able to run the scripts in this repo.  Subsquent
+sections add additional information about the micromamba environment.
+
 ## Create Environment Lock File
 
 The lock file persists the outcome of the package resolution that would have
@@ -125,15 +85,16 @@ taken place in the previous step.  Creating an env from the lock file is
 significantly faster as it just installs packages vs calculating version
 compatibility of packages and sub packages.
 
-`micromamba env export -n ldev -e > explicit.lock`
+`micromamba env export --prefix ./ldev -e > explicit.lock`
 
 ## Create Environment from the Lock file
 
-`micromamba create -n ldev -f explicit.lock -y`
+Previous examples that created an environment from environment.yaml, will figure out
+the version compatibility.  If you have already done this, and have created a lock file
+you can recreate the environment much more quickly with the following command which
+installs the versions defined in the lock.
 
-## Activate and micromamba environment
-
-`micromamba activate ldev`
+`micromamba create --prefix ./ldev -f explicit.lock -y`
 
 ## Upgrade a package and any dependencies
 
@@ -143,41 +104,81 @@ lock file](#create-environment-from-the-lock-file)
 
 `mm install click=8.1.2 -n ldev -c conda-forge`
 
-
 ## Delete environment
 
 Sometimes its easier to start from scratch
 
-`mm env remove -n ldev`
+`mm env remove --prefix ./ldev`
 
+# Running Scripts
 
-# Misc Notes
+Having [created and activated an micromamba environment](#configure--install-dependencies-using-micromamba), and
+[setting the various environment variables](#define-object-store-environment-variables),
+you should now be in a position to run the various scripts that make up the snowpack
+analysis.
+
+In a nutshell the scripts do the following things:
+1. build the required directory and data structures
+1. download the data from the various earth data sources
+1. process / analyze / coallate the data
+1. archive the data to S3 Storage.
+
+## Run build process
+
+This creates the basin / watershed directories, and boundaries that are used to clip the
+various data sets that get created by the scripts.
+
+`python run.py build`
+
+## Run download process
+
+All the examples demonstrate downloading the data for the date 2024.06.17
+
+`python run.py download --date 2024.06.17 --sat viirs`
+
+# Run data processing
+
+`python run.py process --date 2024.06.17 --sat viirs`
+
+# Run the plot creation
+
+`python run.py plot --date 2024.06.17 --sat viirs`
+
+# Archive the data from to object storage
+
+`python snowpack_archive/runS3Backup.py --days_back 120`
+
+# Identify satellite and date combinations to run
+
+This script is run in the github action.  Its not required if you are only manually running
+a single date, unless you are trouble shooting issues with it.
+
+`python get_available_data.py`
+
 # Docker
+
+create the docker image
+`docker build -t snow:snow .`
 
 log into the image:
 `docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data" -it --entrypoint /bin/bash  snow:snow`
 
+get the available dates for processing
+`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  snow:snow python get_available_data.py get-days-to-process --sat viirs`
+
 run the download script
-`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  snow:snow python run.py download --date 2023.05.01 --sat viirs`
+`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  snow:snow python run.py download --date 2024.06.10 --sat viirs`
 
 process the data
 `docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  snow:snow python run.py process --date 2023.05.01 --sat viirs`
 
-
-get the available dates for processing
-`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  snow:snow python get_available_data.py get-days-to-process --sat viirs`
-
 backup data to object storage
-`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SRC_ROOT_DIR=/data" -e "ROOTDIRECTORIES_OMIT=/data/kml,/data/norm"  snow:snow python snowpack_archive/runS3Backup.py`
+`docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SRC_ROOT_DIR=/data" -e "ROOTDIRECTORIES_OMIT=/data/kml,/data/norm"  snow:snow python snowpack_archive/runS3Backup.py --days_back 120`
 
+# Trouble shooting the image built in github
 
-docker run -it --entrypoint /bin/bash ghcr.io/bcgov/snow_analysis:latest
-docker run -it --entrypoint /bin/bash  snow:snow
+The following command demonstrates how you can run the image stored in the github
+container registry that is used by the github actions, on a local machine.
 
+`docker run --rm -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  ghcr.io/bcgov/snow_analysis:latest python run.py download --date 2023.06.11 --sat viirs`
 
-docker run -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  ghcr.io/bcgov/snow_analysis:latest python run.py
-
-
-
-debug the remote image
-`docker run --rm -v /home/kjnether/rfc_proj/snowpack/data_tmp:/data --env-file=.env -e "SNOWPACK_DATA=/data" -e "NORM_ROOT=/data"  ghcr.io/bcgov/snow_analysis:latest python run.py download --date 2023.05.10 --sat viirs`

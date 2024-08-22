@@ -18,6 +18,8 @@ from rasterio.warp import calculate_default_transform, reproject, Resampling
 
 import admin.snow_path_lib
 
+from download_granules.download_config import set_product
+
 logger = logging.getLogger(__name__)
 snow_path = admin.snow_path_lib.SnowPathLib()
 
@@ -201,7 +203,8 @@ def process_viirs(date: str):
     if not os.path.exists(intermediate_pth):
         os.makedirs(intermediate_pth)
     #viirs_granules = glob(os.path.join(const.MODIS_TERRA, 'VNP10A1F.001', date, '*.h5'))
-    viirs_granules = snow_path.get_viirs_granules(date)
+    viirs_product = set_product(sat='viirs', datestr=date)
+    viirs_granules = snow_path.get_viirs_granules(date, viirs_product)
     logger.debug(f"int tif dir: {intermediate_pth}")
 
 

@@ -67,7 +67,7 @@ def clean(target):
 def download(envpth: str, sat: str, date: str, days: int = 5):
     down_load(envpth=envpth, sat=sat, date=date, days=days)
 
-def down_load(envpth: str, sat: str, date: str, days: int = 5):
+def down_load(sat: str, date: str, days: int = 5, envpth: str = ''):
     # modis has the following options 1, 5, 8.  The class does the verification
     # that a valid value has been passed
 
@@ -103,6 +103,9 @@ def down_load(envpth: str, sat: str, date: str, days: int = 5):
 @click.option('--days', required=False, default='5', type=const.DAYS, help='Select 1, 5 or 8 day composite for MODIS')
 @click.option('--sat', type=const.SATS, required=True, help='Which satellite source to process [ modis | viirs ]')
 def process(date: str, sat: str, days: int):
+    pro_cess(date, sat, days)
+
+def pro_cess(date: str, sat: str, days: int):
     if check_date(date):
         if sat == 'modis':
             modis.process_modis(date, int(days))
@@ -178,6 +181,9 @@ def dbtocsv():
 @click.option('--date', type=str, required=True, help='Date in format YYYY.MM.DD')
 @click.option('--sat', type=const.SATS, required=True, help='Which satellite source to process [ modis | viirs ]')
 def plot(date: str, sat: str):
+    p_lot(date, sat)
+
+def p_lot(date: str, sat: str):
     if check_date(date):
         plotter.plot_handler(date, sat)
     else:

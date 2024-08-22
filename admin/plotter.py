@@ -19,7 +19,7 @@ from collections import defaultdict
 
 import admin.object_store_util
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 ostore = admin.object_store_util.OStore()
 
 def plot_sheds(sheds: list, typ: str, sat: str, date: str):
@@ -39,7 +39,7 @@ def plot_sheds(sheds: list, typ: str, sat: str, date: str):
     chunk = 512 # Chunk size to read in as not to overwhelm memory
     org = defaultdict(list) # Organizer for all open sheds to be plot
     for shed in sheds:
-        logger.debug(f'PLOTTING {os.path.split(shed)[-1]}')
+        LOGGER.debug(f'PLOTTING {os.path.split(shed)[-1]}')
         # shed will be just the name of the watershed
         name = os.path.split(shed)[-1]
         base = os.path.join(shed, sat, date)
@@ -48,12 +48,11 @@ def plot_sheds(sheds: list, typ: str, sat: str, date: str):
         out_dir = os.path.dirname(out_pth)
         if not os.path.exists(out_pth):
 
-
             # prepare
             try: # If the shed is not accessible, skip to next
                 daily = glob(os.path.join(base, '*EPSG3153.tif'))[0]
             except Exception as e:
-                logger.warning(e)
+                LOGGER.warning(e)
                 continue
             d = rioxr.open_rasterio(daily, chunks={'band': 1, 'x': chunk, 'y': chunk})
             # replace values that are = to _FillValue to non number
@@ -66,7 +65,7 @@ def plot_sheds(sheds: list, typ: str, sat: str, date: str):
             try: # If generated normal file is missing, skip to next
                 norm10yr = glob(os.path.join(base, f'{name}_10yrNorm.tif'))[0]
             except Exception as e:
-                logger.warning(e)
+                LOGGER.warning(e)
                 continue
             d = rioxr.open_rasterio(norm10yr, chunks={'band': 1, 'x': chunk, 'y': chunk})
             d.data[(d.data == d._FillValue)] = np.nan
@@ -74,7 +73,7 @@ def plot_sheds(sheds: list, typ: str, sat: str, date: str):
             try: # If generated normal file is missing, skip to next
                 norm20yr = glob(os.path.join(base, f'{name}_20yrNorm.tif'))[0]
             except Exception as e:
-                logger.warning(e)
+                LOGGER.warning(e)
                 continue
             d = rioxr.open_rasterio(norm20yr, chunks={'band': 1, 'x': chunk, 'y': chunk})
             d.data[(d.data == d._FillValue)] = np.nan
@@ -108,19 +107,19 @@ def plot_sheds(sheds: list, typ: str, sat: str, date: str):
             out_pth = os.path.join(const.PLOT, sat, typ, date, f'{name}.png')
             out_dir = os.path.dirname(out_pth)
             if not os.path.exists(out_dir):
-                logger.debug(f"creating directory: {out_dir}")
+                LOGGER.debug(f"creating directory: {out_dir}")
                 os.makedirs(out_dir)
             # why overwrite!!!!!?????
             # if os.path.exists(out_pth):
-            #     logger.debug(f"removing the path: {out_pth}")
+            #     LOGGER.debug(f"removing the path: {out_pth}")
             #     os.remove(out_pth)
             # could multiprocess this
             try:
-                logger.debug(f"creating the plot: {out_pth}")
+                LOGGER.debug(f"creating the plot: {out_pth}")
                 plt.savefig(out_pth)
                 plt.close()
             except Exception as e:
-                logger.debug(e)
+                LOGGER.debug(e)
                 continue
 
 def norm_math(orig: np.array, norm: np.array):
@@ -186,7 +185,9 @@ def plot_mosaics(sat: str, date: str):
                 base10yr_dir = const.MODIS_DAILY_10YR
                 base20yr_dir = const.MODIS_DAILY_20YR
             elif sat == 'viirs':
-                orig = glob(os.path.join(const.OUTPUT_TIF_VIIRS, d_year, f'{date}.tif'))[0]
+                viirs_path = os.path.join(const.OUTPUT_TIF_VIIRS, d_year, f'{date}.tif')
+                LOGGER.debug(f"viirs_path: {viirs_path}")
+                orig = glob(viirs_path)[0]
                 base10yr_dir = const.VIIRS_DAILY_10YR
                 base20yr_dir = const.VIIRS_DAILY_20YR
             else: # @click should not let this else ever be reached
@@ -195,12 +196,12 @@ def plot_mosaics(sat: str, date: str):
             # pull 10 year data
             norm10yr = os.path.join(base10yr_dir, f'{date_split[1]}.{date_split[2]}.tif')
             ostore.get_10yr_tif(sat=sat, month=d_month, day=d_day, out_path=norm10yr)
-            logger.debug(f"norm10yr: {norm10yr}")
+            LOGGER.debug(f"norm10yr: {norm10yr}")
 
             # pull 20 year data
             norm20yr = os.path.join(base20yr_dir, f'{date_split[1]}.{date_split[2]}.tif')
             ostore.get_20yr_tif(sat=sat, month=d_month, day=d_day, out_path=norm20yr)
-            logger.debug(f"norm20yr: {norm10yr}")
+            LOGGER.debug(f"norm20yr: {norm10yr}")
 
             # Plot user generated mosaic and clip to prov boundary
             ax[0].set_title(f'{date}')
@@ -288,17 +289,17 @@ def plot_mosaics(sat: str, date: str):
             # Make sure output path is accessible and
             # replace with most up to date version
             if not os.path.exists(out_dir):
-                logger.debug(f"creating the directory: {out_dir}")
+                LOGGER.debug(f"creating the directory: {out_dir}")
                 os.makedirs(out_dir)
             if os.path.exists(out_pth):
-                logger.debug(f"deleting the file: {out_pth}")
+                LOGGER.debug(f"deleting the file: {out_pth}")
                 os.remove(out_pth)
             try:
-                logger.debug(f"creating the file: {out_pth}")
+                LOGGER.debug(f"creating the file: {out_pth}")
                 plt.savefig(out_pth)
                 plt.close()
             except Exception as e:
-                logger.debug(e)
+                LOGGER.debug(e)
 
         # finally push up to object storage
         # ostore_path, local_path, bucket_name=None, public=False)ostore_path, local_path, bucket_name=None, public=False)

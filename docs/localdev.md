@@ -102,7 +102,7 @@ After this step has been completed and verified that it creates a stable env
 that supports the snowpack processing code, then go back and [regenerate the
 lock file](#create-environment-from-the-lock-file)
 
-`mm install click=8.1.2 -n ldev -c conda-forge`
+`mm install click=8.1.2 --prefix ./ldev -c conda-forge`
 
 ## Delete environment
 

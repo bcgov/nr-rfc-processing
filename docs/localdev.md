@@ -85,6 +85,9 @@ taken place in the previous step.  Creating an env from the lock file is
 significantly faster as it just installs packages vs calculating version
 compatibility of packages and sub packages.
 
+before executing make sure that the environment is activated
+`micromamba activate ./ldev`
+
 `micromamba env export --prefix ./ldev -e > explicit.lock`
 
 ## Create Environment from the Lock file

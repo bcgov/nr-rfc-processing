@@ -160,12 +160,13 @@ cython_debug/
 junk*
 snowpack_archive/tmp
 
-ldev/*
-ldev2/**
-ldev3/**
+ldev/
+ldev2/
+ldev3/
 miniconda_install.sh
 env.yaml
 venvarch/
 data_orig/
 data2/
-data_tmp/**
+data_tmp/
+dev/

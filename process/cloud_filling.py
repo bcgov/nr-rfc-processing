@@ -34,6 +34,7 @@ def get_image(dt, path):
     try:
         if not os.path.isfile(file_path):
             ostore.get_object(local_path=file_path, file_path=file_path)
+            print(f'Retrieving {file_path}')
         with rio.open(file_path, "r") as src:
             meta = src.meta.copy()
             data = src.read(1)
@@ -42,12 +43,13 @@ def get_image(dt, path):
             data = None
     return data, meta
 
-date = '2012/04/10'
+date = '2024/02/19'
 dt = datetime.strptime(date,'%Y/%m/%d')
-datelist = pd.date_range(datetime.strptime(date,'%Y/%m/%d'), periods=4000).tolist()
+datelist = pd.date_range(datetime.strptime(date,'%Y/%m/%d'), periods=365).tolist()
 #dt_prev = dt - datetime.timedelta(days=1)
 
 mosaic_path = 'norm/mosaics/modis/%Y'
+new_mosaic_path = 'snowpack_archive/intermediate_tif/modis/%Y.%m.%d/'
 cloud_filled_path = 'snowpack_archive/cloud_filled/%Y'
 mosaic_fname = '%Y.%m.%d.tif'
 mosaic_objpath = os.path.join(mosaic_path,mosaic_fname)
@@ -55,7 +57,15 @@ cloud_filled_objpath = os.path.join(cloud_filled_path,mosaic_fname)
 
 ostore = NRObjStoreUtil.ObjectStoreUtil()
 for dt in datelist:
-    data, meta = get_image(dt, mosaic_objpath)
+    if dt < datetime(2023,1,23):
+        data, meta = get_image(dt, mosaic_objpath)
+    else:
+        olist = ostore.list_objects(dt.strftime(new_mosaic_path),return_file_names_only=True)
+        matching = [s for s in olist if "modis_composite" in s]
+        if len(matching)>0:
+            data, meta = get_image(dt, matching[0])
+        else:
+            data = None
     data_prevday, meta_prevday = get_image(dt - timedelta(days=1), cloud_filled_objpath)
     if data is None:
         data = data_prevday

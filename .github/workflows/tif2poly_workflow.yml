@@ -21,7 +21,7 @@ jobs:
       OBJ_STORE_BUCKET: ${{ secrets.OBJ_STORE_BUCKET }}
       OBJ_STORE_SECRET: ${{ secrets.OBJ_STORE_SECRET }}
       OBJ_STORE_USER: ${{ secrets.OBJ_STORE_USER }}
-      OBJ_STORE_HOST: ${{ vars.OBJ_STORE_HOST }}
+      OBJ_STORE_HOST: ${{ secrets.OBJ_STORE_HOST }}
 
     steps:
     - uses: actions/checkout@v3

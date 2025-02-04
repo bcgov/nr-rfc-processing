@@ -90,38 +90,40 @@ CLEVER_Summary_objfolder = 'snowpack_archive/summary'
 ostore_objs = ostore.list_objects(CLEVER_Summary_objfolder,return_file_names_only=True)
 year = max([int(i.split('.')[0][-4:]) for i in ostore_objs]) + 1
 
-CLEVER_summary_fpath = os.path.join(CLEVER_Summary_objfolder,f'CLEVER_Summary_{year}.csv')
-CLEVER_summary = get_summary(CLEVER_summary_fpath, year)
+if year < 2025:
+    CLEVER_summary_fpath = os.path.join(CLEVER_Summary_objfolder,f'CLEVER_Summary_{year}.csv')
+    CLEVER_summary = get_summary(CLEVER_summary_fpath, year)
 
-objpath = 'snowpack_archive/cloud_filled/%Y/%Y.%m.%d.tif'
+    objpath = 'snowpack_archive/cloud_filled/%Y/%Y.%m.%d.tif'
 
-clever_shp_path = 'aoi/clever_basins/CLEVER_BASINS.shp'
-clever_shp = geopandas.read_file(clever_shp_path)
+    clever_shp_path = 'aoi/clever_basins/CLEVER_BASINS.shp'
+    clever_shp = geopandas.read_file(clever_shp_path)
 
-importdates = pd.date_range(start = datetime(year,1,1), end = datetime(year,12,31))
-output = pd.DataFrame(data=None, index = importdates, columns = clever_shp.WSDG_ID)
-colnames = output.columns
-for dt in importdates:
-    objname = dt.strftime(objpath)
-    filename = objname.split('/')[-1]
-    local_filename = os.path.join('rawdata',filename)
-    ostore.get_object(local_path=local_filename, file_path=objname)
-    print(f'Reading {local_filename}')
-    with rasterio.open(local_filename) as grib:
-            raster = grib.read(1)
-            affine = grib.transform
-            zone = clever_shp.to_crs(grib.crs)
-            #Rasterstats averages all pixels which touch the polygon, or all pixels whose centoids are within the polygon
-            #For exact averaging, weighting pixels by fraction within polygon, investigate this package:
-            #https://github.com/isciences/exactextract
-            raster[raster>100] = 255
-            stats = rasterstats.zonal_stats(zone, raster, affine=affine,stats="mean",all_touched=True,nodata=255)
-            for j in range(len(stats)):
-                output.loc[dt,colnames[j]] = stats[j]['mean']
+    importdates = pd.date_range(start = datetime(year,1,1), end = datetime(year,12,31))
+    output = pd.DataFrame(data=None, index = importdates, columns = clever_shp.WSDG_ID)
+    colnames = output.columns
+    for dt in importdates:
+        objname = dt.strftime(objpath)
+        filename = objname.split('/')[-1]
+        local_filename = os.path.join('rawdata',filename)
+        ostore.get_object(local_path=local_filename, file_path=objname)
+        print(f'Reading {local_filename}')
+        with rasterio.open(local_filename) as grib:
+                raster = grib.read(1)
+                affine = grib.transform
+                zone = clever_shp.to_crs(grib.crs)
+                #Rasterstats averages all pixels which touch the polygon, or all pixels whose centoids are within the polygon
+                #For exact averaging, weighting pixels by fraction within polygon, investigate this package:
+                #https://github.com/isciences/exactextract
+                raster[raster>100] = 255
+                stats = rasterstats.zonal_stats(zone, raster, affine=affine,stats="mean",all_touched=True,nodata=255)
+                for j in range(len(stats)):
+                    output.loc[dt,colnames[j]] = stats[j]['mean']
 
 
-#CLEVER_summary = update_data(CLEVER_summary, CLEVER_precip)
-#df_to_objstore(CLEVER_summary, CLEVER_summary_fpath, onprem=False)
-df_to_objstore(output, CLEVER_summary_fpath, onprem=False)
+    #CLEVER_summary = update_data(CLEVER_summary, CLEVER_precip)
+    #df_to_objstore(CLEVER_summary, CLEVER_summary_fpath, onprem=False)
+    df_to_objstore(output, CLEVER_summary_fpath, onprem=False)
+
 
 

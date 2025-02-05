@@ -102,14 +102,13 @@ def down_load(sat: str, date: str, days: int = 5, envpth: str = ''):
 @click.option('--date', required=True, type=str, help='Date in format YYYY.MM.DD')
 @click.option('--days', required=False, default='5', type=const.DAYS, help='Select 1, 5 or 8 day composite for MODIS')
 @click.option('--sat', type=const.SATS, required=True, help='Which satellite source to process [ modis | viirs ]')
-@click.option('--mosaic_only', required=False, default='False', type=str, help='Only produce mosaics True or False')
-def process(date: str, sat: str, days: int, mosaic_only: str):
-    pro_cess(date, sat, days, mosaic_only)
+def process(date: str, sat: str, days: int):
+    pro_cess(date, sat, days)
 
-def pro_cess(date: str, sat: str, days: int, mosaic_only: str):
+def pro_cess(date: str, sat: str, days: int):
     if check_date(date):
         if sat == 'modis':
-            modis.process_modis(date, int(days),mosaic_only=mosaic_only)
+            modis.process_modis(date, int(days))
         elif sat == 'viirs':
             viirs.process_viirs(date)
         else: # Will never reach here due to click.Choice

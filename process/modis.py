@@ -266,7 +266,7 @@ def process_modis(startdate, days, mosaic_only='False'):
     pull_date_composite(datestr_list=dates, start_date=startdate)
 
     # pull watershed and basin processed data if exists
-    if mosaic_only != 'True':
+    if False:
         pull_watershed_basin_data(
             start_date=startdate,
             sat='modis',
@@ -347,11 +347,12 @@ def process_modis(startdate, days, mosaic_only='False'):
 
     # creates the watershed/basin clipped versions of the composite mosaic
     # in both EPSG4326 and EPSG3153
-    if mosaic_only != 'True':
+
+    if False:
         for task in ["watersheds", "basins"]:
             LOGGER.info(f"CREATING {task.upper()}")
             # pull the 10y 20y data from object storage
-            # send the dates along
+                # send the dates along
             process_by_watershed_or_basin("modis", task, startdate, dates)
 
 

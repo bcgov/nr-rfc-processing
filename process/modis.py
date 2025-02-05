@@ -242,7 +242,7 @@ def clean_intermediate(date):
             os.remove(f)
 
 
-def process_modis(startdate, days, mosaic_only='False'):
+def process_modis(startdate, days):
     """
     Main trigger for processing modis from HDF4 -> GTiff and
     then clipping to watersheds/basins
@@ -266,17 +266,16 @@ def process_modis(startdate, days, mosaic_only='False'):
     pull_date_composite(datestr_list=dates, start_date=startdate)
 
     # pull watershed and basin processed data if exists
-    if False:
-        pull_watershed_basin_data(
-            start_date=startdate,
-            sat='modis',
-            wat_basin='watersheds',
-            process_async=True)
-        pull_watershed_basin_data(
-            start_date=startdate,
-            sat='modis',
-            wat_basin='basins',
-            process_async=True)
+    pull_watershed_basin_data(
+        start_date=startdate,
+        sat='modis',
+        wat_basin='watersheds',
+        process_async=True)
+    pull_watershed_basin_data(
+        start_date=startdate,
+        sat='modis',
+        wat_basin='basins',
+        process_async=True)
 
     # this function recieves a start date and a days arg.
     # the days tell it how many days back to process.
@@ -347,13 +346,101 @@ def process_modis(startdate, days, mosaic_only='False'):
 
     # creates the watershed/basin clipped versions of the composite mosaic
     # in both EPSG4326 and EPSG3153
+    for task in ["watersheds", "basins"]:
+        LOGGER.info(f"CREATING {task.upper()}")
+        # pull the 10y 20y data from object storage
+        # send the dates along
+        process_by_watershed_or_basin("modis", task, startdate, dates)
 
-    if False:
-        for task in ["watersheds", "basins"]:
-            LOGGER.info(f"CREATING {task.upper()}")
-            # pull the 10y 20y data from object storage
-                # send the dates along
-            process_by_watershed_or_basin("modis", task, startdate, dates)
+def mosaic_modis(startdate, days, mosaic_only='False'):
+    """
+    Main trigger for processing modis from HDF4 -> GTiff and
+    then clipping to watersheds/basins
+
+    Parameters
+    ----------
+    startdate : str
+        The startdate which modis process will base it's 5 or 8 day processing
+        from
+    days : int
+        Number of days to process raw HDF5 granules into mosaic -> composites
+        before clipping to watersheds/basins. days = 5 or days = 8 only.
+    """
+    LOGGER.info("MODIS Process Started")
+    # bc_albers = "EPSG:3153"
+    dst_crs = "EPSG:4326"
+
+    dates = get_datespan(startdate, days)
+
+    # pull the date composite output if it exists
+    pull_date_composite(datestr_list=dates, start_date=startdate)
+
+    # this function recieves a start date and a days arg.
+    # the days tell it how many days back to process.
+    #
+    # iterates over each day creating a composite tif that combines all
+    # the granules for that day.
+
+    for date in dates:
+        # for each date will:
+        #  - create reprojected tif to EPSG:4326 in
+        #      the intermediate tif directory for each granule
+        #  - then mosaics all the granules together into
+
+        # intTif = os.path.join(const.INTERMEDIATE_TIF_MODIS, date)
+        # intTif is the local path for the intermediate tif directory
+        int_tif_dir = snow_path.get_modis_int_tif_dir(date)
+        LOGGER.debug(f"intTif: {int_tif_dir}")
+        if not os.path.exists(int_tif_dir):
+            os.makedirs(int_tif_dir)
+            LOGGER.debug(f"created folder: {int_tif_dir}")
+        # modis_granules = glob(os.path.join(pth, date,'*.hdf'))
+        # gets the granules from what exists locally after the download step
+        modis_granules = snow_path.get_modis_granules(date)
+        # why delete these files?  why not pick up where left off?
+        # commenting out, no need to delete
+        # clean_intermediate(date)
+
+        LOGGER.info(f"REPROJ GRANULES: {date}")
+        reproj_args = []
+        for gran in modis_granules:
+            try:
+                # name = os.path.split(gran)[-1]
+                name = os.path.basename(gran)
+                reproj_args.append((date, name, gran, dst_crs))
+            except Exception as e:
+                LOGGER.error(f"Could not append {gran} : {e}")
+                continue
+
+        # if the data already exists in ostore then pull it from there
+        pull_modis_data(reproj_args)
+
+        LOGGER.debug("doing reprojections to EPSG:4326")
+
+        # DEBUGGING... does same as distribute call but in sync.  useful for debugging
+        #              Comment out for prod
+        # for args in reproj_args:
+        #     reproject_modis(*args)
+        distribute(reproject_modis, reproj_args)
+
+        LOGGER.info(f"CREATING MOSAICS: {date}")
+        # os.path.join(const.INTERMEDIATE_TIF_MODIS,date)
+        # creates the mosaic files:
+        # ./data/norm/mosaics/modis/2023/<processing date>
+        # example
+        # ./data/norm/mosaics/modis/2023/2023.03.22.tif
+        output_mosaic_tif = snow_path.get_output_modis_path(date)
+        files_to_mosaic = snow_path.get_modis_intermediate_tifs(date)
+        create_modis_mosaic(int_tif_dir, output_mosaic_tif, files_to_mosaic)
+
+    LOGGER.info("COMPOSING MOSAICS INTO ONE TIF")
+    # creates:
+    # './data/intermediate_tif/modis/2023.03.23/modis_composite_2023.03.23_2023.03.22_2023.03.21_2023.03.20_2023.03.19.tif'
+    composite_mosaic_path = snow_path.get_modis_composite_mosaic_file_name(
+        start_date=startdate, date_list=dates
+    )
+    composite_mosaics(startdate, dates, composite_mosaic_path)
+    color_ramp(composite_mosaic_path)  # just adds the color ramp to the output file
 
 
 def pull_modis_epsg4326(local_file_list, process_async=False):

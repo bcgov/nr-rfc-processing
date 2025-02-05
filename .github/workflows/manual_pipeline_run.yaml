@@ -13,7 +13,7 @@ jobs:
     defaults:
       run:
         shell: bash
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     continue-on-error: true
     environment: PROD
     env:
@@ -29,7 +29,7 @@ jobs:
       matrix: ${{ steps.identify-dates-to-run.outputs.matrix }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       id: checkout
       with:
        fetch-depth: 0
@@ -43,7 +43,7 @@ jobs:
     #     environment-name: snowpack_env
 
     - name: Install micromamba (conda) environment from explicit.lock
-      uses: mamba-org/setup-micromamba@v1
+      uses: mamba-org/setup-micromamba@v2
       with:
         # micromamba-version: '1.3.1'
         environment-name: snowpack_env

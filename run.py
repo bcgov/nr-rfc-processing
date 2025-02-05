@@ -117,24 +117,6 @@ def pro_cess(date: str, sat: str, days: int):
         LOGGER.error('ERROR: Date format YYYY.MM.DD')
 
 @click.command()
-@click.option('--date', required=True, type=str, help='Date in format YYYY.MM.DD')
-@click.option('--days', required=False, default='5', type=const.DAYS, help='Select 1, 5 or 8 day composite for MODIS')
-@click.option('--sat', type=const.SATS, required=True, help='Which satellite source to process [ modis | viirs ]')
-def mosaic(date: str, sat: str, days: int):
-    mo_saic(date, sat, days)
-
-def mo_saic(date: str, sat: str, days: int):
-    if check_date(date):
-        if sat == 'modis':
-            modis.mosaic_modis(date, int(days))
-        elif sat == 'viirs':
-            viirs.process_viirs(date)
-        else: # Will never reach here due to click.Choice
-            LOGGER.error(f'ERR SAT {sat} NOT VALID INPUT')
-    else:
-        LOGGER.error('ERROR: Date format YYYY.MM.DD')
-
-@click.command()
 @click.option('--creds', type=str, required=True, help='Path to credential file.')
 @click.option('--date', type=str, required=True, help='Date in format YYYY.MM.DD')
 @click.option('--lat', type=float, required=True, help='Latitude of point of interest')

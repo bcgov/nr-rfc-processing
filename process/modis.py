@@ -242,7 +242,7 @@ def clean_intermediate(date):
             os.remove(f)
 
 
-def process_modis(startdate, days):
+def process_modis(startdate, days, mosaic_only='False'):
     """
     Main trigger for processing modis from HDF4 -> GTiff and
     then clipping to watersheds/basins
@@ -266,16 +266,17 @@ def process_modis(startdate, days):
     pull_date_composite(datestr_list=dates, start_date=startdate)
 
     # pull watershed and basin processed data if exists
-    pull_watershed_basin_data(
-        start_date=startdate,
-        sat='modis',
-        wat_basin='watersheds',
-        process_async=True)
-    pull_watershed_basin_data(
-        start_date=startdate,
-        sat='modis',
-        wat_basin='basins',
-        process_async=True)
+    if mosaic_only != 'True':
+        pull_watershed_basin_data(
+            start_date=startdate,
+            sat='modis',
+            wat_basin='watersheds',
+            process_async=True)
+        pull_watershed_basin_data(
+            start_date=startdate,
+            sat='modis',
+            wat_basin='basins',
+            process_async=True)
 
     # this function recieves a start date and a days arg.
     # the days tell it how many days back to process.
@@ -346,11 +347,12 @@ def process_modis(startdate, days):
 
     # creates the watershed/basin clipped versions of the composite mosaic
     # in both EPSG4326 and EPSG3153
-    for task in ["watersheds", "basins"]:
-        LOGGER.info(f"CREATING {task.upper()}")
-        # pull the 10y 20y data from object storage
-        # send the dates along
-        process_by_watershed_or_basin("modis", task, startdate, dates)
+    if mosaic_only != 'True':
+        for task in ["watersheds", "basins"]:
+            LOGGER.info(f"CREATING {task.upper()}")
+            # pull the 10y 20y data from object storage
+            # send the dates along
+            process_by_watershed_or_basin("modis", task, startdate, dates)
 
 
 def pull_modis_epsg4326(local_file_list, process_async=False):

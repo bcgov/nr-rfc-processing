@@ -157,7 +157,7 @@ jobs:
             -e "NORM_ROOT=/data" \
             -e "SNOWPACK_DATA=/data" \
             ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
-            python run.py process --date ${{ matrix.date }} --sat ${{ matrix.sat }}
+            python run.py process --date ${{ matrix.date }} --sat ${{ matrix.sat }} --mosaic_only True
 
     - name: Archive Data
       id: archive_data

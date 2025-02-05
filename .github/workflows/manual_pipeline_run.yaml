@@ -171,5 +171,5 @@ jobs:
             -e "ROOTDIRECTORIES_OMIT=/data/kml,/data/norm" \
             -e "SRC_ROOT_DIR=/data" \
             ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
-            python snowpack_archive/runS3Backup.py --days_back 120
+            python snowpack_archive/runS3Backup.py --days_back 500
 

@@ -1,12 +1,12 @@
 {
   "include": [
     {
-      "date": "2021.01.01",
+      "date": "2024.05.19",
       "sat": "modis"
     },
     {
-      "date": "2021.01.02",
-      "sat": "craptel"
+      "date": "2024.05.20",
+      "sat": "modis"
     }
   ]
 }

@@ -1,0 +1,175 @@
+name: Manual Run- Create Composites
+
+on:
+  # push action for debugging purposes, comment up when working
+  # push:
+  #   branches: ["feat/44-containerize-run"]
+  # 2pm utc = 6am pst.. gha uses utc for timezone so action needs to be
+  # described as utc time.
+  workflow_dispatch:
+
+jobs:
+  populate-matrix:
+    defaults:
+      run:
+        shell: bash
+    runs-on: ubuntu-20.04
+    continue-on-error: true
+    environment: PROD
+    env:
+      OBJ_STORE_BUCKET: ${{ secrets.OBJ_STORE_BUCKET }}
+      OBJ_STORE_SECRET: ${{ secrets.OBJ_STORE_SECRET }}
+      OBJ_STORE_USER: ${{ secrets.OBJ_STORE_USER }}
+      OBJ_STORE_HOST: ${{ secrets.OBJ_STORE_HOST }}
+      SNOWPACK_DATA: ./data
+      EARTHDATA_USER: ${{ secrets.EARTHDATA_USER }}
+      EARTHDATA_PASS: ${{ secrets.EARTHDATA_PASS }}
+      SNOWPACK_ENVS_PTH: ./env.yaml
+    outputs:
+      matrix: ${{ steps.identify-dates-to-run.outputs.matrix }}
+
+    steps:
+    - uses: actions/checkout@v3
+      id: checkout
+      with:
+       fetch-depth: 0
+
+    # # this action is now deprecated...
+    # - name: Install micromamba (conda) environment from explicit.lock
+    #   uses: mamba-org/provision-with-micromamba@main
+    #   with:
+    #     cache-env: false
+    #     environment-file: explicit.lock
+    #     environment-name: snowpack_env
+
+    - name: Install micromamba (conda) environment from explicit.lock
+      uses: mamba-org/setup-micromamba@v1
+      with:
+        # micromamba-version: '1.3.1'
+        environment-name: snowpack_env
+        environment-file: 'explicit.lock'
+        init-shell: bash
+        #log-level: debug
+
+    - name: Install Dependencies (pip)
+      id: install_deps_pip
+      shell: micromamba-shell {0}
+      #shell: bash
+      run: |
+        eval "$($MAMBA_EXE shell hook --shell=bash)"
+        # micromamba activate snowpack_env
+        $MAMBA_EXE activate snowpack_env
+        pip install -r requirements.txt
+
+    - name: Identify Dates To Run
+      id: identify-dates-to-run
+      shell: micromamba-shell {0}
+      # shell: bash
+      run: |
+        eval "$($MAMBA_EXE shell hook --shell=bash)"
+        # micromamba activate snowpack_env
+        $MAMBA_EXE activate snowpack_env
+
+        # ---------- populate the secret file ----------
+        echo EARTHDATA_USER: $EARTHDATA_USER > $SNOWPACK_ENVS_PTH
+        echo EARTHDATA_PASS: $EARTHDATA_PASS >> $SNOWPACK_ENVS_PTH
+
+        # ---------- get dates to run ----------
+        #days_json=$(python get_available_data.py  | jq -r 'tostring')
+        days_json=$(cat test_data.json | jq -r 'tostring')
+        echo json is $days_json
+        #echo "::set-output name=matrix::$days_json"
+        echo "matrix=$days_json" >> $GITHUB_OUTPUT
+
+  execute_matrix:
+    environment: PROD
+    env:
+      OBJ_STORE_BUCKET: ${{ secrets.OBJ_STORE_BUCKET }}
+      OBJ_STORE_SECRET: ${{ secrets.OBJ_STORE_SECRET }}
+      OBJ_STORE_USER: ${{ secrets.OBJ_STORE_USER }}
+      OBJ_STORE_HOST: ${{ secrets.OBJ_STORE_HOST }}
+      SNOWPACK_DATA: ./data
+      EARTHDATA_USER: ${{ secrets.EARTHDATA_USER }}
+      EARTHDATA_PASS: ${{ secrets.EARTHDATA_PASS }}
+      SNOWPACK_ENVS_PTH: ./env.yaml
+
+    needs: [ populate-matrix ]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.populate-matrix.outputs.matrix) }}
+      max-parallel: 13
+      # matrix:
+      #   date: [ "2021.01.01", "2021.01.02" ]
+      #   sat: [ "modis"]
+    steps:
+    - name: Pull GHCR image
+      run: docker pull ghcr.io/${{ github.repository_owner }}/snow_analysis:latest
+
+    - name: setup data directory
+      id: setup_data_dir
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/data
+        chmod 777 $GITHUB_WORKSPACE/data
+
+    - name: Build Core Data Directories
+      id: build_core_dirs
+      shell: bash
+      run: |
+        docker run -v $GITHUB_WORKSPACE/data:/data \
+            -e "OBJ_STORE_BUCKET=${{ secrets.OBJ_STORE_BUCKET }}" \
+            -e "OBJ_STORE_SECRET=${{ secrets.OBJ_STORE_SECRET }}" \
+            -e "OBJ_STORE_USER=${{ secrets.OBJ_STORE_USER }}" \
+            -e "OBJ_STORE_HOST=${{ secrets.OBJ_STORE_HOST }}" \
+            -e "EARTHDATA_USER=${{ secrets.EARTHDATA_USER }}" \
+            -e "EARTHDATA_PASS=${{ secrets.EARTHDATA_PASS }}" \
+            -e "NORM_ROOT=/data" \
+            -e "SNOWPACK_DATA=/data" \
+            ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
+            python run.py build
+
+    - name: Download Data
+      id: download_data
+      shell: bash
+      run: |
+        docker run --rm -v $GITHUB_WORKSPACE/data:/data \
+            -e "OBJ_STORE_BUCKET=${{ secrets.OBJ_STORE_BUCKET }}" \
+            -e "OBJ_STORE_SECRET=${{ secrets.OBJ_STORE_SECRET }}" \
+            -e "OBJ_STORE_USER=${{ secrets.OBJ_STORE_USER }}" \
+            -e "OBJ_STORE_HOST=${{ secrets.OBJ_STORE_HOST }}" \
+            -e "EARTHDATA_USER=${{ secrets.EARTHDATA_USER }}" \
+            -e "EARTHDATA_PASS=${{ secrets.EARTHDATA_PASS }}" \
+            -e "NORM_ROOT=/data" \
+            -e "SNOWPACK_DATA=/data" \
+            ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
+            python run.py download --date ${{ matrix.date }} --sat ${{ matrix.sat }}
+
+    - name: Process Data
+      id: process_data
+      shell: bash
+      run: |
+        docker run --rm -v $GITHUB_WORKSPACE/data:/data \
+            -e "OBJ_STORE_BUCKET=${{ secrets.OBJ_STORE_BUCKET }}" \
+            -e "OBJ_STORE_SECRET=${{ secrets.OBJ_STORE_SECRET }}" \
+            -e "OBJ_STORE_USER=${{ secrets.OBJ_STORE_USER }}" \
+            -e "OBJ_STORE_HOST=${{ secrets.OBJ_STORE_HOST }}" \
+            -e "EARTHDATA_USER=${{ secrets.EARTHDATA_USER }}" \
+            -e "EARTHDATA_PASS=${{ secrets.EARTHDATA_PASS }}" \
+            -e "NORM_ROOT=/data" \
+            -e "SNOWPACK_DATA=/data" \
+            ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
+            python run.py process --date ${{ matrix.date }} --sat ${{ matrix.sat }}
+
+    - name: Archive Data
+      id: archive_data
+      shell: bash
+      run: |
+        docker run --rm -v $GITHUB_WORKSPACE/data:/data \
+            -e "OBJ_STORE_BUCKET=${{ secrets.OBJ_STORE_BUCKET }}" \
+            -e "OBJ_STORE_SECRET=${{ secrets.OBJ_STORE_SECRET }}" \
+            -e "OBJ_STORE_USER=${{ secrets.OBJ_STORE_USER }}" \
+            -e "OBJ_STORE_HOST=${{ secrets.OBJ_STORE_HOST }}" \
+            -e "ROOTDIRECTORIES_OMIT=/data/kml,/data/norm" \
+            -e "SRC_ROOT_DIR=/data" \
+            ghcr.io/${{ github.repository_owner }}/snow_analysis:latest \
+            python snowpack_archive/runS3Backup.py --days_back 120
+

@@ -38,7 +38,7 @@ jobs:
       run:
         shell: bash
     name: calculateImageTag
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       imagetag: ${{ steps.EchoTag.outputs.IMAGE_TAG}}
     steps:
@@ -62,7 +62,7 @@ jobs:
       run:
         shell: bash
     needs: CalculateImageTags
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: GET Image Tag
       id: getImageTag
@@ -79,13 +79,13 @@ jobs:
         shell: bash
     needs: CalculateImageTags
     name: 'Build Container Image'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       DEBUG_DEPLOY: false
 
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       id: checkout
       # with:
       #   fetch-depth: 0
@@ -100,14 +100,14 @@ jobs:
         echo event number is: ${{ github.event.number }}
 
     - name: Log in to GitHub Docker Registry
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner  }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and Push Client Docker Image
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v6
       env:
         IMAGE_TAG: ${{ needs.CalculateImageTags.outputs.imagetag }}
 

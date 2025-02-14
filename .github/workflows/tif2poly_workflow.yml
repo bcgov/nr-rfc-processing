@@ -6,7 +6,7 @@ on:
   #     - "main"
   schedule:
   # job should run at 9.01 pst which translates to 5pm UTC
-    - cron: '0,30 1-10 * * *'
+    - cron: '0 15 * * *'
   workflow_dispatch:
 
 jobs:
@@ -46,8 +46,14 @@ jobs:
       run: |
         ls -la
 
+    - id: cloud_filling
+      name: Produce cloud free images using most recent cloud free pixel
+      shell: bash
+      run: |
+        python process/cloud_filling.py
+
     - id: compute_Basin_Averages
-      name: download datamart climateobs data and upload to s3
+      name: Compute basin averaged snow cover fraction and upload to s3
       shell: bash
       run: |
         python process/tif2poly.py

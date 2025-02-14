@@ -43,21 +43,36 @@ def get_image(dt, path):
             data = None
     return data, meta
 
-date = '2024/02/19'
-dt = datetime.strptime(date,'%Y/%m/%d')
-datelist = pd.date_range(datetime.strptime(date,'%Y/%m/%d'), periods=365).tolist()
+def find_most_recent_image(obj_dirpath, obj_fpath, dt):
+    olist = ostore.list_objects(dt.strftime(obj_dirpath),return_file_names_only=True)
+    fname = dt.strftime(obj_fpath)
+    while not any(fname in s for s in olist):
+        dt = dt - timedelta(days=1)
+        fname = dt.strftime(obj_fpath)
+    return dt
+
+#date = '2022/05/07'
+#dt = datetime.strptime(date,'%Y/%m/%d')
+#datelist = pd.date_range(datetime.strptime(date,'%Y/%m/%d'), periods=90).tolist()
 #dt_prev = dt - datetime.timedelta(days=1)
 
+ostore = NRObjStoreUtil.ObjectStoreUtil()
 mosaic_path = 'norm/mosaics/modis/%Y'
-new_mosaic_path = 'snowpack_archive/intermediate_tif/modis/%Y.%m.%d/'
-cloud_filled_path = 'snowpack_archive/cloud_filled/%Y'
+new_mosaic_path = 'snowpack_archive/intermediate_tif/modis/%Y.%m.%d'
+cloud_filled_path = 'snowpack_archive/cloud_filled'
 mosaic_fname = '%Y.%m.%d.tif'
 mosaic_objpath = os.path.join(mosaic_path,mosaic_fname)
-cloud_filled_objpath = os.path.join(cloud_filled_path,mosaic_fname)
+cloud_filled_objpath = os.path.join(cloud_filled_path,'%Y',mosaic_fname)
 
-ostore = NRObjStoreUtil.ObjectStoreUtil()
+today = datetime.today()
+startdate = find_most_recent_image(cloud_filled_path,cloud_filled_objpath,dt = today)
+enddate = find_most_recent_image(os.path.dirname(new_mosaic_path),new_mosaic_path,dt = today)
+datelist = pd.date_range(startdate, enddate).tolist()
+
+
 for dt in datelist:
     if dt < datetime(2023,1,23):
+    #if dt > datetime(2022,6,14):
         data, meta = get_image(dt, mosaic_objpath)
     else:
         olist = ostore.list_objects(dt.strftime(new_mosaic_path),return_file_names_only=True)

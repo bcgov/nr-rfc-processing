@@ -6,3 +6,4 @@ geopandas
 rasterio
 rasterstats
 python-dotenv
+rioxarray

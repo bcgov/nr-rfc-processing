@@ -133,39 +133,40 @@ def create_modis_mosaic(
                 except:
                     LOGGER.debug(f"Failure to add file to mosaic: {f}")
             # Merge all granule tiffs into one
-            mosaic, out_trans = merge(
-                src_files_to_mosaic, bounds=[*const.BBOX], res=const.MODIS_EPSG4326_RES
-            )
-            out_meta = src.meta.copy()
-            out_meta.update(
-                {
-                    "driver": "GTiff",
-                    "height": mosaic.shape[1],
-                    "width": mosaic.shape[2],
-                    "transform": out_trans,
-                }
-            )
-            # Write mosaic to disk
-            # out_pth = os.path.join(
-            #     const.OUTPUT_TIF_MODIS, date.split(".")[0], f"{date}.tif"
-            # )
-            output_mosaic_tif = snow_path.get_output_modis_path(date)
-            LOGGER.debug(f"out_pth: {output_mosaic_tif}")
-            try:
+            if src_files_to_mosaic:
+                mosaic, out_trans = merge(
+                    src_files_to_mosaic, bounds=[*const.BBOX], res=const.MODIS_EPSG4326_RES
+                )
+                out_meta = src.meta.copy()
+                out_meta.update(
+                    {
+                        "driver": "GTiff",
+                        "height": mosaic.shape[1],
+                        "width": mosaic.shape[2],
+                        "transform": out_trans,
+                    }
+                )
+                # Write mosaic to disk
+                # out_pth = os.path.join(
+                #     const.OUTPUT_TIF_MODIS, date.split(".")[0], f"{date}.tif"
+                # )
+                output_mosaic_tif = snow_path.get_output_modis_path(date)
                 LOGGER.debug(f"out_pth: {output_mosaic_tif}")
-                # os.makedirs(os.path.split(out_pth)[0])
-                dir2Create = os.path.dirname(output_mosaic_tif)
-                if not os.path.exists(dir2Create):
-                    os.makedirs(dir2Create)
-                    LOGGER.debug(f"creating dir: {dir2Create}")
-            except Exception as e:
-                LOGGER.debug(e)
-            LOGGER.debug(f"creating: {output_mosaic_tif}")
-            with rio.open(output_mosaic_tif, "w", **out_meta) as dst:
-                dst.write(mosaic)
-            # Close all open tiffs that were mosaic'ed
-            for f in src_files_to_mosaic:
-                f.close()
+                try:
+                    LOGGER.debug(f"out_pth: {output_mosaic_tif}")
+                    # os.makedirs(os.path.split(out_pth)[0])
+                    dir2Create = os.path.dirname(output_mosaic_tif)
+                    if not os.path.exists(dir2Create):
+                        os.makedirs(dir2Create)
+                        LOGGER.debug(f"creating dir: {dir2Create}")
+                except Exception as e:
+                    LOGGER.debug(e)
+                LOGGER.debug(f"creating: {output_mosaic_tif}")
+                with rio.open(output_mosaic_tif, "w", **out_meta) as dst:
+                    dst.write(mosaic)
+                # Close all open tiffs that were mosaic'ed
+                for f in src_files_to_mosaic:
+                    f.close()
 
 
 def composite_mosaics(startdate: str, dates: list, out_pth: str):
@@ -191,7 +192,8 @@ def composite_mosaics(startdate: str, dates: list, out_pth: str):
             # tif_by_date = os.path.join(const.OUTPUT_TIF_MODIS, startdate.split(".")[0],
             #                f"{date}.tif")
             tif_by_date = snow_path.get_output_modis_path(date=date)
-            mosaics.append(tif_by_date)
+            if os.path.isfile(tif_by_date):
+                mosaics.append(tif_by_date)
         with rio.open(mosaics[0], "r") as src:
             meta = src.meta.copy()
             data = src.read(1)

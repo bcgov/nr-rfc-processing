@@ -443,8 +443,8 @@ class GranuleUtil:
         self.granule = granule
 
         self.expected_keys = ["title", "time_start", "producer_granule_id"]
-        #self.title_pattern_string = r"\w+:([\w]+\.[\w]+):\w+"
-        self.title_pattern_string = r"(\w+).\w+.\w+(.\w+)"
+        self.title_pattern_string = r"\w+:([\w]+\.[\w]+):\w+"
+        self.title_pattern2 = re.compile(r"(\w+).\w+.\w+(.\w+)")
         self.title_pattern = re.compile(self.title_pattern_string)
 
         self.validate()
@@ -458,12 +458,16 @@ class GranuleUtil:
 
     def get_local_path(self):
         title = self.granule.get("title", "")
-        title_match = self.title_pattern.match(title)
-        if title_match is None:
-            raise ValueError(f"granule does not have well formated title: {title}")
-
-        #product_name = title_match.groups()[0]
-        product_name = ''.join(title_match.groups())
+        if ':' in title:
+            title_match = self.title_pattern.match(title)
+            if title_match is None:
+                raise ValueError(f"granule does not have well formated title: {title}")
+            product_name = title_match.groups()[0]
+        else:
+            title_match = self.title_pattern2.match(title)
+            if title_match is None:
+                raise ValueError(f"granule does not have well formated title: {title}")
+            product_name = ''.join(title_match.groups())
 
         date_string = dateutil.parser.parse(self.granule.get("time_start")).strftime(
             "%Y.%m.%d"

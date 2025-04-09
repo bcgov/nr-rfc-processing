@@ -90,13 +90,15 @@ def find_most_recent_image(obj_dirpath, obj_fpath, dt):
     return dt
 
 #year = max([int(i.split('.')[0][-4:]) for i in ostore_objs]) + 1
-#year = 2022
+#year = 2001
 
 if __name__ == '__main__':
+    #ostore object loads object store credentials from environment variables:
     ostore = NRObjStoreUtil.ObjectStoreUtil()
 
     today = datetime.today()
     year = int((today - timedelta(days=14)).strftime('%Y'))
+    #year = 2000
     CLEVER_Summary_objfolder = 'snowpack_archive/summary'
     ostore_objs = ostore.list_objects(CLEVER_Summary_objfolder,return_file_names_only=True)
     CLEVER_summary_fpath = os.path.join(CLEVER_Summary_objfolder,f'CLEVER_Summary_{year}.csv')
@@ -116,6 +118,7 @@ if __name__ == '__main__':
     else:
         enddate = find_most_recent_image(os.path.dirname(today.strftime(objpath)), objpath, today)
     importdates = pd.date_range(start = startdate, end = enddate)
+
     if len(importdates) > 0:
         output = pd.DataFrame(data=None, index = importdates, columns = clever_shp.WSDG_ID)
         colnames = output.columns
@@ -123,22 +126,30 @@ if __name__ == '__main__':
             objname = dt.strftime(objpath)
             filename = objname.split('/')[-1]
             local_filename = os.path.join('rawdata',filename)
-            ostore.get_object(local_path=local_filename, file_path=objname)
-            print(f'Reading {local_filename}')
-            with rasterio.open(local_filename) as grib:
-                    raster = grib.read(1)
-                    affine = grib.transform
-                    zone = clever_shp.to_crs(grib.crs)
-                    #Rasterstats averages all pixels which touch the polygon, or all pixels whose centoids are within the polygon
-                    #For exact averaging, weighting pixels by fraction within polygon, investigate this package:
-                    #https://github.com/isciences/exactextract
-                    raster[raster>100] = 255
-                    stats = rasterstats.zonal_stats(zone, raster, affine=affine,stats="mean",all_touched=True,nodata=255)
-                    for j in range(len(stats)):
-                        output.loc[dt,colnames[j]] = stats[j]['mean']
+            if objname in ostore.list_objects(os.path.dirname(objname),return_file_names_only=True):
+                ostore.get_object(local_path=local_filename, file_path=objname)
+                print(f'Reading {local_filename}')
+                with rasterio.open(local_filename) as grib:
+                        raster = grib.read(1)
+                        affine = grib.transform
+                        zone = clever_shp.to_crs(grib.crs)
+                        #Rasterstats averages all pixels which touch the polygon, or all pixels whose centoids are within the polygon
+                        #For exact averaging, weighting pixels by fraction within polygon, investigate this package:
+                        #https://github.com/isciences/exactextract
+                        raster[raster>100] = 255
+                        stats = rasterstats.zonal_stats(zone, raster, affine=affine,stats="mean",all_touched=True,nodata=255)
+                        for j in range(len(stats)):
+                            output.loc[dt,colnames[j]] = stats[j]['mean']
+            else:
+                print(f'{objname} not found')
 
 
         CLEVER_summary = update_data(CLEVER_summary, output)
+        #Modis snow product missing 2001 Jun 16 to 2001 Jul 2, remove data and interpolate over these dates:
+        if year == 2001:
+            removedates = pd.date_range(start = datetime(2001,6,16), end = datetime(2001,7,2))
+            CLEVER_summary.loc[removedates] = np.nan
+            CLEVER_summary.interpolate(axis=0, inplace=True)
         #df_to_objstore(CLEVER_summary, CLEVER_summary_fpath, onprem=False)
         df_to_objstore(CLEVER_summary, CLEVER_summary_fpath, onprem=False)
 

@@ -51,9 +51,9 @@ def find_most_recent_image(obj_dirpath, obj_fpath, dt):
         fname = dt.strftime(obj_fpath)
     return dt
 
-#date = '2022/05/07'
+#date = '2000/02/24'
 #dt = datetime.strptime(date,'%Y/%m/%d')
-#datelist = pd.date_range(datetime.strptime(date,'%Y/%m/%d'), periods=90).tolist()
+#datelist = pd.date_range(datetime.strptime(date,'%Y/%m/%d'), periods=365).tolist()
 #dt_prev = dt - datetime.timedelta(days=1)
 
 ostore = NRObjStoreUtil.ObjectStoreUtil()
@@ -82,18 +82,22 @@ for dt in datelist:
         else:
             data = None
     data_prevday, meta_prevday = get_image(dt - timedelta(days=1), cloud_filled_objpath)
+    if data_prevday is not None:
+        if data is None:
+            data = data_prevday
+            meta = meta_prevday
+        else:
+            nodata_mask = data>100
+            data[nodata_mask]=data_prevday[nodata_mask]
+
     if data is None:
-        data = data_prevday
-        meta = meta_prevday
+        print(f'No imagery available')
     else:
-        nodata_mask = data>100
-        data[nodata_mask]=data_prevday[nodata_mask]
+        out_path = dt.strftime(cloud_filled_objpath)
+        if not os.path.isdir(dt.strftime(cloud_filled_path)):
+            os.makedirs(dt.strftime(cloud_filled_path))
 
-    out_path = dt.strftime(cloud_filled_objpath)
-    if not os.path.isdir(dt.strftime(cloud_filled_path)):
-        os.makedirs(dt.strftime(cloud_filled_path))
-
-    with rio.open(out_path, "w", **meta) as dst:
-        dst.write(data, indexes=1)
-    ostore.put_object(ostore_path=out_path, local_path=out_path)
-    print(f'Saving to {out_path}')
+        with rio.open(out_path, "w", **meta) as dst:
+            dst.write(data, indexes=1)
+        ostore.put_object(ostore_path=out_path, local_path=out_path)
+        print(f'Saving to {out_path}')

@@ -59,40 +59,43 @@ def reproject_modis(date: str, name: str, pth: str, dst_crs: str):
     LOGGER.debug(f"intermediate_tif: {intermediate_tif}")
     LOGGER.debug(f"pth: {pth}")
     if not os.path.exists(intermediate_tif):
-        LOGGER.debug(f"processing the modis granule: {pth_file_noext}")
-        with rio.open(pth, "r") as modis_scene:
-            with rio.open(modis_scene.subdatasets[0], "r") as src:
-                # transform raster to dst_crs------
-                transform, width, height = calculate_default_transform(
-                    src.crs,
-                    dst_crs,
-                    src.width,
-                    src.height,
-                    *src.bounds,
-                    resolution=const.MODIS_EPSG4326_RES,
-                )
-                kwargs = src.meta.copy()
-                kwargs.update(
-                    {
-                        "driver": "GTiff",
-                        "crs": dst_crs,
-                        "transform": transform,
-                        "width": width,
-                        "height": height,
-                    }
-                )
-                # Write reprojected granule into GTiff format
-                with rio.open(intermediate_tif, "w", **kwargs) as dst:
-                    reproject(
-                        source=rio.band(src, 1),
-                        destination=rio.band(dst, 1),
-                        src_transform=src.transform,
-                        src_crs=src.crs,
-                        dst_transform=transform,
-                        dst_crs=dst_crs,
-                        resampling=Resampling.nearest,
+        try:
+            LOGGER.debug(f"processing the modis granule: {pth_file_noext}")
+            with rio.open(pth, "r") as modis_scene:
+                with rio.open(modis_scene.subdatasets[0], "r") as src:
+                    # transform raster to dst_crs------
+                    transform, width, height = calculate_default_transform(
+                        src.crs,
+                        dst_crs,
+                        src.width,
+                        src.height,
+                        *src.bounds,
+                        resolution=const.MODIS_EPSG4326_RES,
                     )
-                # -------------------------------------
+                    kwargs = src.meta.copy()
+                    kwargs.update(
+                        {
+                            "driver": "GTiff",
+                            "crs": dst_crs,
+                            "transform": transform,
+                            "width": width,
+                            "height": height,
+                        }
+                    )
+                    # Write reprojected granule into GTiff format
+                    with rio.open(intermediate_tif, "w", **kwargs) as dst:
+                        reproject(
+                            source=rio.band(src, 1),
+                            destination=rio.band(dst, 1),
+                            src_transform=src.transform,
+                            src_crs=src.crs,
+                            dst_transform=transform,
+                            dst_crs=dst_crs,
+                            resampling=Resampling.nearest,
+                        )
+                    # -------------------------------------
+        except:
+            LOGGER.debug(f"Reprojection failure: {pth_file_noext}")
 
 
 def create_modis_mosaic(
@@ -124,8 +127,11 @@ def create_modis_mosaic(
             # creating a list of rasterio / rio file handles
             for f in tifs_to_mosaic:
                 LOGGER.debug(f"adding to mosaic: {f}")
-                src = rio.open(f, "r")
-                src_files_to_mosaic.append(src)
+                try:
+                    src = rio.open(f, "r")
+                    src_files_to_mosaic.append(src)
+                except:
+                    LOGGER.debug(f"Failure to add file to mosaic: {f}")
             # Merge all granule tiffs into one
             mosaic, out_trans = merge(
                 src_files_to_mosaic, bounds=[*const.BBOX], res=const.MODIS_EPSG4326_RES

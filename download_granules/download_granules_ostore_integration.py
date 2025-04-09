@@ -443,7 +443,8 @@ class GranuleUtil:
         self.granule = granule
 
         self.expected_keys = ["title", "time_start", "producer_granule_id"]
-        self.title_pattern_string = r"\w+:([\w]+\.[\w]+):\w+"
+        #self.title_pattern_string = r"\w+:([\w]+\.[\w]+):\w+"
+        self.title_pattern_string = r"(\w+).\w+.\w+(.\w+)"
         self.title_pattern = re.compile(self.title_pattern_string)
 
         self.validate()
@@ -461,7 +462,8 @@ class GranuleUtil:
         if title_match is None:
             raise ValueError(f"granule does not have well formated title: {title}")
 
-        product_name = title_match.groups()[0]
+        #product_name = title_match.groups()[0]
+        product_name = ''.join(title_match.groups())
 
         date_string = dateutil.parser.parse(self.granule.get("time_start")).strftime(
             "%Y.%m.%d"

@@ -31,7 +31,7 @@ jobs:
       matrix: ${{ steps.identify-dates-to-run.outputs.matrix }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       id: checkout
       with:
        fetch-depth: 0
@@ -45,7 +45,7 @@ jobs:
     #     environment-name: snowpack_env
 
     - name: Install micromamba (conda) environment from explicit.lock
-      uses: mamba-org/setup-micromamba@v1
+      uses: mamba-org/setup-micromamba@4b9113af4fba0e9e1124b252dd6497a419e7396d # v1
       with:
         # micromamba-version: '1.3.1'
         environment-name: snowpack_env

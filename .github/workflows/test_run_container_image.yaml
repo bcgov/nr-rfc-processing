@@ -28,7 +28,7 @@ jobs:
       EARTHDATA_PASS: ${{ secrets.EARTHDATA_PASS }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       id: checkout
       with:
        fetch-depth: 0
@@ -37,7 +37,7 @@ jobs:
     #   uses: docker/setup-docker@v2
 
     - name: Log in to GHCR
-      uses: docker/login-action@v2
+      uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2
       with:
         registry: ghcr.io
         username: ${{ github.actor }}

@@ -1,7 +1,19 @@
 {
   "include": [
     {
+      "date": "2025.05.23",
+      "sat": "modis"
+    },
+    {
+      "date": "2025.05.24",
+      "sat": "modis"
+    },
+    {
       "date": "2025.05.25",
+      "sat": "modis"
+    },
+    {
+      "date": "2025.05.26",
       "sat": "modis"
     }
   ]

@@ -45,7 +45,7 @@ jobs:
     #     environment-name: snowpack_env
 
     - name: Install micromamba (conda) environment from explicit.lock
-      uses: mamba-org/setup-micromamba@v1
+      uses: mamba-org/setup-micromamba@4b9113af4fba0e9e1124b252dd6497a419e7396d # v1
       with:
         # micromamba-version: '1.3.1'
         environment-name: snowpack_env

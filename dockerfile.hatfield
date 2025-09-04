@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3:4.9.2-alpine AS build
+FROM continuumio/miniconda3:4.9.2-alpine@sha256:82bd96b0e95188e152d137f6c9834ea731bfc78e5c5f27b3c90f2be31e9e61d8 AS build
 
 COPY hatfieldcmr /hatfieldcmr/
 COPY setup.py /setup.py
@@ -15,7 +15,7 @@ RUN conda install -c conda-forge conda-pack && \
     rm /tmp/env.tar && \
     /venv/bin/conda-unpack
 
-FROM ubuntu:20.04 AS runtime
+FROM ubuntu:20.04@sha256:8feb4d8ca5354def3d8fce243717141ce31e2c428701f6682bd2fafe15388214 AS runtime
 COPY --from=build /venv /venv
 
 COPY hatfieldcmr /app/hatfieldcmr/

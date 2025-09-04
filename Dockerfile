@@ -1,4 +1,4 @@
-FROM mambaorg/micromamba:1.4.9 as mamba
+FROM mambaorg/micromamba:1.4.9@sha256:1b459e9c6968a32ae5a4321a1f14dfbb8e9f1cb57d8f57d2bf2c39ac9162d88a as mamba
 WORKDIR /app
 COPY --chown=$MAMBA_USER:$MAMBA_USER explicit.lock /tmp/explicit.lock
 COPY --chown=$MAMBA_USER:$MAMBA_USER requirements.txt /tmp/requirements.txt

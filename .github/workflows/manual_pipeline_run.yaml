@@ -96,11 +96,11 @@ jobs:
     needs: [ populate-matrix ]
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{ fromJson(needs.populate-matrix.outputs.matrix) }}
+      #matrix: ${{ fromJson(needs.populate-matrix.outputs.matrix) }}
       max-parallel: 13
-      # matrix:
-      #   date: [ "2021.01.01", "2021.01.02" ]
-      #   sat: [ "modis"]
+      matrix:
+        date: [ "2025.08.31" ]
+        sat: [ "modis"]
     steps:
     - name: Pull GHCR image
       run: docker pull ghcr.io/${{ github.repository_owner }}/snow_analysis:latest

@@ -99,7 +99,7 @@ jobs:
       #matrix: ${{ fromJson(needs.populate-matrix.outputs.matrix) }}
       max-parallel: 13
       matrix:
-        date: [ "2025.08.31" ]
+        date: [ "2025.09.01" ]
         sat: [ "modis"]
     steps:
     - name: Pull GHCR image

@@ -215,6 +215,10 @@ class CMRClient:
                 )
                 retries += 1
                 self.get_file_from_earth_data(granule_url, output_file, retries=retries)
+        except requests.exceptions.InvalidSchema as e:
+            LOGGER.warning(
+                    f"Invalid Schema, skiping file: {granule_url})"
+                )
 
     def check_session(self):
         """makes sure a session object exists"""
@@ -411,7 +415,7 @@ class CMRClientOStore(CMRClient):
 
         # finnally if the file was downloaded from the National Snow and Ice Data Centre
         # then upload it now to object storage.
-        if not ostore_exists:
+        if os.path.exists(output_file) and not ostore_exists:
             LOGGER.info(f'persisting the file {output_file} to object storage')
             self.ostore.put_object(local_path=output_file, ostore_path=ostore_path)
 

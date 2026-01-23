@@ -94,8 +94,8 @@ for dt in datelist:
         print(f'No imagery available')
     else:
         out_path = dt.strftime(cloud_filled_objpath)
-        if not os.path.isdir(dt.strftime(cloud_filled_path)):
-            os.makedirs(dt.strftime(cloud_filled_path))
+        if not os.path.isdir(os.path.dirname(out_path)):
+            os.makedirs(os.path.dirname(out_path))
 
         with rio.open(out_path, "w", **meta) as dst:
             dst.write(data, indexes=1)

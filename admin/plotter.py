@@ -1,4 +1,5 @@
 import os
+import sys
 import rasterio.plot
 import logging
 
@@ -187,7 +188,10 @@ def plot_mosaics(sat: str, date: str):
             elif sat == 'viirs':
                 viirs_path = os.path.join(const.OUTPUT_TIF_VIIRS, d_year, f'{date}.tif')
                 LOGGER.debug(f"viirs_path: {viirs_path}")
-                orig = glob(viirs_path)[0]
+                try:
+                    orig = glob(viirs_path)[0]
+                except:
+                    sys.exit()
                 base10yr_dir = const.VIIRS_DAILY_10YR
                 base20yr_dir = const.VIIRS_DAILY_20YR
             else: # @click should not let this else ever be reached

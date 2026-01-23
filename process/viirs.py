@@ -1,9 +1,11 @@
 import os
 import h5py
 import logging
+import sys
 
 import numpy as np
 import rasterio as rio
+import datetime
 
 import admin.constants as const
 
@@ -206,6 +208,11 @@ def process_viirs(date: str):
     viirs_product = set_product(sat='viirs', datestr=date)
     viirs_granules = snow_path.get_viirs_granules(date, viirs_product)
     logger.debug(f"int tif dir: {intermediate_pth}")
+
+    imagery_age = datetime.datetime.today() -datetime.datetime.strptime(date,"%Y.%m.%d")
+    if len(viirs_granules)==0 and imagery_age.days>10:
+        logger.info('No granules found and imagery date over 20 days old. Exiting Function.')
+        sys.exit()
 
 
     #residual_files = glob(os.path.join(intermediate_pth, '*.tif'))

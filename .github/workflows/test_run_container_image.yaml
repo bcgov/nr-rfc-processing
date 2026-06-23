@@ -28,7 +28,7 @@ jobs:
       EARTHDATA_PASS: ${{ secrets.EARTHDATA_PASS }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
       id: checkout
       with:
        fetch-depth: 0

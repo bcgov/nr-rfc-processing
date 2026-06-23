@@ -128,6 +128,7 @@ template.env
 .venv
 env/
 venv/
+testenv/
 ENV/
 env.bak/
 venv.bak/

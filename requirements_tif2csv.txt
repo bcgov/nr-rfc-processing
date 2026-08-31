@@ -1,7 +1,7 @@
 nr-objstore-util==0.10.0
 python-cmr==0.7.0
 pandas==2.3.0
-numpy==2.3.0
+numpy==2.5.2
 geopandas==1.1.0
 rasterio==1.4.3
 rasterstats==0.20.0

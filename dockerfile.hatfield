@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3:4.9.2-alpine AS build
+FROM continuumio/miniconda3:4.10.3-alpine AS build
 
 COPY hatfieldcmr /hatfieldcmr/
 COPY setup.py /setup.py
